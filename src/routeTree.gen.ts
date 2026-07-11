@@ -10,6 +10,7 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as SitemapDotxmlRouteImport } from './routes/sitemap[.]xml'
+import { Route as SignupRouteImport } from './routes/signup'
 import { Route as LoginRouteImport } from './routes/login'
 import { Route as FeedRouteImport } from './routes/feed'
 import { Route as IndexRouteImport } from './routes/index'
@@ -20,6 +21,11 @@ import { Route as ProfileUsernameRouteImport } from './routes/profile.$username'
 const SitemapDotxmlRoute = SitemapDotxmlRouteImport.update({
   id: '/sitemap.xml',
   path: '/sitemap.xml',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const SignupRoute = SignupRouteImport.update({
+  id: '/signup',
+  path: '/signup',
   getParentRoute: () => rootRouteImport,
 } as any)
 const LoginRoute = LoginRouteImport.update({
@@ -57,6 +63,7 @@ export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/feed': typeof FeedRoute
   '/login': typeof LoginRoute
+  '/signup': typeof SignupRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
   '/profile/$username': typeof ProfileUsernameRoute
   '/share/$username': typeof ShareUsernameRoute
@@ -66,6 +73,7 @@ export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/feed': typeof FeedRoute
   '/login': typeof LoginRoute
+  '/signup': typeof SignupRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
   '/profile/$username': typeof ProfileUsernameRoute
   '/share/$username': typeof ShareUsernameRoute
@@ -76,6 +84,7 @@ export interface FileRoutesById {
   '/': typeof IndexRoute
   '/feed': typeof FeedRoute
   '/login': typeof LoginRoute
+  '/signup': typeof SignupRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
   '/profile/$username': typeof ProfileUsernameRoute
   '/share/$username': typeof ShareUsernameRoute
@@ -87,6 +96,7 @@ export interface FileRouteTypes {
     | '/'
     | '/feed'
     | '/login'
+    | '/signup'
     | '/sitemap.xml'
     | '/profile/$username'
     | '/share/$username'
@@ -96,6 +106,7 @@ export interface FileRouteTypes {
     | '/'
     | '/feed'
     | '/login'
+    | '/signup'
     | '/sitemap.xml'
     | '/profile/$username'
     | '/share/$username'
@@ -105,6 +116,7 @@ export interface FileRouteTypes {
     | '/'
     | '/feed'
     | '/login'
+    | '/signup'
     | '/sitemap.xml'
     | '/profile/$username'
     | '/share/$username'
@@ -115,6 +127,7 @@ export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   FeedRoute: typeof FeedRoute
   LoginRoute: typeof LoginRoute
+  SignupRoute: typeof SignupRoute
   SitemapDotxmlRoute: typeof SitemapDotxmlRoute
   ProfileUsernameRoute: typeof ProfileUsernameRoute
   ShareUsernameRoute: typeof ShareUsernameRoute
@@ -128,6 +141,13 @@ declare module '@tanstack/react-router' {
       path: '/sitemap.xml'
       fullPath: '/sitemap.xml'
       preLoaderRoute: typeof SitemapDotxmlRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/signup': {
+      id: '/signup'
+      path: '/signup'
+      fullPath: '/signup'
+      preLoaderRoute: typeof SignupRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/login': {
@@ -179,6 +199,7 @@ const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   FeedRoute: FeedRoute,
   LoginRoute: LoginRoute,
+  SignupRoute: SignupRoute,
   SitemapDotxmlRoute: SitemapDotxmlRoute,
   ProfileUsernameRoute: ProfileUsernameRoute,
   ShareUsernameRoute: ShareUsernameRoute,
