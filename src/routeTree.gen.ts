@@ -9,38 +9,101 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
+import { Route as FeedRouteImport } from './routes/feed'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as VerdictUsernameRouteImport } from './routes/verdict.$username'
+import { Route as ShareUsernameRouteImport } from './routes/share.$username'
+import { Route as ProfileUsernameRouteImport } from './routes/profile.$username'
 
+const FeedRoute = FeedRouteImport.update({
+  id: '/feed',
+  path: '/feed',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const VerdictUsernameRoute = VerdictUsernameRouteImport.update({
+  id: '/verdict/$username',
+  path: '/verdict/$username',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ShareUsernameRoute = ShareUsernameRouteImport.update({
+  id: '/share/$username',
+  path: '/share/$username',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ProfileUsernameRoute = ProfileUsernameRouteImport.update({
+  id: '/profile/$username',
+  path: '/profile/$username',
+  getParentRoute: () => rootRouteImport,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/feed': typeof FeedRoute
+  '/profile/$username': typeof ProfileUsernameRoute
+  '/share/$username': typeof ShareUsernameRoute
+  '/verdict/$username': typeof VerdictUsernameRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/feed': typeof FeedRoute
+  '/profile/$username': typeof ProfileUsernameRoute
+  '/share/$username': typeof ShareUsernameRoute
+  '/verdict/$username': typeof VerdictUsernameRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/feed': typeof FeedRoute
+  '/profile/$username': typeof ProfileUsernameRoute
+  '/share/$username': typeof ShareUsernameRoute
+  '/verdict/$username': typeof VerdictUsernameRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/'
+  fullPaths:
+    | '/'
+    | '/feed'
+    | '/profile/$username'
+    | '/share/$username'
+    | '/verdict/$username'
   fileRoutesByTo: FileRoutesByTo
-  to: '/'
-  id: '__root__' | '/'
+  to:
+    | '/'
+    | '/feed'
+    | '/profile/$username'
+    | '/share/$username'
+    | '/verdict/$username'
+  id:
+    | '__root__'
+    | '/'
+    | '/feed'
+    | '/profile/$username'
+    | '/share/$username'
+    | '/verdict/$username'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  FeedRoute: typeof FeedRoute
+  ProfileUsernameRoute: typeof ProfileUsernameRoute
+  ShareUsernameRoute: typeof ShareUsernameRoute
+  VerdictUsernameRoute: typeof VerdictUsernameRoute
 }
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
+    '/feed': {
+      id: '/feed'
+      path: '/feed'
+      fullPath: '/feed'
+      preLoaderRoute: typeof FeedRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/': {
       id: '/'
       path: '/'
@@ -48,11 +111,36 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/verdict/$username': {
+      id: '/verdict/$username'
+      path: '/verdict/$username'
+      fullPath: '/verdict/$username'
+      preLoaderRoute: typeof VerdictUsernameRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/share/$username': {
+      id: '/share/$username'
+      path: '/share/$username'
+      fullPath: '/share/$username'
+      preLoaderRoute: typeof ShareUsernameRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/profile/$username': {
+      id: '/profile/$username'
+      path: '/profile/$username'
+      fullPath: '/profile/$username'
+      preLoaderRoute: typeof ProfileUsernameRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  FeedRoute: FeedRoute,
+  ProfileUsernameRoute: ProfileUsernameRoute,
+  ShareUsernameRoute: ShareUsernameRoute,
+  VerdictUsernameRoute: VerdictUsernameRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
