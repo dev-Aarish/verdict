@@ -7,7 +7,7 @@ export function TopBar() {
         <Link to="/" className="wordmark text-lg text-paper">
           Verdict
         </Link>
-        <nav className="flex items-center gap-6">
+        <nav className="flex items-center gap-5">
           <Link
             to="/feed"
             className="text-caption hover:text-brass transition-colors"
@@ -22,11 +22,16 @@ export function TopBar() {
             Profile
           </Link>
           <Link
-            to="/verdict/$username"
-            params={{ username: "you" }}
+            to="/login"
+            className="text-caption hover:text-brass transition-colors"
+          >
+            Sign in
+          </Link>
+          <Link
+            to="/signup"
             className="border border-brass px-3 py-1.5 text-caption text-brass hover:bg-brass hover:text-ink transition-colors"
           >
-            Get your Verdict
+            Get on the list
           </Link>
         </nav>
       </div>
