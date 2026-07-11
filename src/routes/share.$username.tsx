@@ -24,10 +24,13 @@ function SharePage() {
       <TopBar />
 
       <main className="mx-auto max-w-3xl px-6 py-12">
-        <div className="mb-8 flex items-center justify-between">
+        <div className="mb-8 flex items-end justify-between gap-4">
           <div>
             <p className="text-caption">Shareable</p>
             <h1 className="text-section text-paper">Verdict card</h1>
+            <p className="mt-2 max-w-md text-sm text-dust">
+              Tear along the perforation. Keep the stub.
+            </p>
           </div>
           <Link
             to="/profile/$username"
@@ -38,58 +41,105 @@ function SharePage() {
           </Link>
         </div>
 
-        {/* The card — 9:16 story format */}
+        {/* The card — 9:16 story format, two-panel ticket stub */}
         <div className="mx-auto w-full max-w-sm">
           <div
-            className="relative aspect-[9/16] overflow-hidden border-2 border-brass/40 bg-ink p-8"
+            className="ticket-stub relative aspect-[9/16] overflow-hidden border-2 border-brass/40 bg-ink text-left"
             style={{
               backgroundImage:
-                "radial-gradient(ellipse at top, oklch(0.28 0.03 275) 0%, transparent 60%)",
+                "radial-gradient(ellipse at 50% -10%, oklch(0.30 0.03 275) 0%, transparent 55%), radial-gradient(ellipse at 50% 110%, oklch(0.22 0.02 275) 0%, transparent 60%)",
             }}
           >
-            <div className="flex h-full flex-col justify-between">
-              <div>
-                <p className="wordmark text-brass text-sm">Verdict</p>
-                <p className="text-caption mt-1">Est. 2026</p>
+            {/* Perforation seam — split into two panels (top ~72% / stub ~28%) */}
+            <div className="absolute inset-x-0 top-[72%] z-20 pointer-events-none">
+              {/* left/right notches */}
+              <div className="absolute -left-3 -top-3 h-6 w-6 rounded-full bg-background" />
+              <div className="absolute -right-3 -top-3 h-6 w-6 rounded-full bg-background" />
+              {/* dashed perforation */}
+              <div
+                className="mx-6 h-0 border-t border-dashed border-brass/50"
+              />
+            </div>
+
+            {/* TOP panel — the verdict */}
+            <div className="flex h-[72%] flex-col justify-between p-7">
+              <div className="flex items-start justify-between">
+                <div>
+                  <p className="wordmark text-brass text-sm">Verdict</p>
+                  <p className="text-caption mt-1">Est. 2026</p>
+                </div>
+                <div className="text-right">
+                  <p className="text-caption">Reel</p>
+                  <p className="mono text-sm text-paper">
+                    #{String(p.tasteScore).padStart(3, "0")}
+                  </p>
+                </div>
               </div>
 
               <div className="flex flex-col items-center text-center">
-                <p className="text-caption mb-4">The taste of</p>
+                <p className="text-caption mb-3">The taste of</p>
                 <p className="text-card-title text-paper">@{username}</p>
-                <div className="mt-6">
-                  <Stamp size="lg" rotation={-4} label="Taste Score">
+                <div className="mt-5">
+                  <Stamp size="lg" rotation={-4} label="Taste Score" animate="settle">
                     {p.tasteScore}
                   </Stamp>
                 </div>
-                <p className="mono mt-6 max-w-[220px] text-sm text-paper/90">
+                <p className="mono mt-6 max-w-[240px] text-sm italic text-paper/90">
                   "{quote.quote}"
                 </p>
                 <p className="text-caption mt-2">— {quote.from}</p>
               </div>
 
-              <div>
-                <p className="text-caption mb-3">Now Showing</p>
-                <ul className="space-y-1.5">
-                  {topFilms.map((f) => (
-                    <li
-                      key={f.id}
-                      className="flex justify-between border-b border-border/40 pb-1.5 mono text-xs text-paper/85"
-                    >
-                      <span>{f.title}</span>
-                      <span className="text-brass">{f.rating}</span>
-                    </li>
-                  ))}
-                </ul>
+              <div className="hairline flex items-center justify-between pt-3">
+                <span className="text-caption">Aud. A</span>
+                <span className="text-caption">{p.filmCount} films</span>
+                <span className="text-caption">20:00</span>
               </div>
+            </div>
+
+            {/* BOTTOM stub — now showing list */}
+            <div
+              className="relative h-[28%] p-6"
+              style={{
+                background:
+                  "linear-gradient(180deg, transparent 0%, oklch(0.22 0.025 275) 100%)",
+              }}
+            >
+              <div className="flex items-center justify-between">
+                <p className="text-caption">Now Showing</p>
+                <p className="text-caption">verdict.app/@{username}</p>
+              </div>
+              <ul className="mt-3 space-y-1">
+                {topFilms.map((f) => (
+                  <li
+                    key={f.id}
+                    className="flex items-baseline justify-between gap-2 border-b border-border/40 pb-1 mono text-[11px] text-paper/85"
+                  >
+                    <span className="truncate">
+                      {f.title}
+                      <span className="text-dust"> · {f.year}</span>
+                    </span>
+                    <span className="text-brass">{f.rating}</span>
+                  </li>
+                ))}
+              </ul>
             </div>
           </div>
 
-          <button
-            type="button"
-            className="mt-6 w-full border-2 border-brass bg-brass px-6 py-3 text-caption text-ink hover:bg-transparent hover:text-brass transition-colors"
-          >
-            Download card
-          </button>
+          <div className="mt-6 grid grid-cols-2 gap-3">
+            <button
+              type="button"
+              className="border-2 border-brass bg-brass px-6 py-3 text-caption text-ink hover:bg-transparent hover:text-brass transition-colors"
+            >
+              Download
+            </button>
+            <button
+              type="button"
+              className="border-2 border-border px-6 py-3 text-caption text-paper hover:border-brass hover:text-brass transition-colors"
+            >
+              Copy link
+            </button>
+          </div>
         </div>
       </main>
     </div>
