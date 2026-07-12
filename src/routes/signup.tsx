@@ -1,7 +1,9 @@
+import { useUser } from "@/lib/user-context";
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useState } from "react";
 import { TopBar } from "@/components/TopBar";
 import { Stamp } from "@/components/Stamp";
+import { signupFn } from "@/api/auth";
 
 export const Route = createFileRoute("/signup")({
   head: () => ({
@@ -15,9 +17,11 @@ export const Route = createFileRoute("/signup")({
 
 function SignupPage() {
   const navigate = useNavigate();
+  const { setUser } = useUser();
   const [username, setUsername] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   return (
     <div className="min-h-screen">
@@ -54,12 +58,27 @@ function SignupPage() {
 
             <form
               className="mt-8 space-y-5"
-              onSubmit={(e) => {
+              onSubmit={async (e) => {
                 e.preventDefault();
-                navigate({
-                  to: "/profile/$username",
-                  params: { username: username || "you" },
-                });
+                setIsSubmitting(true);
+                try {
+                  const result = await signupFn({
+                    data: {
+                      username,
+                      email,
+                      bio: "",
+                    },
+                  });
+                  setUser(result.user);
+                  navigate({
+                    to: "/profile/$username",
+                    params: { username },
+                  });
+                } catch (err: any) {
+                  alert(err.message);
+                } finally {
+                  setIsSubmitting(false);
+                }
               }}
             >
               <Field label="Handle" value={username} onChange={setUsername} placeholder="mira_k" />
@@ -80,9 +99,10 @@ function SignupPage() {
 
               <button
                 type="submit"
-                className="w-full border-2 border-brass bg-brass px-6 py-3 text-caption text-ink transition-colors hover:bg-transparent hover:text-brass"
+                disabled={isSubmitting}
+                className="w-full border-2 border-brass bg-brass px-6 py-3 text-caption text-ink transition-colors hover:bg-transparent hover:text-brass disabled:opacity-50"
               >
-                Enter the room
+                {isSubmitting ? "Entering..." : "Enter the room"}
               </button>
             </form>
 

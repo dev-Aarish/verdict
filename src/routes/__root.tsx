@@ -7,10 +7,17 @@ import {
   HeadContent,
   Scripts,
 } from "@tanstack/react-router";
-import { useEffect, type ReactNode } from "react";
+import { useEffect, useState, type ReactNode } from "react";
 
 import appCss from "../styles.css?url";
 import { reportLovableError } from "../lib/lovable-error-reporting";
+import { getCurrentUserFn } from "@/api/auth";
+import { UserContext } from "@/lib/user-context";
+
+interface MyRouterContext {
+  queryClient: QueryClient;
+  user: any;
+}
 
 function NotFoundComponent() {
   return (
@@ -72,7 +79,7 @@ function ErrorComponent({ error, reset }: { error: Error; reset: () => void }) {
   );
 }
 
-export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()({
+export const Route = createRootRouteWithContext<MyRouterContext>()({
   head: () => ({
     meta: [
       { charSet: "utf-8" },
@@ -88,7 +95,7 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
       {
         property: "og:description",
         content:
-          "A screening-room take on movie ratings. Get a Taste Score, collect Verdicts stamped by your friends, share the card.",
+          "Get a Taste Score. Collect Verdicts. Share the stamp. A screening-room take on movie-rating apps.",
       },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary_large_image" },
@@ -104,6 +111,10 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
       },
     ],
   }),
+  loader: async ({ context }) => {
+    const user = await getCurrentUserFn();
+    return { user };
+  },
   shellComponent: RootShell,
   component: RootComponent,
   notFoundComponent: NotFoundComponent,
@@ -126,11 +137,14 @@ function RootShell({ children }: { children: ReactNode }) {
 
 function RootComponent() {
   const { queryClient } = Route.useRouteContext();
+  const { user: initialUser } = Route.useLoaderData();
+  const [user, setUser] = useState(initialUser);
 
   return (
     <QueryClientProvider client={queryClient}>
-      {/* Required: nested routes render here. Removing <Outlet /> breaks all child routes. */}
-      <Outlet />
+      <UserContext.Provider value={{ user, setUser }}>
+        <Outlet context={{ queryClient, user }} />
+      </UserContext.Provider>
     </QueryClientProvider>
   );
 }

@@ -1,7 +1,9 @@
+import { useUser } from "@/lib/user-context";
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useState } from "react";
 import { TopBar } from "@/components/TopBar";
 import { Stamp } from "@/components/Stamp";
+import { loginFn } from "@/api/auth";
 
 export const Route = createFileRoute("/login")({
   head: () => ({
@@ -15,8 +17,10 @@ export const Route = createFileRoute("/login")({
 
 function LoginPage() {
   const navigate = useNavigate();
+  const { setUser } = useUser();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   return (
     <div className="min-h-screen">
@@ -37,9 +41,7 @@ function LoginPage() {
             </p>
             <p className="text-caption">— House motto, est. 2026</p>
           </div>
-          <div className="hairline pt-4 text-caption">
-            Reel 01 · Aud. A · 20:00
-          </div>
+          <div className="hairline pt-4 text-caption">Reel 01 · Aud. A · 20:00</div>
         </aside>
 
         {/* Right: form */}
@@ -53,9 +55,20 @@ function LoginPage() {
 
             <form
               className="mt-8 space-y-5"
-              onSubmit={(e) => {
+              onSubmit={async (e) => {
                 e.preventDefault();
-                navigate({ to: "/profile/$username", params: { username: "you" } });
+                setIsSubmitting(true);
+                try {
+                  const { user } = await loginFn({
+                    data: { email },
+                  });
+                  setUser(user);
+                  navigate({ to: "/profile/$username", params: { username: user.username } });
+                } catch (err: any) {
+                  alert(err.message);
+                } finally {
+                  setIsSubmitting(false);
+                }
               }}
             >
               <Field
@@ -83,9 +96,10 @@ function LoginPage() {
 
               <button
                 type="submit"
-                className="w-full border-2 border-brass bg-brass px-6 py-3 text-caption text-ink transition-colors hover:bg-transparent hover:text-brass"
+                disabled={isSubmitting}
+                className="w-full border-2 border-brass bg-brass px-6 py-3 text-caption text-ink transition-colors hover:bg-transparent hover:text-brass disabled:opacity-50"
               >
-                Take your seat
+                {isSubmitting ? "Checking..." : "Take your seat"}
               </button>
             </form>
 
