@@ -12,11 +12,11 @@ export const users = sqliteTable("users", {
 
 export const movies = sqliteTable("movies", {
   id: text("id").primaryKey(),
-  tmdbId: integer("tmdb_id").notNull().unique(),
+  imdbId: text("imdb_id").notNull().unique(),
   title: text("title").notNull(),
-  year: integer("year"),
+  year: text("year"),
   posterUrl: text("poster_url"),
-  genres: text("genres"), // Comma separated string
+  genres: text("genres"),
   country: text("country"),
   director: text("director"),
 });

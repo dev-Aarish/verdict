@@ -29,6 +29,13 @@ export function TopBar() {
             Feed
           </Link>
 
+          <Link
+            to="/search"
+            className="text-caption hover:text-brass transition-colors"
+          >
+            Search
+          </Link>
+
           {user ? (
             <>
               <Link

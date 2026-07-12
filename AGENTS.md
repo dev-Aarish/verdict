@@ -3,7 +3,7 @@
 ## Phases
 
 - [x] **Phase 1: Project Setup & Auth** - Initialize project, setup database schema (User, Movie, WatchedEntry), and implement Authentication (Email/Google).
-- [ ] **Phase 2: Movie Discovery & Logging** - Implement TMDb API integration for searching movies and the ability for users to add movies to their "Watched List" with personal ratings.
+- [x] **Phase 2: Movie Discovery & Logging** - Implement TMDb API integration for searching movies and the ability for users to add movies to their "Watched List" with personal ratings. *(Implemented using OMDb API instead of TMDb)*
 - [ ] **Phase 3: Taste Score Engine (v0)** - Implement the backend logic to compute the initial Taste Score (Diversity + Obscurity).
 - [ ] **Phase 4: Public Profile & Display** - Build the public profile page that displays the user's Watched List, their Taste Score, and a breakdown of the score.
 - [ ] **Phase 5: Verdict System (Core Mechanic)** - Implement the ability for users to leave a "Verdict" (rating + short comment) on another user's profile.
@@ -13,4 +13,6 @@
 - [ ] **Phase 9: Testing & Deployment** - Comprehensive testing, bug fixing, and deploying the MVP to production.
 
 ## Current Progress
-- [ ] Phase 1: Project Setup & Auth (In Progress)
+- [x] Phase 1: Project Setup & Auth (Completed)
+- [x] Phase 2: Movie Discovery & Logging (Completed)
+- [ ] Phase 3: Taste Score Engine (v0) (Not Started)
