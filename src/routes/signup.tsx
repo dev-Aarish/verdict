@@ -4,6 +4,7 @@ import { useState } from "react";
 import { TopBar } from "@/components/TopBar";
 import { Stamp } from "@/components/Stamp";
 import { signupFn } from "@/api/auth";
+import { GoogleSignInButton } from "@/components/GoogleSignInButton";
 
 export const Route = createFileRoute("/signup")({
   head: () => ({
@@ -112,12 +113,7 @@ function SignupPage() {
               <div className="hairline flex-1" />
             </div>
 
-            <button
-              type="button"
-              className="mt-6 w-full border border-border/70 px-6 py-3 text-caption text-paper hover:border-brass hover:text-brass transition-colors"
-            >
-              Continue with Google
-            </button>
+            <GoogleSignInButton />
 
             <p className="mt-8 text-caption">
               Already a member?{" "}

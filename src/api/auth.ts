@@ -1,20 +1,14 @@
 import { createServerFn } from "@tanstack/react-start";
+import { setCookie, getCookie } from "@tanstack/react-start/server";
 import { users, sessions } from "@/db/schema";
 import { db } from "@/db";
 import { eq, and } from "drizzle-orm";
 import { v4 as uuidv4 } from "uuid";
+import * as jose from "jose";
 
 export const getCurrentUserFn = createServerFn({ method: "GET" })
-  .handler(async ({ context }) => {
-    const ctx = context as any;
-    const request = ctx.request;
-    if (!request) return null;
-
-    const cookieHeader = request.headers.get("Cookie");
-    if (!cookieHeader) return null;
-
-    const cookies = Object.fromEntries(cookieHeader.split('; ').map(c => c.split('=')));
-    const sessionId = cookies["auth_session"];
+  .handler(async () => {
+    const sessionId = getCookie("auth_session");
     if (!sessionId) return null;
 
     const session = await db.select()
@@ -30,10 +24,7 @@ export const getCurrentUserFn = createServerFn({ method: "GET" })
 
 export const signupFn = createServerFn({ method: "POST" })
   .validator((data: { username: string; email: string; bio?: string }) => data)
-  .handler(async ({ data, context }) => {
-    const ctx = context as any;
-    console.log("Context keys:", Object.keys(ctx));
-    
+  .handler(async ({ data }) => {
     const existingUser = await db.select().from(users).where(eq(users.email, data.email)).then(res => res[0]);
     if (existingUser) {
       throw new Error("Email already in use");
@@ -60,22 +51,20 @@ export const signupFn = createServerFn({ method: "POST" })
       expiresAt,
     });
 
-    if (ctx.response) {
-      const cookie = `auth_session=${sessionId}; Path=/; HttpOnly; Secure; SameSite=Lax; Max-Age=${7 * 24 * 60 * 60}`;
-      ctx.response.headers.append("Set-Cookie", cookie);
-    } else {
-      console.warn("Response object not found in context");
-    }
+    setCookie("auth_session", sessionId, {
+      path: "/",
+      httpOnly: true,
+      secure: true,
+      sameSite: "lax",
+      maxAge: 7 * 24 * 60 * 60,
+    });
 
     return { user: newUser[0] };
   });
 
 export const loginFn = createServerFn({ method: "POST" })
   .validator((data: { email: string }) => data)
-  .handler(async ({ data, context }) => {
-    const ctx = context as any;
-    console.log("Context keys:", Object.keys(ctx));
-
+  .handler(async ({ data }) => {
     const user = await db.select().from(users).where(eq(users.email, data.email)).then(res => res[0]);
     if (!user) {
       throw new Error("User not found");
@@ -89,34 +78,90 @@ export const loginFn = createServerFn({ method: "POST" })
       expiresAt,
     });
 
-    if (ctx.response) {
-      const cookie = `auth_session=${sessionId}; Path=/; HttpOnly; Secure; SameSite=Lax; Max-Age=${7 * 24 * 60 * 60}`;
-      ctx.response.headers.append("Set-Cookie", cookie);
-    } else {
-      console.warn("Response object not found in context");
+    setCookie("auth_session", sessionId, {
+      path: "/",
+      httpOnly: true,
+      secure: true,
+      sameSite: "lax",
+      maxAge: 7 * 24 * 60 * 60,
+    });
+
+    return { user };
+  });
+
+export const googleAuthFn = createServerFn({ method: "POST" })
+  .validator((data: { credential: string }) => data)
+  .handler(async ({ data }) => {
+    
+    const JWKS = jose.createRemoteJWKSet(
+      new URL("https://www.googleapis.com/oauth2/v3/certs")
+    );
+
+    let payload: jose.JWTPayload;
+    try {
+      const result = await jose.jwtVerify(data.credential, JWKS, {
+        issuer: ["accounts.google.com", "https://accounts.google.com"],
+      });
+      payload = result.payload;
+    } catch (err: any) {
+      throw new Error(`Google verification failed: ${err.message}`);
     }
+
+    const email = payload.email as string | undefined;
+    const picture = payload.picture as string | undefined;
+    const name = payload.name as string | undefined;
+
+    if (!email) {
+      throw new Error("Email is required for Google sign-in");
+    }
+
+    let user = await db.select().from(users).where(eq(users.email, email)).then(res => res[0]);
+
+    if (!user) {
+      const id = uuidv4();
+      let username = email.split("@")[0].replace(/[^a-zA-Z0-9_]/g, "_");
+      const existing = await db.select().from(users).where(eq(users.username, username)).then(res => res[0]);
+      if (existing) {
+        username = `${username}_${Math.random().toString(36).slice(2, 6)}`;
+      }
+
+      user = await db.insert(users).values({
+        id,
+        username,
+        email,
+        bio: "",
+        avatarUrl: picture,
+      }).returning().then(res => res[0]);
+    }
+
+    const sessionId = uuidv4();
+    const expiresAt = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000);
+    await db.insert(sessions).values({
+      id: sessionId,
+      userId: user.id,
+      expiresAt,
+    });
+
+    setCookie("auth_session", sessionId, {
+      path: "/",
+      httpOnly: true,
+      secure: true,
+      sameSite: "lax",
+      maxAge: 7 * 24 * 60 * 60,
+    });
 
     return { user };
   });
 
 export const logoutFn = createServerFn({ method: "POST" })
-  .handler(async ({ context }) => {
-    const ctx = context as any;
-    const request = ctx.request;
-    const response = ctx.response;
-
-    if (!request || !response) {
-      console.warn("Request or Response not found in context");
-      return;
-    }
-
-    const cookieHeader = request.headers.get("Cookie");
-    if (!cookieHeader) return;
-
-    const cookies = Object.fromEntries(cookieHeader.split('; ').map(c => c.split('=')));
-    const sessionId = cookies["auth_session"];
+  .handler(async () => {
+    const sessionId = getCookie("auth_session");
     if (sessionId) {
       await db.delete(sessions).where(eq(sessions.id, sessionId));
-      response.headers.append("Set-Cookie", "auth_session=; Path=/; HttpOnly; Max-Age=0");
+      setCookie("auth_session", "", {
+        path: "/",
+        httpOnly: true,
+        maxAge: 0,
+      });
     }
   });
