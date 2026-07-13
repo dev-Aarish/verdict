@@ -2,6 +2,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import { Stamp } from "@/components/Stamp";
 import { TopBar } from "@/components/TopBar";
 import { getUserWatchedFn, removeWatchedFn } from "@/api/movies";
+import { getTasteScoreFn, type TasteBreakdown } from "@/api/taste-score";
 import { useUser } from "@/lib/user-context";
 import { useState } from "react";
 import { useRouter } from "@tanstack/react-router";
@@ -17,13 +18,20 @@ function ProfilePage() {
   const isOwn = user?.username === username;
   const [entries, setEntries] = useState<any[] | null>(null);
   const [profileUser, setProfileUser] = useState<any>(null);
+  const [tasteScore, setTasteScore] = useState<{ score: number; breakdown: TasteBreakdown } | null>(
+    null,
+  );
   const [loading, setLoading] = useState(true);
 
   useState(() => {
-    getUserWatchedFn({ data: { username } })
-      .then((data) => {
+    Promise.all([
+      getUserWatchedFn({ data: { username } }),
+      getTasteScoreFn({ data: { username } }).catch(() => null),
+    ])
+      .then(([data, taste]) => {
         setProfileUser(data.user);
         setEntries(data.entries);
+        setTasteScore(taste);
       })
       .catch(() => {})
       .finally(() => setLoading(false));
@@ -39,8 +47,7 @@ function ProfilePage() {
     }
   };
 
-  const posterSrc = (url: string | null) =>
-    url && url !== "N/A" ? url : "/film-placeholder.svg";
+  const posterSrc = (url: string | null) => (url && url !== "N/A" ? url : "/film-placeholder.svg");
 
   if (loading) {
     return (
@@ -85,7 +92,34 @@ function ProfilePage() {
           </div>
         </div>
 
-        <section className="hairline mt-12 pt-8">
+        {tasteScore && (
+          <div className="hairline mt-10 pt-8 w-full max-w-md mx-auto">
+            <div className="flex items-center justify-center gap-8 mb-6">
+              <div className="flex flex-col items-center">
+                <span className="text-[2.5rem] font-bold text-brass leading-none">
+                  {tasteScore.score}
+                </span>
+                <span className="text-caption text-dust mt-1">Taste Score</span>
+              </div>
+              <div className="flex gap-6">
+                {(
+                  [
+                    { label: "Diversity", value: tasteScore.breakdown.diversity },
+                    { label: "Obscurity", value: tasteScore.breakdown.obscurity },
+                    { label: "Consistency", value: tasteScore.breakdown.consistency },
+                  ] as const
+                ).map((item) => (
+                  <div key={item.label} className="flex flex-col items-center">
+                    <span className="text-lg font-semibold text-brass">{item.value}</span>
+                    <span className="text-caption text-dust text-xs">{item.label}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+        )}
+
+        <section className="hairline mt-10 pt-8">
           <h2 className="text-card-title text-paper mb-6">Watched Films</h2>
 
           {(!entries || entries.length === 0) && (
