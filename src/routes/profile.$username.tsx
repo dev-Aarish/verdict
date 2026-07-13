@@ -6,6 +6,17 @@ import { getTasteScoreFn, type TasteBreakdown } from "@/api/taste-score";
 import { useUser } from "@/lib/user-context";
 import { useState } from "react";
 import { useRouter } from "@tanstack/react-router";
+import {
+  AlertDialog,
+  AlertDialogTrigger,
+  AlertDialogContent,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogCancel,
+  AlertDialogAction,
+} from "@/components/ui/alert-dialog";
 
 export const Route = createFileRoute("/profile/$username")({
   component: ProfilePage,
@@ -136,12 +147,13 @@ function ProfilePage() {
                 if (!movie) return null;
                 return (
                   <div key={entry.id} className="group relative flex flex-col">
-                    <div className="aspect-[2/3] overflow-hidden bg-velvet ring-1 ring-white/5">
+                    <div className="relative aspect-[2/3] overflow-hidden bg-velvet ring-1 ring-white/5">
                       <img
                         src={posterSrc(movie.posterUrl)}
                         alt={movie.title}
                         className="h-full w-full object-cover"
                         loading="lazy"
+                        onError={(e) => { e.currentTarget.src = "/film-placeholder.svg"; }}
                       />
                       <div className="absolute inset-0 flex items-center justify-center bg-ink/60 opacity-0 group-hover:opacity-100 transition-opacity">
                         <Stamp size="sm" rotation={-2}>
@@ -163,12 +175,32 @@ function ProfilePage() {
                       )}
                     </div>
                     {isOwn && (
-                      <button
-                        onClick={() => handleRemove(entry.id)}
-                        className="mt-1 w-full py-1 border border-marquee-red/40 text-marquee-red text-caption text-[0.6rem] opacity-0 group-hover:opacity-100 transition-opacity hover:bg-marquee-red/10 cursor-pointer"
-                      >
-                        Remove
-                      </button>
+                      <AlertDialog>
+                        <AlertDialogTrigger asChild>
+                          <button className="mt-1 w-full py-1 border border-marquee-red/40 text-marquee-red text-caption text-[0.6rem] opacity-0 group-hover:opacity-100 transition-opacity hover:bg-marquee-red/10 cursor-pointer">
+                            Remove
+                          </button>
+                        </AlertDialogTrigger>
+                        <AlertDialogContent className="bg-velvet border-white/10">
+                          <AlertDialogHeader>
+                            <AlertDialogTitle className="text-paper">Remove film?</AlertDialogTitle>
+                            <AlertDialogDescription className="text-dust">
+                              Remove "{movie.title}" from your watched list? This cannot be undone.
+                            </AlertDialogDescription>
+                          </AlertDialogHeader>
+                          <AlertDialogFooter>
+                            <AlertDialogCancel className="border-white/10 text-paper bg-transparent hover:bg-white/5">
+                              Cancel
+                            </AlertDialogCancel>
+                            <AlertDialogAction
+                              onClick={() => handleRemove(entry.id)}
+                              className="bg-marquee-red text-white hover:bg-marquee-red/80"
+                            >
+                              Remove
+                            </AlertDialogAction>
+                          </AlertDialogFooter>
+                        </AlertDialogContent>
+                      </AlertDialog>
                     )}
                   </div>
                 );

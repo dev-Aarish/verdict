@@ -1,7 +1,7 @@
 import { createFileRoute, useRouter } from "@tanstack/react-router";
-import { useState, useCallback, useRef } from "react";
+import { useState, useCallback, useRef, useEffect } from "react";
 import { TopBar } from "@/components/TopBar";
-import { searchMoviesFn, addToWatchedFn } from "@/api/movies";
+import { searchMoviesFn, addToWatchedFn, getCurrentUserWatchedFn } from "@/api/movies";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogClose } from "@/components/ui/dialog";
 import { Slider } from "@/components/ui/slider";
 import { Button } from "@/components/ui/button";
@@ -36,6 +36,7 @@ function SearchPage() {
   const [rating, setRating] = useState([7]);
   const [adding, setAdding] = useState(false);
   const [addError, setAddError] = useState<string | null>(null);
+  const [watchedMap, setWatchedMap] = useState<Record<string, number>>({});
   const [addedIds, setAddedIds] = useState<Set<string>>(new Set());
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(0);
@@ -43,6 +44,20 @@ function SearchPage() {
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const requestIdRef = useRef(0);
   const lastQueryRef = useRef("");
+
+  useEffect(() => {
+    if (!user) {
+      setWatchedMap({});
+      return;
+    }
+    getCurrentUserWatchedFn().then((data) => {
+      const map: Record<string, number> = {};
+      for (const entry of data.entries) {
+        map[entry.imdbId] = entry.rating;
+      }
+      setWatchedMap(map);
+    });
+  }, [user]);
 
   const doSearch = useCallback(async (q: string, page: number) => {
     const id = ++requestIdRef.current;
@@ -113,6 +128,7 @@ function SearchPage() {
         },
       });
       setAddedIds(prev => new Set(prev).add(selectedMovie.imdbID));
+      setWatchedMap(prev => ({ ...prev, [selectedMovie.imdbID]: rating[0] }));
       setSelectedMovie(null);
       setRating([7]);
       router.invalidate();
@@ -184,7 +200,8 @@ function SearchPage() {
 
               <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5">
                 {results.map((movie) => {
-                  const isAdded = addedIds.has(movie.imdbID);
+                  const isAdded = addedIds.has(movie.imdbID) || movie.imdbID in watchedMap;
+                  const existingRating = watchedMap[movie.imdbID];
                   return (
                     <div key={movie.imdbID} className="group flex flex-col">
                       <div className="aspect-[2/3] overflow-hidden bg-velvet ring-1 ring-white/5">
@@ -193,6 +210,7 @@ function SearchPage() {
                           alt={movie.Title}
                           className="h-full w-full object-cover transition-opacity group-hover:opacity-70"
                           loading="lazy"
+                          onError={(e) => { e.currentTarget.src = "/film-placeholder.svg"; }}
                         />
                       </div>
                       <div className="mt-2 flex-1">
@@ -213,7 +231,7 @@ function SearchPage() {
                               : "border border-brass/50 text-brass hover:bg-brass hover:text-ink cursor-pointer"
                           }`}
                         >
-                          {isAdded ? "Logged" : "Log it"}
+                          {isAdded ? `Logged · ${existingRating}/10` : "Log it"}
                         </button>
                       )}
                     </div>
@@ -265,6 +283,7 @@ function SearchPage() {
                   src={posterSrc(selectedMovie.Poster)}
                   alt={selectedMovie.Title}
                   className="h-full w-full object-cover"
+                  onError={(e) => { e.currentTarget.src = "/film-placeholder.svg"; }}
                 />
               </div>
 

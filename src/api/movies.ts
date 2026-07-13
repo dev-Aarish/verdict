@@ -126,6 +126,38 @@ export const addToWatchedFn = createServerFn({ method: "POST" })
     return { entry, movie };
   });
 
+export const getCurrentUserWatchedFn = createServerFn({ method: "GET" })
+  .handler(async () => {
+    const sessionId = getCookie("auth_session");
+    if (!sessionId) return { entries: [] };
+
+    const session = await db.select().from(sessions).where(eq(sessions.id, sessionId)).then(r => r[0]);
+    if (!session) return { entries: [] };
+
+    const entries = await db.select().from(watchedEntries)
+      .where(eq(watchedEntries.userId, session.userId))
+      .then(r => r);
+
+    const movieIds = entries.map(e => e.movieId);
+    if (movieIds.length === 0) return { entries: [] };
+
+    const movieList = await db.select().from(movies)
+      .where(inArray(movies.id, movieIds))
+      .then(r => r);
+
+    const movieMap = new Map(movieList.map(m => [m.id, m]));
+
+    const result = entries.map(entry => {
+      const movie = movieMap.get(entry.movieId);
+      return {
+        imdbId: movie?.imdbId || null,
+        rating: entry.rating,
+      };
+    }).filter(e => e.imdbId !== null);
+
+    return { entries: result };
+  });
+
 export const removeWatchedFn = createServerFn({ method: "POST" })
   .validator((data: { entryId: string }) => data)
   .handler(async ({ data }) => {
