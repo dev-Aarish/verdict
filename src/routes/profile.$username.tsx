@@ -4,7 +4,7 @@ import { TopBar } from "@/components/TopBar";
 import { getUserWatchedFn, removeWatchedFn } from "@/api/movies";
 import { getTasteScoreFn, type TasteBreakdown } from "@/api/taste-score";
 import { useUser } from "@/lib/user-context";
-import { useState } from "react";
+import { useState, useCallback } from "react";
 import { useRouter } from "@tanstack/react-router";
 import {
   AlertDialog,
@@ -33,6 +33,8 @@ function ProfilePage() {
     null,
   );
   const [loading, setLoading] = useState(true);
+  const [currentPage, setCurrentPage] = useState(1);
+  const PAGE_SIZE = 20;
 
   useState(() => {
     Promise.all([
@@ -57,6 +59,17 @@ function ProfilePage() {
       console.error("Failed to remove", e);
     }
   };
+
+  const totalPages = entries ? Math.ceil(entries.length / PAGE_SIZE) : 0;
+  const paginatedEntries = entries?.slice(
+    (currentPage - 1) * PAGE_SIZE,
+    currentPage * PAGE_SIZE,
+  );
+
+  const goToPage = useCallback((page: number) => {
+    setCurrentPage(page);
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  }, []);
 
   const posterSrc = (url: string | null) => (url && url !== "N/A" ? url : "/film-placeholder.svg");
 
@@ -142,7 +155,7 @@ function ProfilePage() {
 
           {entries && entries.length > 0 && (
             <div className="grid grid-cols-2 gap-5 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5">
-              {entries.map((entry) => {
+              {paginatedEntries.map((entry) => {
                 const movie = entry.movie;
                 if (!movie) return null;
                 return (
@@ -205,6 +218,28 @@ function ProfilePage() {
                   </div>
                 );
               })}
+            </div>
+          )}
+
+          {totalPages > 1 && (
+            <div className="mt-10 flex items-center justify-center gap-4">
+              <button
+                onClick={() => goToPage(currentPage - 1)}
+                disabled={currentPage <= 1}
+                className="border border-dust/30 px-4 py-2 text-caption text-dust text-xs hover:text-paper transition-colors disabled:opacity-30 disabled:cursor-not-allowed cursor-pointer"
+              >
+                Previous
+              </button>
+              <span className="text-caption text-dust text-xs">
+                Page {currentPage} of {totalPages}
+              </span>
+              <button
+                onClick={() => goToPage(currentPage + 1)}
+                disabled={currentPage >= totalPages}
+                className="border border-dust/30 px-4 py-2 text-caption text-dust text-xs hover:text-paper transition-colors disabled:opacity-30 disabled:cursor-not-allowed cursor-pointer"
+              >
+                Next
+              </button>
             </div>
           )}
         </section>
