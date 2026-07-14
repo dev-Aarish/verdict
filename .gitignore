@@ -35,3 +35,9 @@ dist-ssr
 Plan.md
 
 .env
+
+# Database — never track SQLite files in git (branch switches destroy live data)
+data/
+*.db
+*.db.backup
+*.db.*

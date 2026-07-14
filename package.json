@@ -4,12 +4,15 @@
   "sideEffects": false,
   "type": "module",
   "scripts": {
-    "dev": "vite dev",
+    "dev": "bun run db:backup && vite dev",
     "build": "vite build",
     "build:dev": "vite build --mode development",
     "preview": "vite preview",
     "lint": "eslint .",
-    "format": "prettier --write ."
+    "format": "prettier --write .",
+    "db:backup": "cp data/sqlite.db data/sqlite.db.backup 2>/dev/null; echo '[backup] saved'",
+    "db:seed": "bun run db:backup && bun run src/db/seed.ts",
+    "db:push": "bun run db:backup && drizzle-kit push"
   },
   "dependencies": {
     "@hookform/resolvers": "^5.2.2",

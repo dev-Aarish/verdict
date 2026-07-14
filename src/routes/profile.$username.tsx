@@ -1,11 +1,11 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, Link, useRouter } from "@tanstack/react-router";
 import { Stamp } from "@/components/Stamp";
 import { TopBar } from "@/components/TopBar";
 import { getUserWatchedFn, removeWatchedFn } from "@/api/movies";
 import { getTasteScoreFn, type TasteBreakdown } from "@/api/taste-score";
+import { getUserVerdictsFn } from "@/api/verdicts";
 import { useUser } from "@/lib/user-context";
 import { useState, useCallback } from "react";
-import { useRouter } from "@tanstack/react-router";
 import {
   AlertDialog,
   AlertDialogTrigger,
@@ -19,6 +19,12 @@ import {
 } from "@/components/ui/alert-dialog";
 
 export const Route = createFileRoute("/profile/$username")({
+  head: ({ params }) => ({
+    meta: [
+      { title: `${params.username}'s profile · Verdict` },
+      { name: "description", content: `Browse ${params.username}'s watched films, Taste Score, and film history.` },
+    ],
+  }),
   component: ProfilePage,
 });
 
@@ -33,6 +39,7 @@ function ProfilePage() {
     null,
   );
   const [loading, setLoading] = useState(true);
+  const [verdicts, setVerdicts] = useState<any[] | null>(null);
   const [currentPage, setCurrentPage] = useState(1);
   const PAGE_SIZE = 20;
 
@@ -40,11 +47,13 @@ function ProfilePage() {
     Promise.all([
       getUserWatchedFn({ data: { username } }),
       getTasteScoreFn({ data: { username } }).catch(() => null),
+      getUserVerdictsFn({ data: { username } }).catch(() => ({ verdicts: [] })),
     ])
-      .then(([data, taste]) => {
+      .then(([data, taste, v]) => {
         setProfileUser(data.user);
         setEntries(data.entries);
         setTasteScore(taste);
+        setVerdicts(v.verdicts);
       })
       .catch(() => {})
       .finally(() => setLoading(false));
@@ -61,15 +70,32 @@ function ProfilePage() {
   };
 
   const totalPages = entries ? Math.ceil(entries.length / PAGE_SIZE) : 0;
-  const paginatedEntries = entries?.slice(
-    (currentPage - 1) * PAGE_SIZE,
-    currentPage * PAGE_SIZE,
-  );
+  const paginatedEntries = entries
+    ? entries.slice((currentPage - 1) * PAGE_SIZE, currentPage * PAGE_SIZE)
+    : [];
 
   const goToPage = useCallback((page: number) => {
     setCurrentPage(page);
     window.scrollTo({ top: 0, behavior: "smooth" });
   }, []);
+
+  const filmCount = entries?.length || 0;
+  const avgRating =
+    entries && entries.length > 0
+      ? (entries.reduce((sum, e) => sum + e.rating, 0) / entries.length).toFixed(1)
+      : null;
+
+  const memberSince = (() => {
+    if (!profileUser?.createdAt) return null;
+    const d = new Date(
+      typeof profileUser.createdAt === "number"
+        ? profileUser.createdAt * 1000
+        : profileUser.createdAt,
+    );
+    return isNaN(d.getTime())
+      ? null
+      : d.toLocaleDateString("en-US", { year: "numeric", month: "short" });
+  })();
 
   const posterSrc = (url: string | null) => (url && url !== "N/A" ? url : "/film-placeholder.svg");
 
@@ -110,9 +136,24 @@ function ProfilePage() {
           </div>
           <div>
             <h1 className="text-section text-paper">{profileUser.username}</h1>
-            <p className="text-caption text-dust">
-              {entries?.length || 0} film{(entries?.length || 0) !== 1 ? "s" : ""} logged
-            </p>
+            {profileUser.bio && (
+              <p className="mt-2 text-sm text-paper/70 max-w-md">{profileUser.bio}</p>
+            )}
+            <div className="mt-3 flex items-center justify-center gap-4 text-caption text-dust">
+              <span>{filmCount} film{filmCount !== 1 ? "s" : ""}</span>
+              {avgRating && (
+                <>
+                  <span className="opacity-30">·</span>
+                  <span>Avg <span className="text-brass">{avgRating}</span>/10</span>
+                </>
+              )}
+              {memberSince && (
+                <>
+                  <span className="opacity-30">·</span>
+                  <span>Since {memberSince}</span>
+                </>
+              )}
+            </div>
           </div>
         </div>
 
@@ -143,24 +184,98 @@ function ProfilePage() {
           </div>
         )}
 
+        {!isOwn && (
+          <div className="mt-8 flex justify-center">
+            <Link
+              to="/verdict/$username"
+              params={{ username }}
+              className="border-2 border-brass px-6 py-3 text-caption text-brass hover:bg-brass hover:text-ink transition-colors"
+            >
+              Leave a Verdict →
+            </Link>
+          </div>
+        )}
+
+        {verdicts && verdicts.length > 0 && (
+          <section className="hairline mt-10 pt-8 max-w-xl mx-auto">
+            <h2 className="text-card-title text-paper mb-6 text-center">
+              Verdicts ({verdicts.length})
+            </h2>
+            <div className="space-y-4">
+              {verdicts.map((v) => {
+                if (!v.fromUser) return null;
+                return (
+                  <div key={v.id} className="border border-dust/20 p-4">
+                    <div className="flex items-start justify-between gap-4">
+                      <div className="flex items-center gap-3 min-w-0">
+                        <div className="h-8 w-8 shrink-0 overflow-hidden rounded-full bg-dust/20">
+                          <img
+                            src={`https://api.dicebear.com/7.x/avataaars/svg?seed=${v.fromUser.username}`}
+                            alt={v.fromUser.username}
+                            className="h-full w-full object-cover"
+                          />
+                        </div>
+                        <div className="min-w-0">
+                          <Link
+                            to="/profile/$username"
+                            params={{ username: v.fromUser.username }}
+                            className="text-sm font-medium text-brass hover:underline"
+                          >
+                            {v.fromUser.username}
+                          </Link>
+                          {v.comment && (
+                            <p className="text-sm text-paper/80 mt-0.5 italic">"{v.comment}"</p>
+                          )}
+                        </div>
+                      </div>
+                      <Stamp size="sm" rotation={2} variant={v.score <= 4 ? "red" : "brass"}>
+                        {v.score}
+                      </Stamp>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </section>
+        )}
+
         <section className="hairline mt-10 pt-8">
-          <h2 className="text-card-title text-paper mb-6">Watched Films</h2>
+          <div className="flex items-center justify-between mb-6">
+            <h2 className="text-card-title text-paper">Watched Films</h2>
+            {isOwn && filmCount > 0 && (
+              <Link
+                to="/search"
+                className="text-caption text-brass/70 hover:text-brass transition-colors"
+              >
+                + Add more
+              </Link>
+            )}
+          </div>
 
-          {(!entries || entries.length === 0) && (
-            <p className="text-caption text-dust text-center py-12">
-              No films logged yet.
-              {isOwn && " Search for films to add to your list."}
-            </p>
-          )}
-
-          {entries && entries.length > 0 && (
+          {!entries || entries.length === 0 ? (
+            <div className="text-center py-16">
+              <p className="text-caption text-dust mb-6">No films logged yet.</p>
+              {isOwn ? (
+                <Link
+                  to="/search"
+                  className="border border-brass px-6 py-3 text-caption text-brass hover:bg-brass hover:text-ink transition-colors"
+                >
+                  Search for films →
+                </Link>
+              ) : (
+                <p className="text-caption text-dust">
+                  {username} hasn't logged any films yet.
+                </p>
+              )}
+            </div>
+          ) : (
             <div className="grid grid-cols-2 gap-5 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5">
               {paginatedEntries.map((entry) => {
                 const movie = entry.movie;
                 if (!movie) return null;
                 return (
                   <div key={entry.id} className="group relative flex flex-col">
-                    <div className="relative aspect-[2/3] overflow-hidden bg-velvet ring-1 ring-white/5">
+                    <div className="relative aspect-2/3 overflow-hidden bg-velvet ring-1 ring-white/5">
                       <img
                         src={posterSrc(movie.posterUrl)}
                         alt={movie.title}

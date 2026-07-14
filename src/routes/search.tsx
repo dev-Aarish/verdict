@@ -204,7 +204,7 @@ function SearchPage() {
                   const existingRating = watchedMap[movie.imdbID];
                   return (
                     <div key={movie.imdbID} className="group flex flex-col">
-                      <div className="aspect-[2/3] overflow-hidden bg-velvet ring-1 ring-white/5">
+                      <div className="aspect-2/3 overflow-hidden bg-velvet ring-1 ring-white/5">
                         <img
                           src={posterSrc(movie.Poster)}
                           alt={movie.Title}

@@ -2,6 +2,8 @@ import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useState } from "react";
 import { Stamp } from "@/components/Stamp";
 import { TopBar } from "@/components/TopBar";
+import { submitVerdictFn } from "@/api/verdicts";
+import { useUser } from "@/lib/user-context";
 
 export const Route = createFileRoute("/verdict/$username")({
   head: ({ params }) => ({
@@ -15,17 +17,25 @@ export const Route = createFileRoute("/verdict/$username")({
 
 function LeaveVerdict() {
   const { username } = Route.useParams();
+  const { user } = useUser();
   const navigate = useNavigate();
   const [score, setScore] = useState(7);
   const [line, setLine] = useState("");
   const [stamped, setStamped] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
-  const submit = () => {
+  const submit = async () => {
     if (!line.trim()) return;
-    setStamped(true);
-    setTimeout(() => {
-      navigate({ to: "/profile/$username", params: { username } });
-    }, 1400);
+    if (!user) { setError("Sign in to leave a verdict"); return; }
+    try {
+      await submitVerdictFn({ data: { toUsername: username, score, comment: line.trim() } });
+      setStamped(true);
+      setTimeout(() => {
+        navigate({ to: "/profile/$username", params: { username } });
+      }, 1400);
+    } catch (e: any) {
+      setError(e.message || "Failed to submit verdict");
+    }
   };
 
   const isRed = score <= 4;
@@ -95,7 +105,11 @@ function LeaveVerdict() {
                 <p className="text-caption mt-2 text-right">{line.length}/80</p>
               </div>
 
-              <div className="mt-12 flex items-center justify-between">
+              {error && (
+                <p className="text-caption text-marquee-red mt-8 text-center">{error}</p>
+              )}
+
+              <div className="mt-6 flex items-center justify-between">
                 <Link
                   to="/profile/$username"
                   params={{ username }}
