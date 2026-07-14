@@ -1,6 +1,6 @@
 import { db } from "@/db";
 import { users, sessions } from "@/db/schema";
-import { eq, and } from "drizzle-orm";
+import { eq, and, gt } from "drizzle-orm";
 import { v4 as uuidv4 } from "uuid";
 
 export async function createUser(data: {
@@ -10,10 +10,13 @@ export async function createUser(data: {
   bio?: string;
 }) {
   const id = uuidv4();
-  const newUser = await db.insert(users).values({
-    id,
-    ...data,
-  }).returning();
+  const newUser = await db
+    .insert(users)
+    .values({
+      id,
+      ...data,
+    })
+    .returning();
   return newUser[0];
 }
 
@@ -39,15 +42,11 @@ export async function createSession(userId: string) {
 }
 
 export async function getSession(sessionId: string) {
-  const result = await db.select()
+  const result = await db
+    .select()
     .from(sessions)
     .innerJoin(users, eq(sessions.userId, users.id))
-    .where(
-      and(
-        eq(sessions.id, sessionId),
-        // In a real app, we'd check if expiresAt > now
-      )
-    );
+    .where(and(eq(sessions.id, sessionId), gt(sessions.expiresAt, new Date())));
   return result[0]?.[0] || null;
 }
 

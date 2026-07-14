@@ -2,46 +2,66 @@ import { createServerFn } from "@tanstack/react-start";
 import { setCookie, getCookie } from "@tanstack/react-start/server";
 import { users, sessions } from "@/db/schema";
 import { db } from "@/db";
-import { eq, and } from "drizzle-orm";
+import { eq, and, gt } from "drizzle-orm";
 import { v4 as uuidv4 } from "uuid";
 import * as jose from "jose";
 
-export const getCurrentUserFn = createServerFn({ method: "GET" })
-  .handler(async () => {
-    const sessionId = getCookie("auth_session");
-    if (!sessionId) return null;
+export const getCurrentUserFn = createServerFn({ method: "GET" }).handler(async () => {
+  const sessionId = getCookie("auth_session");
+  if (!sessionId) return null;
 
-    const session = await db.select()
-      .from(sessions)
-      .where(eq(sessions.id, sessionId))
-      .then(res => res[0]);
+  const session = await db
+    .select()
+    .from(sessions)
+    .where(eq(sessions.id, sessionId))
+    .then((res) => res[0]);
 
-    if (!session) return null;
+  if (!session) return null;
 
-    const user = await db.select().from(users).where(eq(users.id, session.userId)).then(res => res[0]);
-    return user || null;
-  });
+  if (session.expiresAt < new Date()) {
+    await db.delete(sessions).where(eq(sessions.id, sessionId));
+    return null;
+  }
+
+  const user = await db
+    .select()
+    .from(users)
+    .where(eq(users.id, session.userId))
+    .then((res) => res[0]);
+  return user || null;
+});
 
 export const signupFn = createServerFn({ method: "POST" })
   .validator((data: { username: string; email: string; bio?: string }) => data)
   .handler(async ({ data }) => {
-    const existingUser = await db.select().from(users).where(eq(users.email, data.email)).then(res => res[0]);
+    const existingUser = await db
+      .select()
+      .from(users)
+      .where(eq(users.email, data.email))
+      .then((res) => res[0]);
     if (existingUser) {
       throw new Error("Email already in use");
     }
 
-    const existingUsername = await db.select().from(users).where(eq(users.username, data.username)).then(res => res[0]);
+    const existingUsername = await db
+      .select()
+      .from(users)
+      .where(eq(users.username, data.username))
+      .then((res) => res[0]);
     if (existingUsername) {
       throw new Error("Username already in use");
     }
 
     const id = uuidv4();
-    const newUser = await db.insert(users).values({
-      id,
-      username: data.username,
-      email: data.email,
-      bio: data.bio,
-    }).returning();
+    const newUser = await db
+      .insert(users)
+      .values({
+        id,
+        username: data.username,
+        email: data.email,
+        bio: data.bio,
+      })
+      .returning();
 
     const sessionId = uuidv4();
     const expiresAt = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000);
@@ -65,7 +85,11 @@ export const signupFn = createServerFn({ method: "POST" })
 export const loginFn = createServerFn({ method: "POST" })
   .validator((data: { email: string }) => data)
   .handler(async ({ data }) => {
-    const user = await db.select().from(users).where(eq(users.email, data.email)).then(res => res[0]);
+    const user = await db
+      .select()
+      .from(users)
+      .where(eq(users.email, data.email))
+      .then((res) => res[0]);
     if (!user) {
       throw new Error("User not found");
     }
@@ -92,10 +116,7 @@ export const loginFn = createServerFn({ method: "POST" })
 export const googleAuthFn = createServerFn({ method: "POST" })
   .validator((data: { credential: string }) => data)
   .handler(async ({ data }) => {
-    
-    const JWKS = jose.createRemoteJWKSet(
-      new URL("https://www.googleapis.com/oauth2/v3/certs")
-    );
+    const JWKS = jose.createRemoteJWKSet(new URL("https://www.googleapis.com/oauth2/v3/certs"));
 
     let payload: jose.JWTPayload;
     try {
@@ -115,23 +136,35 @@ export const googleAuthFn = createServerFn({ method: "POST" })
       throw new Error("Email is required for Google sign-in");
     }
 
-    let user = await db.select().from(users).where(eq(users.email, email)).then(res => res[0]);
+    let user = await db
+      .select()
+      .from(users)
+      .where(eq(users.email, email))
+      .then((res) => res[0]);
 
     if (!user) {
       const id = uuidv4();
       let username = email.split("@")[0].replace(/[^a-zA-Z0-9_]/g, "_");
-      const existing = await db.select().from(users).where(eq(users.username, username)).then(res => res[0]);
+      const existing = await db
+        .select()
+        .from(users)
+        .where(eq(users.username, username))
+        .then((res) => res[0]);
       if (existing) {
         username = `${username}_${Math.random().toString(36).slice(2, 6)}`;
       }
 
-      user = await db.insert(users).values({
-        id,
-        username,
-        email,
-        bio: "",
-        avatarUrl: picture,
-      }).returning().then(res => res[0]);
+      user = await db
+        .insert(users)
+        .values({
+          id,
+          username,
+          email,
+          bio: "",
+          avatarUrl: picture,
+        })
+        .returning()
+        .then((res) => res[0]);
     }
 
     const sessionId = uuidv4();
@@ -153,15 +186,14 @@ export const googleAuthFn = createServerFn({ method: "POST" })
     return { user };
   });
 
-export const logoutFn = createServerFn({ method: "POST" })
-  .handler(async () => {
-    const sessionId = getCookie("auth_session");
-    if (sessionId) {
-      await db.delete(sessions).where(eq(sessions.id, sessionId));
-      setCookie("auth_session", "", {
-        path: "/",
-        httpOnly: true,
-        maxAge: 0,
-      });
-    }
-  });
+export const logoutFn = createServerFn({ method: "POST" }).handler(async () => {
+  const sessionId = getCookie("auth_session");
+  if (sessionId) {
+    await db.delete(sessions).where(eq(sessions.id, sessionId));
+    setCookie("auth_session", "", {
+      path: "/",
+      httpOnly: true,
+      maxAge: 0,
+    });
+  }
+});
