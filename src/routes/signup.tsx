@@ -67,6 +67,7 @@ function SignupPage() {
                     data: {
                       username,
                       email,
+                      password,
                       bio: "",
                     },
                   });

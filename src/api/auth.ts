@@ -5,6 +5,19 @@ import { db } from "@/db";
 import { eq, and, gt } from "drizzle-orm";
 import { v4 as uuidv4 } from "uuid";
 import * as jose from "jose";
+import { randomBytes, scryptSync, timingSafeEqual } from "node:crypto";
+
+function hashPassword(password: string): string {
+  const salt = randomBytes(16).toString("hex");
+  const hash = scryptSync(password, salt, 64).toString("hex");
+  return `${salt}:${hash}`;
+}
+
+function verifyPassword(password: string, stored: string): boolean {
+  const [salt, hash] = stored.split(":");
+  const derived = scryptSync(password, salt, 64).toString("hex");
+  return timingSafeEqual(Buffer.from(derived), Buffer.from(hash));
+}
 
 export const getCurrentUserFn = createServerFn({ method: "GET" }).handler(async () => {
   const sessionId = getCookie("auth_session");
@@ -32,8 +45,12 @@ export const getCurrentUserFn = createServerFn({ method: "GET" }).handler(async 
 });
 
 export const signupFn = createServerFn({ method: "POST" })
-  .validator((data: { username: string; email: string; bio?: string }) => data)
+  .validator((data: { username: string; email: string; password: string; bio?: string }) => data)
   .handler(async ({ data }) => {
+    if (!data.password || data.password.length < 8) {
+      throw new Error("Password must be at least 8 characters");
+    }
+
     const existingUser = await db
       .select()
       .from(users)
@@ -53,6 +70,7 @@ export const signupFn = createServerFn({ method: "POST" })
     }
 
     const id = uuidv4();
+    const passwordHash = hashPassword(data.password);
     const newUser = await db
       .insert(users)
       .values({
@@ -60,6 +78,7 @@ export const signupFn = createServerFn({ method: "POST" })
         username: data.username,
         email: data.email,
         bio: data.bio,
+        passwordHash,
       })
       .returning();
 
@@ -79,11 +98,12 @@ export const signupFn = createServerFn({ method: "POST" })
       maxAge: 7 * 24 * 60 * 60,
     });
 
-    return { user: newUser[0] };
+    const { passwordHash: _, ...safeUser } = newUser[0];
+    return { user: safeUser };
   });
 
 export const loginFn = createServerFn({ method: "POST" })
-  .validator((data: { email: string }) => data)
+  .validator((data: { email: string; password: string }) => data)
   .handler(async ({ data }) => {
     const user = await db
       .select()
@@ -91,7 +111,11 @@ export const loginFn = createServerFn({ method: "POST" })
       .where(eq(users.email, data.email))
       .then((res) => res[0]);
     if (!user) {
-      throw new Error("User not found");
+      throw new Error("Invalid email or password");
+    }
+
+    if (!user.passwordHash || !verifyPassword(data.password, user.passwordHash)) {
+      throw new Error("Invalid email or password");
     }
 
     const sessionId = uuidv4();
@@ -110,7 +134,8 @@ export const loginFn = createServerFn({ method: "POST" })
       maxAge: 7 * 24 * 60 * 60,
     });
 
-    return { user };
+    const { passwordHash: _, ...safeUser } = user;
+    return { user: safeUser };
   });
 
 export const googleAuthFn = createServerFn({ method: "POST" })

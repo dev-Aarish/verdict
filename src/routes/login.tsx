@@ -61,7 +61,7 @@ function LoginPage() {
                 setIsSubmitting(true);
                 try {
                   const { user } = await loginFn({
-                    data: { email },
+                    data: { email, password },
                   });
                   setUser(user);
                   navigate({ to: "/profile/$username", params: { username: user.username } });

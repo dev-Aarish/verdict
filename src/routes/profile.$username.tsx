@@ -4,6 +4,7 @@ import { TopBar } from "@/components/TopBar";
 import { getUserWatchedFn, removeWatchedFn } from "@/api/movies";
 import { getTasteScoreFn, type TasteBreakdown } from "@/api/taste-score";
 import { getUserVerdictsFn } from "@/api/verdicts";
+import { followUserFn, unfollowUserFn, getFollowStatusFn, getFollowCountsFn } from "@/api/follows";
 import { useUser } from "@/lib/user-context";
 import { useState, useCallback } from "react";
 import {
@@ -41,6 +42,8 @@ function ProfilePage() {
   const [loading, setLoading] = useState(true);
   const [verdicts, setVerdicts] = useState<any[] | null>(null);
   const [currentPage, setCurrentPage] = useState(1);
+  const [isFollowing, setIsFollowing] = useState(false);
+  const [followCounts, setFollowCounts] = useState<{ followers: number; following: number } | null>(null);
   const PAGE_SIZE = 20;
 
   useState(() => {
@@ -48,16 +51,36 @@ function ProfilePage() {
       getUserWatchedFn({ data: { username } }),
       getTasteScoreFn({ data: { username } }).catch(() => null),
       getUserVerdictsFn({ data: { username } }).catch(() => ({ verdicts: [] })),
+      getFollowStatusFn({ data: { username } }).catch(() => ({ isFollowing: false })),
+      getFollowCountsFn({ data: { username } }).catch(() => null),
     ])
-      .then(([data, taste, v]) => {
+      .then(([data, taste, v, followStatus, counts]) => {
         setProfileUser(data.user);
         setEntries(data.entries);
         setTasteScore(taste);
         setVerdicts(v.verdicts);
+        setIsFollowing(followStatus.isFollowing);
+        setFollowCounts(counts);
       })
       .catch(() => {})
       .finally(() => setLoading(false));
   });
+
+  const handleFollowToggle = async () => {
+    try {
+      if (isFollowing) {
+        await unfollowUserFn({ data: { username } });
+        setIsFollowing(false);
+        setFollowCounts(prev => prev ? { ...prev, followers: Math.max(0, prev.followers - 1) } : prev);
+      } else {
+        await followUserFn({ data: { username } });
+        setIsFollowing(true);
+        setFollowCounts(prev => prev ? { ...prev, followers: prev.followers + 1 } : prev);
+      }
+    } catch (e: any) {
+      console.error("Follow failed", e);
+    }
+  };
 
   const handleRemove = async (entryId: string) => {
     try {
@@ -141,6 +164,14 @@ function ProfilePage() {
             )}
             <div className="mt-3 flex items-center justify-center gap-4 text-caption text-dust">
               <span>{filmCount} film{filmCount !== 1 ? "s" : ""}</span>
+              {followCounts && (
+                <>
+                  <span className="opacity-30">·</span>
+                  <span>{followCounts.followers} follower{followCounts.followers !== 1 ? "s" : ""}</span>
+                  <span className="opacity-30">·</span>
+                  <span>{followCounts.following} following</span>
+                </>
+              )}
               {avgRating && (
                 <>
                   <span className="opacity-30">·</span>
@@ -154,6 +185,20 @@ function ProfilePage() {
                 </>
               )}
             </div>
+            {!isOwn && user && (
+              <div className="mt-4">
+                <button
+                  onClick={handleFollowToggle}
+                  className={`border px-5 py-2 text-caption transition-colors cursor-pointer ${
+                    isFollowing
+                      ? "border-dust/40 text-dust hover:border-marquee-red hover:text-marquee-red"
+                      : "border-brass text-brass hover:bg-brass hover:text-ink"
+                  }`}
+                >
+                  {isFollowing ? "Following" : "Follow"}
+                </button>
+              </div>
+            )}
           </div>
         </div>
 

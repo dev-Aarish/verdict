@@ -1,7 +1,10 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { Stamp } from "@/components/Stamp";
 import { TopBar } from "@/components/TopBar";
-import { sampleProfile } from "@/lib/mock";
+import { getUserWatchedFn } from "@/api/movies";
+import { getTasteScoreFn } from "@/api/taste-score";
+import { getUserVerdictsFn } from "@/api/verdicts";
+import { useState, useEffect } from "react";
 
 export const Route = createFileRoute("/share/$username")({
   head: ({ params }) => ({
@@ -15,9 +18,55 @@ export const Route = createFileRoute("/share/$username")({
 
 function SharePage() {
   const { username } = Route.useParams();
-  const p = sampleProfile;
-  const topFilms = p.watched.slice(0, 5);
-  const quote = p.verdicts[0];
+  const [data, setData] = useState<{
+    watched: { entries: any[]; user: any };
+    score: { score: number; breakdown: { diversity: number; obscurity: number; consistency: number } } | null;
+    verdicts: any[];
+  } | null>(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    Promise.all([
+      getUserWatchedFn({ data: { username } }).catch(() => ({ entries: [], user: null })),
+      getTasteScoreFn({ data: { username } }).catch(() => null),
+      getUserVerdictsFn({ data: { username } }).catch(() => ({ verdicts: [] })),
+    ]).then(([watched, score, v]) => {
+      setData({ watched, score, verdicts: v.verdicts });
+      setLoading(false);
+    });
+  }, [username]);
+
+  if (loading) {
+    return (
+      <div className="min-h-screen">
+        <TopBar />
+        <main className="mx-auto max-w-3xl px-6 py-12 text-center">
+          <p className="text-caption text-dust py-24">Loading...</p>
+        </main>
+      </div>
+    );
+  }
+
+  if (!data?.watched?.user) {
+    return (
+      <div className="min-h-screen">
+        <TopBar />
+        <main className="mx-auto max-w-3xl px-6 py-12 text-center">
+          <p className="text-caption text-dust py-24">User not found.</p>
+        </main>
+      </div>
+    );
+  }
+
+  const topFilms = data.watched.entries.slice(0, 5).map((e: any, i: number) => ({
+    id: String(i),
+    title: e.movie?.title || "Unknown",
+    year: e.movie?.year ? Number(e.movie.year) : 0,
+    rating: e.rating,
+  }));
+  const tasteScore = data.score?.score || 0;
+  const filmCount = data.watched.entries.length;
+  const firstVerdict = data.verdicts[0];
 
   return (
     <div className="min-h-screen">
@@ -71,7 +120,7 @@ function SharePage() {
                 <div className="text-right">
                   <p className="text-caption">Reel</p>
                   <p className="mono text-sm text-paper">
-                    #{String(p.tasteScore).padStart(3, "0")}
+                    #{String(tasteScore).padStart(3, "0")}
                   </p>
                 </div>
               </div>
@@ -81,18 +130,22 @@ function SharePage() {
                 <p className="text-card-title text-paper">@{username}</p>
                 <div className="mt-5">
                   <Stamp size="lg" rotation={-4} label="Taste Score" animate="settle">
-                    {p.tasteScore}
+                    {tasteScore}
                   </Stamp>
                 </div>
-                <p className="mono mt-6 max-w-[240px] text-sm italic text-paper/90">
-                  "{quote.quote}"
-                </p>
-                <p className="text-caption mt-2">— {quote.from}</p>
+                {firstVerdict && (
+                  <>
+                    <p className="mono mt-6 max-w-[240px] text-sm italic text-paper/90">
+                      "{firstVerdict.comment}"
+                    </p>
+                    <p className="text-caption mt-2">— {firstVerdict.fromUser?.username}</p>
+                  </>
+                )}
               </div>
 
               <div className="hairline flex items-center justify-between pt-3">
                 <span className="text-caption">Aud. A</span>
-                <span className="text-caption">{p.filmCount} films</span>
+                <span className="text-caption">{filmCount} films</span>
                 <span className="text-caption">20:00</span>
               </div>
             </div>
