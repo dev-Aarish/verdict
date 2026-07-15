@@ -1,7 +1,8 @@
-import { createFileRoute, useRouter } from "@tanstack/react-router";
+import { createFileRoute, useRouter, Link } from "@tanstack/react-router";
 import { useState, useCallback, useRef, useEffect } from "react";
 import { TopBar } from "@/components/TopBar";
 import { searchMoviesFn, addToWatchedFn, getCurrentUserWatchedFn } from "@/api/movies";
+import { searchUsersFn } from "@/api/users";
 import {
   Dialog,
   DialogContent,
@@ -11,19 +12,19 @@ import {
   DialogClose,
 } from "@/components/ui/dialog";
 import { Slider } from "@/components/ui/slider";
-import { Button } from "@/components/ui/button";
 import { useUser } from "@/lib/user-context";
-import { Link } from "@tanstack/react-router";
 
 export const Route = createFileRoute("/search")({
   head: () => ({
     meta: [
-      { title: "Search Movies · Verdict" },
-      { name: "description", content: "Search for movies to add to your watched list." },
+      { title: "Search · Verdict" },
+      { name: "description", content: "Search for films and people on Verdict." },
     ],
   }),
   component: SearchPage,
 });
+
+type Tab = "films" | "people";
 
 interface SearchResult {
   imdbID: string;
@@ -32,11 +33,21 @@ interface SearchResult {
   Poster: string;
 }
 
+interface UserResult {
+  id: string;
+  username: string;
+  avatarUrl: string | null;
+  bio: string | null;
+  filmCount: number;
+}
+
 function SearchPage() {
   const { user } = useUser();
   const router = useRouter();
+  const [tab, setTab] = useState<Tab>("films");
   const [query, setQuery] = useState("");
   const [results, setResults] = useState<SearchResult[]>([]);
+  const [userResults, setUserResults] = useState<UserResult[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [selectedMovie, setSelectedMovie] = useState<SearchResult | null>(null);
@@ -66,44 +77,59 @@ function SearchPage() {
     });
   }, [user]);
 
-  const doSearch = useCallback(async (q: string, page: number) => {
-    const id = ++requestIdRef.current;
-    setLoading(true);
-    setError(null);
-    try {
-      const res = await searchMoviesFn({ data: { query: q, page } });
-      if (id !== requestIdRef.current) return;
-      if (res.error) {
-        setResults([]);
-        setTotalPages(0);
-        setTotalResults(0);
-        if (res.error === "Too many results.") {
-          setError("Too many results. Try a more specific title.");
+  const doSearch = useCallback(
+    async (q: string, page: number) => {
+      const id = ++requestIdRef.current;
+      setLoading(true);
+      setError(null);
+
+      try {
+        if (tab === "people") {
+          const res = await searchUsersFn({ data: { query: q } });
+          if (id !== requestIdRef.current) return;
+          setUserResults(res.users);
+          setResults([]);
+        } else {
+          const res = await searchMoviesFn({ data: { query: q, page } });
+          if (id !== requestIdRef.current) return;
+          if (res.error) {
+            setResults([]);
+            setTotalPages(0);
+            setTotalResults(0);
+            if (res.error === "Too many results.") {
+              setError("Too many results. Try a more specific title.");
+            }
+          } else {
+            setResults(res.results);
+            setCurrentPage(res.page);
+            setTotalPages(res.totalPages);
+            setTotalResults(res.totalResults);
+          }
         }
-      } else {
-        setResults(res.results);
-        setCurrentPage(res.page);
-        setTotalPages(res.totalPages);
-        setTotalResults(res.totalResults);
+      } catch (e: unknown) {
+        if (id !== requestIdRef.current) return;
+        setError(e instanceof Error ? e.message : "Search failed");
+        setResults([]);
+        setUserResults([]);
+      } finally {
+        if (id === requestIdRef.current) setLoading(false);
       }
-    } catch (e: any) {
-      if (id !== requestIdRef.current) return;
-      setError(e.message || "Search failed");
-      setResults([]);
-    } finally {
-      if (id === requestIdRef.current) setLoading(false);
-    }
-  }, []);
+    },
+    [tab],
+  );
 
   const handleSearch = useCallback(
-    async (q: string) => {
+    (q: string) => {
       setQuery(q);
       setError(null);
 
       if (timerRef.current) clearTimeout(timerRef.current);
 
-      if (q.length < 3) {
+      const minChars = tab === "people" ? 1 : 3;
+
+      if (q.length < minChars) {
         setResults([]);
+        setUserResults([]);
         setTotalPages(0);
         setTotalResults(0);
         return;
@@ -114,7 +140,7 @@ function SearchPage() {
         doSearch(q, 1);
       }, 300);
     },
-    [doSearch],
+    [doSearch, tab],
   );
 
   const goToPage = useCallback(
@@ -145,8 +171,8 @@ function SearchPage() {
       setSelectedMovie(null);
       setRating([7]);
       router.invalidate();
-    } catch (e: any) {
-      setAddError(e.message || "Failed to add movie");
+    } catch (e: unknown) {
+      setAddError(e instanceof Error ? e.message : "Failed to add movie");
     } finally {
       setAdding(false);
     }
@@ -160,12 +186,47 @@ function SearchPage() {
       <TopBar />
       <main className="mx-auto max-w-6xl px-6 py-12">
         <p className="text-caption mb-3">The Vault</p>
-        <h1 className="text-section text-paper">Search Films</h1>
+        <h1 className="text-section text-paper">Search</h1>
 
-        <div className="hairline mt-8 pb-6">
+        <div className="mt-8 flex gap-6 border-b border-dust/20 pb-0">
+          <button
+            onClick={() => {
+              setTab("films");
+              setQuery("");
+              setResults([]);
+              setUserResults([]);
+              setError(null);
+            }}
+            className={`pb-3 text-sm tracking-widest uppercase font-mono transition-colors cursor-pointer ${
+              tab === "films"
+                ? "text-brass border-b-2 border-brass"
+                : "text-dust hover:text-paper border-b-2 border-transparent"
+            }`}
+          >
+            Films
+          </button>
+          <button
+            onClick={() => {
+              setTab("people");
+              setQuery("");
+              setResults([]);
+              setUserResults([]);
+              setError(null);
+            }}
+            className={`pb-3 text-sm tracking-widest uppercase font-mono transition-colors cursor-pointer ${
+              tab === "people"
+                ? "text-brass border-b-2 border-brass"
+                : "text-dust hover:text-paper border-b-2 border-transparent"
+            }`}
+          >
+            People
+          </button>
+        </div>
+
+        <div className="hairline mt-6 pb-6">
           <input
             type="text"
-            placeholder="Search by title..."
+            placeholder={tab === "films" ? "Search by title..." : "Search by username..."}
             value={query}
             onChange={(e) => handleSearch(e.target.value)}
             className="w-full border-0 border-b border-dust/30 bg-transparent py-4 text-2xl text-paper placeholder-dust/50 outline-none transition-colors focus:border-brass font-display"
@@ -173,7 +234,7 @@ function SearchPage() {
           />
         </div>
 
-        {!user && (
+        {!user && tab === "films" && (
           <div className="mt-12 text-center">
             <p className="text-dust mb-4">Sign in to log films to your watched list.</p>
             <Link
@@ -190,17 +251,29 @@ function SearchPage() {
 
           {error && <p className="text-caption text-marquee-red text-center py-12">{error}</p>}
 
-          {!loading && !error && query.length >= 3 && results.length === 0 && (
+          {!loading && !error && tab === "films" && query.length >= 3 && results.length === 0 && (
             <p className="text-caption text-dust text-center py-12">No films found.</p>
           )}
 
-          {!loading && query.length < 3 && (
+          {!loading &&
+            !error &&
+            tab === "people" &&
+            query.length >= 1 &&
+            userResults.length === 0 && (
+              <p className="text-caption text-dust text-center py-12">No users found.</p>
+            )}
+
+          {!loading && tab === "films" && query.length < 3 && (
             <p className="text-caption text-dust text-center py-12">
               Type at least three characters to search.
             </p>
           )}
 
-          {results.length > 0 && (
+          {!loading && tab === "people" && query.length < 1 && (
+            <p className="text-caption text-dust text-center py-12">Type a username to search.</p>
+          )}
+
+          {tab === "films" && results.length > 0 && (
             <>
               <p className="text-caption text-dust mb-4 text-xs">
                 {totalResults > 0 && `${totalResults} film${totalResults > 1 ? "s" : ""} found`}
@@ -274,6 +347,38 @@ function SearchPage() {
                 </div>
               )}
             </>
+          )}
+
+          {tab === "people" && userResults.length > 0 && (
+            <div className="space-y-3">
+              {userResults.map((u) => (
+                <Link
+                  key={u.id}
+                  to="/profile/$username"
+                  params={{ username: u.username }}
+                  className="flex items-center gap-4 border border-dust/20 p-4 hover:border-brass/50 transition-colors group"
+                >
+                  <div className="h-12 w-12 shrink-0 overflow-hidden rounded-full bg-velvet ring-1 ring-white/10">
+                    <img
+                      src={`https://api.dicebear.com/9.x/identicon/svg?seed=${u.username}`}
+                      alt={u.username}
+                      className="h-full w-full object-cover"
+                    />
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm font-medium text-paper group-hover:text-brass transition-colors">
+                      {u.username}
+                    </p>
+                    {u.bio && (
+                      <p className="text-caption text-dust text-xs truncate mt-0.5">{u.bio}</p>
+                    )}
+                  </div>
+                  <div className="text-caption text-dust text-xs shrink-0">
+                    {u.filmCount} film{u.filmCount !== 1 ? "s" : ""}
+                  </div>
+                </Link>
+              ))}
+            </div>
           )}
         </div>
       </main>
