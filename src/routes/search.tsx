@@ -2,7 +2,14 @@ import { createFileRoute, useRouter } from "@tanstack/react-router";
 import { useState, useCallback, useRef, useEffect } from "react";
 import { TopBar } from "@/components/TopBar";
 import { searchMoviesFn, addToWatchedFn, getCurrentUserWatchedFn } from "@/api/movies";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogClose } from "@/components/ui/dialog";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+  DialogClose,
+} from "@/components/ui/dialog";
 import { Slider } from "@/components/ui/slider";
 import { Button } from "@/components/ui/button";
 import { useUser } from "@/lib/user-context";
@@ -88,30 +95,36 @@ function SearchPage() {
     }
   }, []);
 
-  const handleSearch = useCallback(async (q: string) => {
-    setQuery(q);
-    setError(null);
+  const handleSearch = useCallback(
+    async (q: string) => {
+      setQuery(q);
+      setError(null);
 
-    if (timerRef.current) clearTimeout(timerRef.current);
+      if (timerRef.current) clearTimeout(timerRef.current);
 
-    if (q.length < 3) {
-      setResults([]);
-      setTotalPages(0);
-      setTotalResults(0);
-      return;
-    }
+      if (q.length < 3) {
+        setResults([]);
+        setTotalPages(0);
+        setTotalResults(0);
+        return;
+      }
 
-    lastQueryRef.current = q;
-    timerRef.current = setTimeout(() => {
-      doSearch(q, 1);
-    }, 300);
-  }, [doSearch]);
+      lastQueryRef.current = q;
+      timerRef.current = setTimeout(() => {
+        doSearch(q, 1);
+      }, 300);
+    },
+    [doSearch],
+  );
 
-  const goToPage = useCallback((page: number) => {
-    const q = lastQueryRef.current;
-    if (q.length < 3) return;
-    doSearch(q, page);
-  }, [doSearch]);
+  const goToPage = useCallback(
+    (page: number) => {
+      const q = lastQueryRef.current;
+      if (q.length < 3) return;
+      doSearch(q, page);
+    },
+    [doSearch],
+  );
 
   const handleAdd = async () => {
     if (!selectedMovie || !user) return;
@@ -127,8 +140,8 @@ function SearchPage() {
           rating: rating[0],
         },
       });
-      setAddedIds(prev => new Set(prev).add(selectedMovie.imdbID));
-      setWatchedMap(prev => ({ ...prev, [selectedMovie.imdbID]: rating[0] }));
+      setAddedIds((prev) => new Set(prev).add(selectedMovie.imdbID));
+      setWatchedMap((prev) => ({ ...prev, [selectedMovie.imdbID]: rating[0] }));
       setSelectedMovie(null);
       setRating([7]);
       router.invalidate();
@@ -173,13 +186,9 @@ function SearchPage() {
         )}
 
         <div className="mt-8 min-h-[200px]">
-          {loading && (
-            <p className="text-caption text-dust text-center py-12">Searching...</p>
-          )}
+          {loading && <p className="text-caption text-dust text-center py-12">Searching...</p>}
 
-          {error && (
-            <p className="text-caption text-marquee-red text-center py-12">{error}</p>
-          )}
+          {error && <p className="text-caption text-marquee-red text-center py-12">{error}</p>}
 
           {!loading && !error && query.length >= 3 && results.length === 0 && (
             <p className="text-caption text-dust text-center py-12">No films found.</p>
@@ -210,11 +219,15 @@ function SearchPage() {
                           alt={movie.Title}
                           className="h-full w-full object-cover transition-opacity group-hover:opacity-70"
                           loading="lazy"
-                          onError={(e) => { e.currentTarget.src = "/film-placeholder.svg"; }}
+                          onError={(e) => {
+                            e.currentTarget.src = "/film-placeholder.svg";
+                          }}
                         />
                       </div>
                       <div className="mt-2 flex-1">
-                        <h3 className="text-sm font-medium text-paper leading-tight">{movie.Title}</h3>
+                        <h3 className="text-sm font-medium text-paper leading-tight">
+                          {movie.Title}
+                        </h3>
                         <p className="text-caption text-dust text-xs">{movie.Year}</p>
                       </div>
                       {user && (
@@ -268,9 +281,7 @@ function SearchPage() {
       <Dialog open={!!selectedMovie} onOpenChange={(open) => !open && setSelectedMovie(null)}>
         <DialogContent className="border border-dust/30 bg-velvet max-w-sm">
           <DialogHeader>
-            <DialogTitle className="text-card-title text-paper">
-              {selectedMovie?.Title}
-            </DialogTitle>
+            <DialogTitle className="text-card-title text-paper">{selectedMovie?.Title}</DialogTitle>
             <DialogDescription className="text-caption text-dust">
               {selectedMovie?.Year} · Rate your experience
             </DialogDescription>
@@ -283,7 +294,9 @@ function SearchPage() {
                   src={posterSrc(selectedMovie.Poster)}
                   alt={selectedMovie.Title}
                   className="h-full w-full object-cover"
-                  onError={(e) => { e.currentTarget.src = "/film-placeholder.svg"; }}
+                  onError={(e) => {
+                    e.currentTarget.src = "/film-placeholder.svg";
+                  }}
                 />
               </div>
 
@@ -306,9 +319,7 @@ function SearchPage() {
                 </div>
               </div>
 
-              {addError && (
-                <p className="text-caption text-marquee-red text-xs">{addError}</p>
-              )}
+              {addError && <p className="text-caption text-marquee-red text-xs">{addError}</p>}
 
               <div className="flex gap-3 w-full">
                 <DialogClose asChild>

@@ -23,7 +23,10 @@ export const Route = createFileRoute("/profile/$username")({
   head: ({ params }) => ({
     meta: [
       { title: `${params.username}'s profile · Verdict` },
-      { name: "description", content: `Browse ${params.username}'s watched films, Taste Score, and film history.` },
+      {
+        name: "description",
+        content: `Browse ${params.username}'s watched films, Taste Score, and film history.`,
+      },
     ],
   }),
   component: ProfilePage,
@@ -43,7 +46,9 @@ function ProfilePage() {
   const [verdicts, setVerdicts] = useState<any[] | null>(null);
   const [currentPage, setCurrentPage] = useState(1);
   const [isFollowing, setIsFollowing] = useState(false);
-  const [followCounts, setFollowCounts] = useState<{ followers: number; following: number } | null>(null);
+  const [followCounts, setFollowCounts] = useState<{ followers: number; following: number } | null>(
+    null,
+  );
   const PAGE_SIZE = 20;
 
   useState(() => {
@@ -71,11 +76,13 @@ function ProfilePage() {
       if (isFollowing) {
         await unfollowUserFn({ data: { username } });
         setIsFollowing(false);
-        setFollowCounts(prev => prev ? { ...prev, followers: Math.max(0, prev.followers - 1) } : prev);
+        setFollowCounts((prev) =>
+          prev ? { ...prev, followers: Math.max(0, prev.followers - 1) } : prev,
+        );
       } else {
         await followUserFn({ data: { username } });
         setIsFollowing(true);
-        setFollowCounts(prev => prev ? { ...prev, followers: prev.followers + 1 } : prev);
+        setFollowCounts((prev) => (prev ? { ...prev, followers: prev.followers + 1 } : prev));
       }
     } catch (e: any) {
       console.error("Follow failed", e);
@@ -163,11 +170,15 @@ function ProfilePage() {
               <p className="mt-2 text-sm text-paper/70 max-w-md">{profileUser.bio}</p>
             )}
             <div className="mt-3 flex items-center justify-center gap-4 text-caption text-dust">
-              <span>{filmCount} film{filmCount !== 1 ? "s" : ""}</span>
+              <span>
+                {filmCount} film{filmCount !== 1 ? "s" : ""}
+              </span>
               {followCounts && (
                 <>
                   <span className="opacity-30">·</span>
-                  <span>{followCounts.followers} follower{followCounts.followers !== 1 ? "s" : ""}</span>
+                  <span>
+                    {followCounts.followers} follower{followCounts.followers !== 1 ? "s" : ""}
+                  </span>
                   <span className="opacity-30">·</span>
                   <span>{followCounts.following} following</span>
                 </>
@@ -175,7 +186,9 @@ function ProfilePage() {
               {avgRating && (
                 <>
                   <span className="opacity-30">·</span>
-                  <span>Avg <span className="text-brass">{avgRating}</span>/10</span>
+                  <span>
+                    Avg <span className="text-brass">{avgRating}</span>/10
+                  </span>
                 </>
               )}
               {memberSince && (
@@ -308,9 +321,7 @@ function ProfilePage() {
                   Search for films →
                 </Link>
               ) : (
-                <p className="text-caption text-dust">
-                  {username} hasn't logged any films yet.
-                </p>
+                <p className="text-caption text-dust">{username} hasn't logged any films yet.</p>
               )}
             </div>
           ) : (
@@ -326,7 +337,9 @@ function ProfilePage() {
                         alt={movie.title}
                         className="h-full w-full object-cover"
                         loading="lazy"
-                        onError={(e) => { e.currentTarget.src = "/film-placeholder.svg"; }}
+                        onError={(e) => {
+                          e.currentTarget.src = "/film-placeholder.svg";
+                        }}
                       />
                       <div className="absolute inset-0 flex items-center justify-center bg-ink/60 opacity-0 group-hover:opacity-100 transition-opacity">
                         <Stamp size="sm" rotation={-2}>

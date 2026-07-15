@@ -43,8 +43,8 @@ function Landing() {
               <span className="text-brass">Now they can prove it.</span>
             </h1>
             <p className="mt-6 max-w-md text-paper/80">
-              Verdict reads your movie history and renders a score. Then your friends
-              stamp their judgment onto your taste — one line, no hedging.
+              Verdict reads your movie history and renders a score. Then your friends stamp their
+              judgment onto your taste — one line, no hedging.
             </p>
             <div className="mt-10 flex flex-wrap items-center gap-6">
               <Link
@@ -104,9 +104,21 @@ function Landing() {
         {/* How it works — three acts */}
         <section className="hairline grid gap-10 py-20 md:grid-cols-3">
           {[
-            { n: "I.", t: "Log the films", b: "Import a list or add as you go. Your history is the record." },
-            { n: "II.", t: "Receive the score", b: "A Taste Score is calculated from diversity, obscurity, and consistency." },
-            { n: "III.", t: "Collect Verdicts", b: "Share the link. Friends leave a one-line judgment, stamped." },
+            {
+              n: "I.",
+              t: "Log the films",
+              b: "Import a list or add as you go. Your history is the record.",
+            },
+            {
+              n: "II.",
+              t: "Receive the score",
+              b: "A Taste Score is calculated from diversity, obscurity, and consistency.",
+            },
+            {
+              n: "III.",
+              t: "Collect Verdicts",
+              b: "Share the link. Friends leave a one-line judgment, stamped.",
+            },
           ].map((step) => (
             <div key={step.n}>
               <p className="text-brass mono text-lg">{step.n}</p>

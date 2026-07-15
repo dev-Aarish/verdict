@@ -41,15 +41,11 @@ export function Stamp({
       )}
     >
       {label && (
-        <span className="text-caption text-[0.55rem] tracking-[0.3em] opacity-80">
-          {label}
-        </span>
+        <span className="text-caption text-[0.55rem] tracking-[0.3em] opacity-80">{label}</span>
       )}
       <span className="leading-none">{children}</span>
       {label && (
-        <span className="text-caption text-[0.5rem] tracking-[0.25em] opacity-60">
-          / 100
-        </span>
+        <span className="text-caption text-[0.5rem] tracking-[0.25em] opacity-60">/ 100</span>
       )}
     </div>
   );

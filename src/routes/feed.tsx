@@ -21,13 +21,13 @@ function FeedPage() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    Promise.all([
-      getFeedVerdictsFn({ data: { limit: 50 } }),
-      getLeaderboardFn(),
-    ]).then(([v, lb]) => {
-      setVerdicts(v.verdicts);
-      setLeaderboard(lb);
-    }).catch(() => {}).finally(() => setLoading(false));
+    Promise.all([getFeedVerdictsFn({ data: { limit: 50 } }), getLeaderboardFn()])
+      .then(([v, lb]) => {
+        setVerdicts(v.verdicts);
+        setLeaderboard(lb);
+      })
+      .catch(() => {})
+      .finally(() => setLoading(false));
   }, []);
 
   const timeAgo = (d: Date | number | null | undefined) => {
@@ -51,23 +51,30 @@ function FeedPage() {
           {loading ? (
             <p className="text-caption text-dust mt-10">Loading...</p>
           ) : verdicts.length === 0 ? (
-            <p className="text-caption text-dust mt-10">No verdicts yet. Be the first to stamp your judgment.</p>
+            <p className="text-caption text-dust mt-10">
+              No verdicts yet. Be the first to stamp your judgment.
+            </p>
           ) : (
             <ul className="hairline mt-10 divide-y divide-border/40">
               {verdicts.map((v, i) => (
-                <li
-                  key={v.id}
-                  className="grid grid-cols-[3rem_1fr_auto] items-center gap-4 py-5"
-                >
+                <li key={v.id} className="grid grid-cols-[3rem_1fr_auto] items-center gap-4 py-5">
                   <span className="mono text-xs text-dust">{timeAgo(v.createdAt)}</span>
                   <div>
                     <p className="mono text-sm text-paper">"{v.comment}"</p>
                     <p className="text-caption mt-1">
-                      <Link to="/profile/$username" params={{ username: v.fromUser?.username }} className="hover:text-brass transition-colors">
+                      <Link
+                        to="/profile/$username"
+                        params={{ username: v.fromUser?.username }}
+                        className="hover:text-brass transition-colors"
+                      >
                         {v.fromUser?.username}
                       </Link>
                       {" → "}
-                      <Link to="/profile/$username" params={{ username: v.toUser?.username }} className="hover:text-brass transition-colors">
+                      <Link
+                        to="/profile/$username"
+                        params={{ username: v.toUser?.username }}
+                        className="hover:text-brass transition-colors"
+                      >
                         {v.toUser?.username}
                       </Link>
                     </p>

@@ -25,9 +25,7 @@ let scriptPromise: Promise<void> | null = null;
 function loadGoogleScript(): Promise<void> {
   if (scriptPromise) return scriptPromise;
   scriptPromise = new Promise((resolve) => {
-    const existing = document.querySelector(
-      'script[src="https://accounts.google.com/gsi/client"]'
-    );
+    const existing = document.querySelector('script[src="https://accounts.google.com/gsi/client"]');
     if (existing && (window as any).google?.accounts?.id) {
       resolve();
       return;

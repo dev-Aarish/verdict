@@ -29,9 +29,7 @@ export const submitVerdictFn = createServerFn({ method: "POST" })
     const existing = await db
       .select()
       .from(verdicts)
-      .where(
-        and(eq(verdicts.fromUserId, session.userId), eq(verdicts.toUserId, target.id)),
-      )
+      .where(and(eq(verdicts.fromUserId, session.userId), eq(verdicts.toUserId, target.id)))
       .then((r) => r[0]);
     if (existing) throw new Error("Already left a verdict on this user");
 

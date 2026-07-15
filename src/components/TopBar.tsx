@@ -22,17 +22,11 @@ export function TopBar() {
           Verdict
         </Link>
         <nav className="flex items-center gap-5">
-          <Link
-            to="/feed"
-            className="text-caption hover:text-brass transition-colors"
-          >
+          <Link to="/feed" className="text-caption hover:text-brass transition-colors">
             Feed
           </Link>
 
-          <Link
-            to="/search"
-            className="text-caption hover:text-brass transition-colors"
-          >
+          <Link to="/search" className="text-caption hover:text-brass transition-colors">
             Search
           </Link>
 
@@ -54,10 +48,7 @@ export function TopBar() {
             </>
           ) : (
             <>
-              <Link
-                to="/login"
-                className="text-caption hover:text-brass transition-colors"
-              >
+              <Link to="/login" className="text-caption hover:text-brass transition-colors">
                 Sign in
               </Link>
               <Link

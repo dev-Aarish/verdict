@@ -70,16 +70,33 @@ export const searchMoviesFn = createServerFn({ method: "GET" })
   });
 
 export const addToWatchedFn = createServerFn({ method: "POST" })
-  .validator((data: { imdbId: string; title: string; year: string; posterUrl: string | null; rating: number; note?: string }) => data)
+  .validator(
+    (data: {
+      imdbId: string;
+      title: string;
+      year: string;
+      posterUrl: string | null;
+      rating: number;
+      note?: string;
+    }) => data,
+  )
   .handler(async ({ data }) => {
     const sessionId = getCookie("auth_session");
     if (!sessionId) throw new Error("Not authenticated");
 
-    const session = await db.select().from(sessions).where(eq(sessions.id, sessionId)).then(r => r[0]);
+    const session = await db
+      .select()
+      .from(sessions)
+      .where(eq(sessions.id, sessionId))
+      .then((r) => r[0]);
     if (!session) throw new Error("Invalid session");
     const userId = session.userId;
 
-    let movie = await db.select().from(movies).where(eq(movies.imdbId, data.imdbId)).then(r => r[0]);
+    let movie = await db
+      .select()
+      .from(movies)
+      .where(eq(movies.imdbId, data.imdbId))
+      .then((r) => r[0]);
 
     if (!movie) {
       const key = getApiKey();
@@ -89,74 +106,92 @@ export const addToWatchedFn = createServerFn({ method: "POST" })
       url.searchParams.set("type", "movie");
 
       const res = await fetch(url.toString());
-      const detail = await res.json() as OmdbDetailResult & { Response?: string; Error?: string };
+      const detail = (await res.json()) as OmdbDetailResult & { Response?: string; Error?: string };
 
       if (detail.Response === "False") {
         throw new Error(detail.Error || "Failed to fetch movie details");
       }
 
       const movieId = uuidv4();
-      const inserted = await db.insert(movies).values({
-        id: movieId,
-        imdbId: data.imdbId,
-        title: detail.Title || data.title,
-        year: detail.Year || data.year,
-        posterUrl: detail.Poster && detail.Poster !== "N/A" ? detail.Poster : data.posterUrl,
-        genres: detail.Genre && detail.Genre !== "N/A" ? detail.Genre : null,
-        director: detail.Director && detail.Director !== "N/A" ? detail.Director : null,
-        country: detail.Country && detail.Country !== "N/A" ? detail.Country : null,
-      }).returning();
+      const inserted = await db
+        .insert(movies)
+        .values({
+          id: movieId,
+          imdbId: data.imdbId,
+          title: detail.Title || data.title,
+          year: detail.Year || data.year,
+          posterUrl: detail.Poster && detail.Poster !== "N/A" ? detail.Poster : data.posterUrl,
+          genres: detail.Genre && detail.Genre !== "N/A" ? detail.Genre : null,
+          director: detail.Director && detail.Director !== "N/A" ? detail.Director : null,
+          country: detail.Country && detail.Country !== "N/A" ? detail.Country : null,
+        })
+        .returning();
       movie = inserted[0];
     }
 
-    const existing = await db.select().from(watchedEntries).where(
-      and(eq(watchedEntries.userId, userId), eq(watchedEntries.movieId, movie.id))
-    ).then(r => r[0]);
+    const existing = await db
+      .select()
+      .from(watchedEntries)
+      .where(and(eq(watchedEntries.userId, userId), eq(watchedEntries.movieId, movie.id)))
+      .then((r) => r[0]);
 
     if (existing) throw new Error("Movie already in watched list");
 
-    const entry = await db.insert(watchedEntries).values({
-      id: uuidv4(),
-      userId,
-      movieId: movie.id,
-      rating: data.rating,
-      note: data.note || null,
-    }).returning().then(r => r[0]);
+    const entry = await db
+      .insert(watchedEntries)
+      .values({
+        id: uuidv4(),
+        userId,
+        movieId: movie.id,
+        rating: data.rating,
+        note: data.note || null,
+      })
+      .returning()
+      .then((r) => r[0]);
 
     return { entry, movie };
   });
 
-export const getCurrentUserWatchedFn = createServerFn({ method: "GET" })
-  .handler(async () => {
-    const sessionId = getCookie("auth_session");
-    if (!sessionId) return { entries: [] };
+export const getCurrentUserWatchedFn = createServerFn({ method: "GET" }).handler(async () => {
+  const sessionId = getCookie("auth_session");
+  if (!sessionId) return { entries: [] };
 
-    const session = await db.select().from(sessions).where(eq(sessions.id, sessionId)).then(r => r[0]);
-    if (!session) return { entries: [] };
+  const session = await db
+    .select()
+    .from(sessions)
+    .where(eq(sessions.id, sessionId))
+    .then((r) => r[0]);
+  if (!session) return { entries: [] };
 
-    const entries = await db.select().from(watchedEntries)
-      .where(eq(watchedEntries.userId, session.userId))
-      .then(r => r);
+  const entries = await db
+    .select()
+    .from(watchedEntries)
+    .where(eq(watchedEntries.userId, session.userId))
+    .then((r) => r);
 
-    const movieIds = entries.map(e => e.movieId);
-    if (movieIds.length === 0) return { entries: [] };
+  const movieIds = entries.map((e) => e.movieId);
+  if (movieIds.length === 0) return { entries: [] };
 
-    const movieList = await db.select().from(movies)
-      .where(inArray(movies.id, movieIds))
-      .then(r => r);
+  const movieList = await db
+    .select()
+    .from(movies)
+    .where(inArray(movies.id, movieIds))
+    .then((r) => r);
 
-    const movieMap = new Map(movieList.map(m => [m.id, m]));
+  const movieMap = new Map(movieList.map((m) => [m.id, m]));
 
-    const result = entries.map(entry => {
+  const result = entries
+    .map((entry) => {
       const movie = movieMap.get(entry.movieId);
       return {
         imdbId: movie?.imdbId || null,
         rating: entry.rating,
       };
-    }).filter(e => e.imdbId !== null);
+    })
+    .filter((e) => e.imdbId !== null);
 
-    return { entries: result };
-  });
+  return { entries: result };
+});
 
 export const removeWatchedFn = createServerFn({ method: "POST" })
   .validator((data: { entryId: string }) => data)
@@ -164,10 +199,18 @@ export const removeWatchedFn = createServerFn({ method: "POST" })
     const sessionId = getCookie("auth_session");
     if (!sessionId) throw new Error("Not authenticated");
 
-    const session = await db.select().from(sessions).where(eq(sessions.id, sessionId)).then(r => r[0]);
+    const session = await db
+      .select()
+      .from(sessions)
+      .where(eq(sessions.id, sessionId))
+      .then((r) => r[0]);
     if (!session) throw new Error("Invalid session");
 
-    const entry = await db.select().from(watchedEntries).where(eq(watchedEntries.id, data.entryId)).then(r => r[0]);
+    const entry = await db
+      .select()
+      .from(watchedEntries)
+      .where(eq(watchedEntries.id, data.entryId))
+      .then((r) => r[0]);
     if (!entry || entry.userId !== session.userId) throw new Error("Not authorized");
 
     await db.delete(watchedEntries).where(eq(watchedEntries.id, data.entryId));
@@ -177,24 +220,32 @@ export const removeWatchedFn = createServerFn({ method: "POST" })
 export const getUserWatchedFn = createServerFn({ method: "GET" })
   .validator((data: { username: string }) => data)
   .handler(async ({ data }) => {
-    const user = await db.select().from(users).where(eq(users.username, data.username)).then(r => r[0]);
+    const user = await db
+      .select()
+      .from(users)
+      .where(eq(users.username, data.username))
+      .then((r) => r[0]);
     if (!user) throw new Error("User not found");
 
-    const entries = await db.select().from(watchedEntries)
+    const entries = await db
+      .select()
+      .from(watchedEntries)
       .where(eq(watchedEntries.userId, user.id))
       .orderBy(watchedEntries.watchedAt)
-      .then(r => r);
+      .then((r) => r);
 
-    const movieIds = entries.map(e => e.movieId);
+    const movieIds = entries.map((e) => e.movieId);
     if (movieIds.length === 0) return { user, entries: [] };
 
-    const movieList = await db.select().from(movies)
+    const movieList = await db
+      .select()
+      .from(movies)
       .where(inArray(movies.id, movieIds))
-      .then(r => r);
+      .then((r) => r);
 
-    const movieMap = new Map(movieList.map(m => [m.id, m]));
+    const movieMap = new Map(movieList.map((m) => [m.id, m]));
 
-    const result = entries.map(entry => ({
+    const result = entries.map((entry) => ({
       ...entry,
       movie: movieMap.get(entry.movieId) || null,
     }));

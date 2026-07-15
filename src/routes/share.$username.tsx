@@ -20,7 +20,10 @@ function SharePage() {
   const { username } = Route.useParams();
   const [data, setData] = useState<{
     watched: { entries: any[]; user: any };
-    score: { score: number; breakdown: { diversity: number; obscurity: number; consistency: number } } | null;
+    score: {
+      score: number;
+      breakdown: { diversity: number; obscurity: number; consistency: number };
+    } | null;
     verdicts: any[];
   } | null>(null);
   const [loading, setLoading] = useState(true);
@@ -105,9 +108,7 @@ function SharePage() {
               <div className="absolute -left-3 -top-3 h-6 w-6 rounded-full bg-background" />
               <div className="absolute -right-3 -top-3 h-6 w-6 rounded-full bg-background" />
               {/* dashed perforation */}
-              <div
-                className="mx-6 h-0 border-t border-dashed border-brass/50"
-              />
+              <div className="mx-6 h-0 border-t border-dashed border-brass/50" />
             </div>
 
             {/* TOP panel — the verdict */}
@@ -119,9 +120,7 @@ function SharePage() {
                 </div>
                 <div className="text-right">
                   <p className="text-caption">Reel</p>
-                  <p className="mono text-sm text-paper">
-                    #{String(tasteScore).padStart(3, "0")}
-                  </p>
+                  <p className="mono text-sm text-paper">#{String(tasteScore).padStart(3, "0")}</p>
                 </div>
               </div>
 
@@ -154,8 +153,7 @@ function SharePage() {
             <div
               className="relative h-[28%] p-6"
               style={{
-                background:
-                  "linear-gradient(180deg, transparent 0%, oklch(0.22 0.025 275) 100%)",
+                background: "linear-gradient(180deg, transparent 0%, oklch(0.22 0.025 275) 100%)",
               }}
             >
               <div className="flex items-center justify-between">

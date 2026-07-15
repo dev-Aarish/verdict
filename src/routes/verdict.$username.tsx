@@ -9,7 +9,10 @@ export const Route = createFileRoute("/verdict/$username")({
   head: ({ params }) => ({
     meta: [
       { title: `Render a verdict on ${params.username} · Verdict` },
-      { name: "description", content: `Stamp your judgment on ${params.username}'s taste. One line. Be honest.` },
+      {
+        name: "description",
+        content: `Stamp your judgment on ${params.username}'s taste. One line. Be honest.`,
+      },
     ],
   }),
   component: LeaveVerdict,
@@ -26,7 +29,10 @@ function LeaveVerdict() {
 
   const submit = async () => {
     if (!line.trim()) return;
-    if (!user) { setError("Sign in to leave a verdict"); return; }
+    if (!user) {
+      setError("Sign in to leave a verdict");
+      return;
+    }
     try {
       await submitVerdictFn({ data: { toUsername: username, score, comment: line.trim() } });
       setStamped(true);
@@ -49,8 +55,7 @@ function LeaveVerdict() {
           <>
             <p className="text-caption mb-4">In the matter of</p>
             <h1 className="text-section text-paper">
-              Rendering a verdict on{" "}
-              <span className="text-brass">{username}</span>'s taste.
+              Rendering a verdict on <span className="text-brass">{username}</span>'s taste.
             </h1>
             <p className="mt-3 text-dust">Be honest. One line. That's it.</p>
 
@@ -80,12 +85,7 @@ function LeaveVerdict() {
                 />
                 <div className="mono mt-2 flex justify-between text-xs text-dust">
                   {Array.from({ length: 10 }).map((_, i) => (
-                    <span
-                      key={i}
-                      className={
-                        i + 1 === score ? "text-brass" : ""
-                      }
-                    >
+                    <span key={i} className={i + 1 === score ? "text-brass" : ""}>
                       {i + 1}
                     </span>
                   ))}
@@ -105,9 +105,7 @@ function LeaveVerdict() {
                 <p className="text-caption mt-2 text-right">{line.length}/80</p>
               </div>
 
-              {error && (
-                <p className="text-caption text-marquee-red mt-8 text-center">{error}</p>
-              )}
+              {error && <p className="text-caption text-marquee-red mt-8 text-center">{error}</p>}
 
               <div className="mt-6 flex items-center justify-between">
                 <Link
@@ -130,18 +128,11 @@ function LeaveVerdict() {
         ) : (
           <div className="flex flex-col items-center gap-8 text-center">
             <p className="text-caption">Verdict recorded</p>
-            <Stamp
-              size="lg"
-              rotation={-4}
-              variant={isRed ? "red" : "brass"}
-              animate="slam"
-            >
+            <Stamp size="lg" rotation={-4} variant={isRed ? "red" : "brass"} animate="slam">
               {score}
             </Stamp>
             <p className="text-card-title max-w-md text-paper">"{line}"</p>
-            <p className="text-caption text-dust">
-              Returning to {username}'s profile…
-            </p>
+            <p className="text-caption text-dust">Returning to {username}'s profile…</p>
           </div>
         )}
       </main>
