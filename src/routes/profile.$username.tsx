@@ -6,7 +6,7 @@ import { getTasteScoreFn, type TasteBreakdown } from "@/api/taste-score";
 import { getUserVerdictsFn } from "@/api/verdicts";
 import { followUserFn, unfollowUserFn, getFollowStatusFn, getFollowCountsFn } from "@/api/follows";
 import { useUser } from "@/lib/user-context";
-import { useState, useCallback } from "react";
+import { useState, useCallback, useEffect } from "react";
 import {
   AlertDialog,
   AlertDialogTrigger,
@@ -51,7 +51,8 @@ function ProfilePage() {
   );
   const PAGE_SIZE = 20;
 
-  useState(() => {
+  useEffect(() => {
+    setLoading(true);
     Promise.all([
       getUserWatchedFn({ data: { username } }),
       getTasteScoreFn({ data: { username } }).catch(() => null),
@@ -69,7 +70,7 @@ function ProfilePage() {
       })
       .catch(() => {})
       .finally(() => setLoading(false));
-  });
+  }, [username]);
 
   const handleFollowToggle = async () => {
     try {
