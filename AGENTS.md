@@ -7,7 +7,7 @@
 - [x] **Phase 3: Taste Score Engine (v0)** - Implement the backend logic to compute the initial Taste Score (Diversity + Obscurity + Consistency).
 - [x] **Phase 4: Public Profile & Display** - Build the public profile page that displays the user's Watched List, their Taste Score, and a breakdown of the score.
 - [x] **Phase 5: Verdict System (Core Mechanic)** - Implement the ability for users to leave a "Verdict" (rating + short comment) on another user's profile.
-- [ ] **Phase 6: Social Layer (Feed & Follow)** - Implement the follow system and a basic feed showing recent verdicts.
+- [x] **Phase 6: Social Layer (Feed & Follow)** - Implement the follow system and a basic feed showing recent verdicts.
 - [ ] **Phase 7: Shareability (Growth Engine)** - Create the shareable image card generator for profiles and taste scores.
 - [ ] **Phase 8: UI/UX Polish & PWA** - Refine the overall design, add animations, and ensure a high-quality PWA experience.
 - [ ] **Phase 9: Testing & Deployment** - Comprehensive testing, bug fixing, and deploying the MVP to production.
@@ -27,3 +27,4 @@
 - [x] Phase 3: Taste Score Engine (v0) (Completed)
 - [x] Phase 4: Public Profile & Display (Completed)
 - [x] Phase 5: Verdict System (Core Mechanic) (Completed)
+- [x] Phase 6: Social Layer (Feed & Follow) (Completed)

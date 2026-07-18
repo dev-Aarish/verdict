@@ -48,15 +48,14 @@ function Landing() {
             </p>
             <div className="mt-10 flex flex-wrap items-center gap-6">
               <Link
-                to="/verdict/$username"
-                params={{ username: "you" }}
+                to="/signup"
                 className="border-2 border-brass bg-brass px-6 py-3 text-caption text-ink hover:bg-transparent hover:text-brass transition-colors"
               >
                 Get your Verdict →
               </Link>
               <Link
                 to="/profile/$username"
-                params={{ username: "you" }}
+                params={{ username: "testuser" }}
                 className="text-caption text-dust hover:text-paper transition-colors"
               >
                 See an example profile
@@ -135,8 +134,7 @@ function Landing() {
             A quiet, formal room where your taste is read out loud.
           </h2>
           <Link
-            to="/verdict/$username"
-            params={{ username: "you" }}
+            to="/signup"
             className="border-2 border-brass bg-brass px-6 py-3 text-caption text-ink hover:bg-transparent hover:text-brass transition-colors"
           >
             Get your Verdict →
