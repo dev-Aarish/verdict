@@ -1,14 +1,60 @@
 import { createServerFn } from "@tanstack/react-start";
-import { verdicts, users, tasteScores } from "@/db/schema";
+import { getCookie } from "@tanstack/react-start/server";
+import { verdicts, users, tasteScores, follows, sessions } from "@/db/schema";
 import { db } from "@/db";
-import { eq, desc, inArray } from "drizzle-orm";
+import { eq, desc, inArray, or, and } from "drizzle-orm";
+
+async function getCurrentUserId(): Promise<string | null> {
+  const sessionId = getCookie("auth_session");
+  if (!sessionId) return null;
+  const session = await db
+    .select()
+    .from(sessions)
+    .where(eq(sessions.id, sessionId))
+    .then((r) => r[0]);
+  return session?.userId ?? null;
+}
 
 export const getFeedVerdictsFn = createServerFn({ method: "GET" })
-  .validator((data: { limit?: number }) => data)
+  .validator((data: { limit?: number; filter?: "all" | "following" }) => data)
   .handler(async ({ data }) => {
     const limit = data.limit || 50;
+    const filter = data.filter || "all";
 
-    const rows = await db.select().from(verdicts).orderBy(desc(verdicts.createdAt)).limit(limit);
+    let rows;
+
+    if (filter === "following") {
+      const currentUserId = await getCurrentUserId();
+      if (!currentUserId) {
+        rows = await db
+          .select()
+          .from(verdicts)
+          .orderBy(desc(verdicts.createdAt))
+          .limit(limit);
+      } else {
+        const followingRows = await db
+          .select({ followeeId: follows.followeeId })
+          .from(follows)
+          .where(eq(follows.followerId, currentUserId));
+        const followingIds = followingRows.map((r) => r.followeeId);
+
+        if (followingIds.length === 0) return { verdicts: [] };
+
+        rows = await db
+          .select()
+          .from(verdicts)
+          .where(
+            or(
+              inArray(verdicts.fromUserId, followingIds),
+              inArray(verdicts.toUserId, followingIds),
+            ),
+          )
+          .orderBy(desc(verdicts.createdAt))
+          .limit(limit);
+      }
+    } else {
+      rows = await db.select().from(verdicts).orderBy(desc(verdicts.createdAt)).limit(limit);
+    }
 
     if (rows.length === 0) return { verdicts: [] };
 

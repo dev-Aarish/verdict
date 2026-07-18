@@ -2,7 +2,7 @@ import { createServerFn } from "@tanstack/react-start";
 import { getCookie } from "@tanstack/react-start/server";
 import { follows, users, sessions } from "@/db/schema";
 import { db } from "@/db";
-import { eq, and, sql } from "drizzle-orm";
+import { eq, and, sql, inArray } from "drizzle-orm";
 
 export const followUserFn = createServerFn({ method: "POST" })
   .validator((data: { username: string }) => data)
@@ -114,4 +114,56 @@ export const getFollowCountsFn = createServerFn({ method: "GET" })
       .where(eq(follows.followerId, user.id));
 
     return { followers: Number(followers.count), following: Number(following.count) };
+  });
+
+export const getFollowersListFn = createServerFn({ method: "GET" })
+  .validator((data: { username: string }) => data)
+  .handler(async ({ data }) => {
+    const user = await db
+      .select()
+      .from(users)
+      .where(eq(users.username, data.username))
+      .then((r) => r[0]);
+    if (!user) throw new Error("User not found");
+
+    const rows = await db
+      .select({ followerId: follows.followerId })
+      .from(follows)
+      .where(eq(follows.followeeId, user.id));
+
+    if (rows.length === 0) return { users: [] };
+
+    const followerIds = rows.map((r) => r.followerId);
+    const followerUsers = await db
+      .select()
+      .from(users)
+      .where(inArray(users.id, followerIds));
+
+    return { users: followerUsers };
+  });
+
+export const getFollowingListFn = createServerFn({ method: "GET" })
+  .validator((data: { username: string }) => data)
+  .handler(async ({ data }) => {
+    const user = await db
+      .select()
+      .from(users)
+      .where(eq(users.username, data.username))
+      .then((r) => r[0]);
+    if (!user) throw new Error("User not found");
+
+    const rows = await db
+      .select({ followeeId: follows.followeeId })
+      .from(follows)
+      .where(eq(follows.followerId, user.id));
+
+    if (rows.length === 0) return { users: [] };
+
+    const followeeIds = rows.map((r) => r.followeeId);
+    const followeeUsers = await db
+      .select()
+      .from(users)
+      .where(inArray(users.id, followeeIds));
+
+    return { users: followeeUsers };
   });

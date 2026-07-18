@@ -12,10 +12,10 @@ interface StampProps {
 }
 
 const sizeMap = {
-  sm: "text-2xl px-4 py-2 min-w-[3.5rem]",
-  md: "text-4xl px-5 py-3 min-w-[5rem]",
-  lg: "text-7xl px-8 py-5 min-w-[8rem]",
-  xl: "text-[10rem] leading-none px-12 py-8 min-w-[14rem]",
+  sm: "text-2xl min-w-[4.5rem] min-h-[4.5rem]",
+  md: "text-4xl min-w-[5.5rem] min-h-[5.5rem]",
+  lg: "text-7xl min-w-[8rem] min-h-[8rem]",
+  xl: "text-[10rem] leading-none min-w-[12.5rem] min-h-[12.5rem]",
 };
 
 export function Stamp({

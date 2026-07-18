@@ -177,11 +177,21 @@ function ProfilePage() {
               {followCounts && (
                 <>
                   <span className="opacity-30">·</span>
-                  <span>
+                  <Link
+                    to="/profile/$username/followers"
+                    params={{ username }}
+                    className="hover:text-brass transition-colors"
+                  >
                     {followCounts.followers} follower{followCounts.followers !== 1 ? "s" : ""}
-                  </span>
+                  </Link>
                   <span className="opacity-30">·</span>
-                  <span>{followCounts.following} following</span>
+                  <Link
+                    to="/profile/$username/following"
+                    params={{ username }}
+                    className="hover:text-brass transition-colors"
+                  >
+                    {followCounts.following} following
+                  </Link>
                 </>
               )}
               {avgRating && (

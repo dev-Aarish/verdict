@@ -18,6 +18,8 @@ import { Route as IndexRouteImport } from './routes/index'
 import { Route as VerdictUsernameRouteImport } from './routes/verdict.$username'
 import { Route as ShareUsernameRouteImport } from './routes/share.$username'
 import { Route as ProfileUsernameRouteImport } from './routes/profile.$username'
+import { Route as ProfileUsernameFollowingRouteImport } from './routes/profile.$username.following'
+import { Route as ProfileUsernameFollowersRouteImport } from './routes/profile.$username.followers'
 
 const SitemapDotxmlRoute = SitemapDotxmlRouteImport.update({
   id: '/sitemap.xml',
@@ -64,6 +66,18 @@ const ProfileUsernameRoute = ProfileUsernameRouteImport.update({
   path: '/profile/$username',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ProfileUsernameFollowingRoute =
+  ProfileUsernameFollowingRouteImport.update({
+    id: '/following',
+    path: '/following',
+    getParentRoute: () => ProfileUsernameRoute,
+  } as any)
+const ProfileUsernameFollowersRoute =
+  ProfileUsernameFollowersRouteImport.update({
+    id: '/followers',
+    path: '/followers',
+    getParentRoute: () => ProfileUsernameRoute,
+  } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -72,9 +86,11 @@ export interface FileRoutesByFullPath {
   '/search': typeof SearchRoute
   '/signup': typeof SignupRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
-  '/profile/$username': typeof ProfileUsernameRoute
+  '/profile/$username': typeof ProfileUsernameRouteWithChildren
   '/share/$username': typeof ShareUsernameRoute
   '/verdict/$username': typeof VerdictUsernameRoute
+  '/profile/$username/followers': typeof ProfileUsernameFollowersRoute
+  '/profile/$username/following': typeof ProfileUsernameFollowingRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -83,9 +99,11 @@ export interface FileRoutesByTo {
   '/search': typeof SearchRoute
   '/signup': typeof SignupRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
-  '/profile/$username': typeof ProfileUsernameRoute
+  '/profile/$username': typeof ProfileUsernameRouteWithChildren
   '/share/$username': typeof ShareUsernameRoute
   '/verdict/$username': typeof VerdictUsernameRoute
+  '/profile/$username/followers': typeof ProfileUsernameFollowersRoute
+  '/profile/$username/following': typeof ProfileUsernameFollowingRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -95,9 +113,11 @@ export interface FileRoutesById {
   '/search': typeof SearchRoute
   '/signup': typeof SignupRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
-  '/profile/$username': typeof ProfileUsernameRoute
+  '/profile/$username': typeof ProfileUsernameRouteWithChildren
   '/share/$username': typeof ShareUsernameRoute
   '/verdict/$username': typeof VerdictUsernameRoute
+  '/profile/$username/followers': typeof ProfileUsernameFollowersRoute
+  '/profile/$username/following': typeof ProfileUsernameFollowingRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -111,6 +131,8 @@ export interface FileRouteTypes {
     | '/profile/$username'
     | '/share/$username'
     | '/verdict/$username'
+    | '/profile/$username/followers'
+    | '/profile/$username/following'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -122,6 +144,8 @@ export interface FileRouteTypes {
     | '/profile/$username'
     | '/share/$username'
     | '/verdict/$username'
+    | '/profile/$username/followers'
+    | '/profile/$username/following'
   id:
     | '__root__'
     | '/'
@@ -133,6 +157,8 @@ export interface FileRouteTypes {
     | '/profile/$username'
     | '/share/$username'
     | '/verdict/$username'
+    | '/profile/$username/followers'
+    | '/profile/$username/following'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -142,7 +168,7 @@ export interface RootRouteChildren {
   SearchRoute: typeof SearchRoute
   SignupRoute: typeof SignupRoute
   SitemapDotxmlRoute: typeof SitemapDotxmlRoute
-  ProfileUsernameRoute: typeof ProfileUsernameRoute
+  ProfileUsernameRoute: typeof ProfileUsernameRouteWithChildren
   ShareUsernameRoute: typeof ShareUsernameRoute
   VerdictUsernameRoute: typeof VerdictUsernameRoute
 }
@@ -212,8 +238,36 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ProfileUsernameRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/profile/$username/following': {
+      id: '/profile/$username/following'
+      path: '/following'
+      fullPath: '/profile/$username/following'
+      preLoaderRoute: typeof ProfileUsernameFollowingRouteImport
+      parentRoute: typeof ProfileUsernameRoute
+    }
+    '/profile/$username/followers': {
+      id: '/profile/$username/followers'
+      path: '/followers'
+      fullPath: '/profile/$username/followers'
+      preLoaderRoute: typeof ProfileUsernameFollowersRouteImport
+      parentRoute: typeof ProfileUsernameRoute
+    }
   }
 }
+
+interface ProfileUsernameRouteChildren {
+  ProfileUsernameFollowersRoute: typeof ProfileUsernameFollowersRoute
+  ProfileUsernameFollowingRoute: typeof ProfileUsernameFollowingRoute
+}
+
+const ProfileUsernameRouteChildren: ProfileUsernameRouteChildren = {
+  ProfileUsernameFollowersRoute: ProfileUsernameFollowersRoute,
+  ProfileUsernameFollowingRoute: ProfileUsernameFollowingRoute,
+}
+
+const ProfileUsernameRouteWithChildren = ProfileUsernameRoute._addFileChildren(
+  ProfileUsernameRouteChildren,
+)
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
@@ -222,7 +276,7 @@ const rootRouteChildren: RootRouteChildren = {
   SearchRoute: SearchRoute,
   SignupRoute: SignupRoute,
   SitemapDotxmlRoute: SitemapDotxmlRoute,
-  ProfileUsernameRoute: ProfileUsernameRoute,
+  ProfileUsernameRoute: ProfileUsernameRouteWithChildren,
   ShareUsernameRoute: ShareUsernameRoute,
   VerdictUsernameRoute: VerdictUsernameRoute,
 }
