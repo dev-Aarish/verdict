@@ -4,13 +4,25 @@ import { TopBar } from "@/components/TopBar";
 import { getUserWatchedFn } from "@/api/movies";
 import { getTasteScoreFn } from "@/api/taste-score";
 import { getUserVerdictsFn } from "@/api/verdicts";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
+import { toPng } from "html-to-image";
+import { toast } from "sonner";
 
 export const Route = createFileRoute("/share/$username")({
   head: ({ params }) => ({
     meta: [
       { title: `${params.username}'s Verdict card` },
-      { name: "description", content: `Share ${params.username}'s Taste Score.` },
+      {
+        name: "description",
+        content: `Share ${params.username}'s Taste Score.`,
+      },
+      { property: "og:title", content: `${params.username}'s Verdict Card` },
+      {
+        property: "og:description",
+        content: `${params.username} has a Taste Score. See their film verdict card.`,
+      },
+      { property: "og:type", content: "website" },
+      { name: "twitter:card", content: "summary_large_image" },
     ],
   }),
   component: SharePage,
@@ -18,6 +30,9 @@ export const Route = createFileRoute("/share/$username")({
 
 function SharePage() {
   const { username } = Route.useParams();
+  const cardRef = useRef<HTMLDivElement>(null);
+  const [downloading, setDownloading] = useState(false);
+  const [copied, setCopied] = useState(false);
   const [data, setData] = useState<{
     watched: { entries: any[]; user: any };
     score: {
@@ -30,13 +45,51 @@ function SharePage() {
 
   useEffect(() => {
     Promise.all([
-      getUserWatchedFn({ data: { username } }).catch(() => ({ entries: [], user: null })),
+      getUserWatchedFn({ data: { username } }).catch(() => ({
+        entries: [],
+        user: null,
+      })),
       getTasteScoreFn({ data: { username } }).catch(() => null),
-      getUserVerdictsFn({ data: { username } }).catch(() => ({ verdicts: [] })),
+      getUserVerdictsFn({ data: { username } }).catch(() => ({
+        verdicts: [],
+      })),
     ]).then(([watched, score, v]) => {
       setData({ watched, score, verdicts: v.verdicts });
       setLoading(false);
     });
+  }, [username]);
+
+  const handleDownload = useCallback(async () => {
+    if (!cardRef.current) return;
+    setDownloading(true);
+    try {
+      const dataUrl = await toPng(cardRef.current, {
+        pixelRatio: 2,
+        cacheBust: true,
+      });
+      const link = document.createElement("a");
+      link.download = `verdict-${username}.png`;
+      link.href = dataUrl;
+      link.click();
+      toast.success("Card downloaded");
+    } catch (err) {
+      console.error("Download failed", err);
+      toast.error("Failed to download card");
+    } finally {
+      setDownloading(false);
+    }
+  }, [username]);
+
+  const handleCopyLink = useCallback(async () => {
+    const url = `${window.location.origin}/share/${username}`;
+    try {
+      await navigator.clipboard.writeText(url);
+      setCopied(true);
+      toast.success("Link copied to clipboard");
+      setTimeout(() => setCopied(false), 2000);
+    } catch {
+      toast.error("Failed to copy link");
+    }
   }, [username]);
 
   if (loading) {
@@ -96,6 +149,7 @@ function SharePage() {
         {/* The card — 9:16 story format, two-panel ticket stub */}
         <div className="mx-auto w-full max-w-sm">
           <div
+            ref={cardRef}
             className="ticket-stub relative aspect-[9/16] overflow-hidden border-2 border-brass/40 bg-ink text-left"
             style={{
               backgroundImage:
@@ -180,15 +234,18 @@ function SharePage() {
           <div className="mt-6 grid grid-cols-2 gap-3">
             <button
               type="button"
-              className="border-2 border-brass bg-brass px-6 py-3 text-caption text-ink hover:bg-transparent hover:text-brass transition-colors"
+              onClick={handleDownload}
+              disabled={downloading}
+              className="border-2 border-brass bg-brass px-6 py-3 text-caption text-ink hover:bg-transparent hover:text-brass transition-colors disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
             >
-              Download
+              {downloading ? "Saving…" : "Download"}
             </button>
             <button
               type="button"
-              className="border-2 border-border px-6 py-3 text-caption text-paper hover:border-brass hover:text-brass transition-colors"
+              onClick={handleCopyLink}
+              className="border-2 border-border px-6 py-3 text-caption text-paper hover:border-brass hover:text-brass transition-colors cursor-pointer"
             >
-              Copy link
+              {copied ? "Copied!" : "Copy link"}
             </button>
           </div>
         </div>

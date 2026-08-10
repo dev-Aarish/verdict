@@ -134,10 +134,7 @@ export const getFollowersListFn = createServerFn({ method: "GET" })
     if (rows.length === 0) return { users: [] };
 
     const followerIds = rows.map((r) => r.followerId);
-    const followerUsers = await db
-      .select()
-      .from(users)
-      .where(inArray(users.id, followerIds));
+    const followerUsers = await db.select().from(users).where(inArray(users.id, followerIds));
 
     return { users: followerUsers };
   });
@@ -160,10 +157,7 @@ export const getFollowingListFn = createServerFn({ method: "GET" })
     if (rows.length === 0) return { users: [] };
 
     const followeeIds = rows.map((r) => r.followeeId);
-    const followeeUsers = await db
-      .select()
-      .from(users)
-      .where(inArray(users.id, followeeIds));
+    const followeeUsers = await db.select().from(users).where(inArray(users.id, followeeIds));
 
     return { users: followeeUsers };
   });

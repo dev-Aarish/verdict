@@ -26,11 +26,7 @@ export const getFeedVerdictsFn = createServerFn({ method: "GET" })
     if (filter === "following") {
       const currentUserId = await getCurrentUserId();
       if (!currentUserId) {
-        rows = await db
-          .select()
-          .from(verdicts)
-          .orderBy(desc(verdicts.createdAt))
-          .limit(limit);
+        rows = await db.select().from(verdicts).orderBy(desc(verdicts.createdAt)).limit(limit);
       } else {
         const followingRows = await db
           .select({ followeeId: follows.followeeId })

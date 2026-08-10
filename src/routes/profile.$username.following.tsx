@@ -67,9 +67,7 @@ function FollowingPage() {
           ← Back to {username}'s profile
         </Link>
 
-        <h1 className="text-section text-paper mt-6">
-          {username} is Following
-        </h1>
+        <h1 className="text-section text-paper mt-6">{username} is Following</h1>
 
         {loading ? (
           <p className="text-caption text-dust mt-10">Loading...</p>

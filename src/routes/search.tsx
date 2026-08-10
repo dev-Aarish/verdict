@@ -360,7 +360,10 @@ function SearchPage() {
                 >
                   <div className="h-12 w-12 shrink-0 overflow-hidden rounded-full bg-velvet ring-1 ring-white/10">
                     <img
-                      src={u.avatarUrl || `https://api.dicebear.com/7.x/avataaars/svg?seed=${u.username}`}
+                      src={
+                        u.avatarUrl ||
+                        `https://api.dicebear.com/7.x/avataaars/svg?seed=${u.username}`
+                      }
                       alt={u.username}
                       className="h-full w-full object-cover"
                     />

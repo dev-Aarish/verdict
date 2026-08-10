@@ -210,7 +210,7 @@ function ProfilePage() {
               )}
             </div>
             {!isOwn && user && (
-              <div className="mt-4">
+              <div className="mt-4 flex items-center justify-center gap-3">
                 <button
                   onClick={handleFollowToggle}
                   className={`border px-5 py-2 text-caption transition-colors cursor-pointer ${
@@ -221,6 +221,24 @@ function ProfilePage() {
                 >
                   {isFollowing ? "Following" : "Follow"}
                 </button>
+                <Link
+                  to="/share/$username"
+                  params={{ username }}
+                  className="border border-dust/30 px-5 py-2 text-caption text-dust hover:border-brass hover:text-brass transition-colors"
+                >
+                  Share card →
+                </Link>
+              </div>
+            )}
+            {isOwn && (
+              <div className="mt-4">
+                <Link
+                  to="/share/$username"
+                  params={{ username }}
+                  className="border border-dust/30 px-5 py-2 text-caption text-dust hover:border-brass hover:text-brass transition-colors"
+                >
+                  Share card →
+                </Link>
               </div>
             )}
           </div>

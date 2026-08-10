@@ -112,9 +112,7 @@ function FeedPage() {
             <p className="text-caption text-dust mt-10">Loading...</p>
           ) : filter === "following" && verdicts.length === 0 ? (
             <div className="mt-10 text-center">
-              <p className="text-caption text-dust mb-4">
-                No verdicts from people you follow yet.
-              </p>
+              <p className="text-caption text-dust mb-4">No verdicts from people you follow yet.</p>
               <Link
                 to="/search"
                 className="border border-brass px-5 py-2 text-caption text-brass hover:bg-brass hover:text-ink transition-colors"
@@ -129,7 +127,10 @@ function FeedPage() {
           ) : (
             <ul className="hairline mt-6 divide-y divide-border/40">
               {verdicts.map((v, i) => (
-                <li key={v.id} className="grid grid-cols-[3rem_1fr_auto_auto] items-center gap-4 py-5">
+                <li
+                  key={v.id}
+                  className="grid grid-cols-[3rem_1fr_auto_auto] items-center gap-4 py-5"
+                >
                   <span className="mono text-xs text-dust">{timeAgo(v.createdAt)}</span>
                   <div>
                     <p className="mono text-sm text-paper">"{v.comment}"</p>
