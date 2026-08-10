@@ -26,7 +26,7 @@ function loadGoogleScript(): Promise<void> {
   if (scriptPromise) return scriptPromise;
   scriptPromise = new Promise((resolve) => {
     const existing = document.querySelector('script[src="https://accounts.google.com/gsi/client"]');
-    if (existing && (window as any).google?.accounts?.id) {
+    if (existing && window.google?.accounts?.id) {
       resolve();
       return;
     }
@@ -36,7 +36,7 @@ function loadGoogleScript(): Promise<void> {
     script.defer = true;
     script.onload = () => {
       const wait = () => {
-        if ((window as any).google?.accounts?.id) {
+        if (window.google?.accounts?.id) {
           resolve();
         } else {
           setTimeout(wait, 50);
@@ -61,15 +61,15 @@ export function GoogleSignInButton() {
     initialized.current = true;
 
     loadGoogleScript().then(() => {
-      if ((window as any).google?.accounts?.id && clientId) {
-        window.google!.accounts.id.initialize({
+      if (window.google?.accounts?.id && clientId) {
+        window.google.accounts.id.initialize({
           client_id: clientId,
           callback: handleCredentialResponse,
           cancel_on_tap_outside: false,
         });
       }
     });
-  }, []);
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   const handleCredentialResponse = async (response: { credential?: string; error?: string }) => {
     if (response.error || !response.credential) {
@@ -80,8 +80,8 @@ export function GoogleSignInButton() {
       const { user } = await googleAuthFn({ data: { credential: response.credential } });
       setUser(user);
       navigate({ to: "/profile/$username", params: { username: user.username } });
-    } catch (err: any) {
-      alert(err.message);
+    } catch (err) {
+      alert(err instanceof Error ? err.message : "Sign in failed");
     } finally {
       setLoading(false);
     }
@@ -98,7 +98,7 @@ export function GoogleSignInButton() {
 
     await loadGoogleScript();
 
-    if (!(window as any).google?.accounts?.id) {
+    if (!window.google?.accounts?.id) {
       alert("Google Sign-In failed to load. Please try again.");
       setLoading(false);
       return;

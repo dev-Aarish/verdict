@@ -78,8 +78,8 @@ function SignupPage() {
                     to: "/profile/$username",
                     params: { username },
                   });
-                } catch (err: any) {
-                  alert(err.message);
+                } catch (err) {
+                  alert(err instanceof Error ? err.message : "Signup failed");
                 } finally {
                   setIsSubmitting(false);
                 }

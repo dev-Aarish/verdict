@@ -7,6 +7,7 @@ import { getUserVerdictsFn } from "@/api/verdicts";
 import { followUserFn, unfollowUserFn, getFollowStatusFn, getFollowCountsFn } from "@/api/follows";
 import { useUser } from "@/lib/user-context";
 import { useState, useCallback, useEffect } from "react";
+import type { User, WatchedEntryWithMovie, VerdictWithUser } from "@/lib/types";
 import {
   AlertDialog,
   AlertDialogTrigger,
@@ -37,13 +38,13 @@ function ProfilePage() {
   const { user } = useUser();
   const router = useRouter();
   const isOwn = user?.username === username;
-  const [entries, setEntries] = useState<any[] | null>(null);
-  const [profileUser, setProfileUser] = useState<any>(null);
+  const [entries, setEntries] = useState<WatchedEntryWithMovie[] | null>(null);
+  const [profileUser, setProfileUser] = useState<User | null>(null);
   const [tasteScore, setTasteScore] = useState<{ score: number; breakdown: TasteBreakdown } | null>(
     null,
   );
   const [loading, setLoading] = useState(true);
-  const [verdicts, setVerdicts] = useState<any[] | null>(null);
+  const [verdicts, setVerdicts] = useState<VerdictWithUser[] | null>(null);
   const [currentPage, setCurrentPage] = useState(1);
   const [isFollowing, setIsFollowing] = useState(false);
   const [followCounts, setFollowCounts] = useState<{ followers: number; following: number } | null>(
@@ -85,7 +86,7 @@ function ProfilePage() {
         setIsFollowing(true);
         setFollowCounts((prev) => (prev ? { ...prev, followers: prev.followers + 1 } : prev));
       }
-    } catch (e: any) {
+    } catch (e) {
       console.error("Follow failed", e);
     }
   };

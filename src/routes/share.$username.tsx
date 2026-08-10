@@ -5,6 +5,7 @@ import { getUserWatchedFn } from "@/api/movies";
 import { getTasteScoreFn } from "@/api/taste-score";
 import { getUserVerdictsFn } from "@/api/verdicts";
 import { useState, useEffect, useRef, useCallback } from "react";
+import type { User, WatchedEntryWithMovie, VerdictWithUser } from "@/lib/types";
 import { toPng } from "html-to-image";
 import { toast } from "sonner";
 
@@ -34,12 +35,12 @@ function SharePage() {
   const [downloading, setDownloading] = useState(false);
   const [copied, setCopied] = useState(false);
   const [data, setData] = useState<{
-    watched: { entries: any[]; user: any };
+    watched: { entries: WatchedEntryWithMovie[]; user: User | null };
     score: {
       score: number;
       breakdown: { diversity: number; obscurity: number; consistency: number };
     } | null;
-    verdicts: any[];
+    verdicts: VerdictWithUser[];
   } | null>(null);
   const [loading, setLoading] = useState(true);
 
@@ -114,7 +115,7 @@ function SharePage() {
     );
   }
 
-  const topFilms = data.watched.entries.slice(0, 5).map((e: any, i: number) => ({
+  const topFilms = data.watched.entries.slice(0, 5).map((e: WatchedEntryWithMovie, i: number) => ({
     id: String(i),
     title: e.movie?.title || "Unknown",
     year: e.movie?.year ? Number(e.movie.year) : 0,

@@ -6,6 +6,7 @@ import { followUserFn, unfollowUserFn } from "@/api/follows";
 import { useUser } from "@/lib/user-context";
 import { useState, useEffect, useCallback } from "react";
 import { formatDistanceToNow } from "date-fns";
+import type { VerdictWithUser, LeaderboardRow } from "@/lib/types";
 
 export const Route = createFileRoute("/feed")({
   head: () => ({
@@ -20,8 +21,8 @@ export const Route = createFileRoute("/feed")({
 function FeedPage() {
   const { user } = useUser();
   const [filter, setFilter] = useState<"following" | "all">(user ? "following" : "all");
-  const [verdicts, setVerdicts] = useState<any[]>([]);
-  const [leaderboard, setLeaderboard] = useState<any[]>([]);
+  const [verdicts, setVerdicts] = useState<VerdictWithUser[]>([]);
+  const [leaderboard, setLeaderboard] = useState<LeaderboardRow[]>([]);
   const [loading, setLoading] = useState(true);
   const [followingState, setFollowingState] = useState<Record<string, boolean>>({});
 
@@ -31,7 +32,7 @@ function FeedPage() {
       .then((v) => {
         setVerdicts(v.verdicts);
         const init: Record<string, boolean> = {};
-        v.verdicts.forEach((verdict: any) => {
+        v.verdicts.forEach((verdict: VerdictWithUser) => {
           if (verdict.fromUser) init[verdict.fromUser.username] = false;
           if (verdict.toUser) init[verdict.toUser.username] = false;
         });

@@ -15,9 +15,11 @@ import { reportLovableError } from "../lib/lovable-error-reporting";
 import { getCurrentUserFn } from "@/api/auth";
 import { UserContext } from "@/lib/user-context";
 
+import type { UserSafe } from "@/lib/types";
+
 interface MyRouterContext {
   queryClient: QueryClient;
-  user: any;
+  user: UserSafe | null;
 }
 
 function NotFoundComponent() {

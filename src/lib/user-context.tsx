@@ -1,6 +1,10 @@
 import { createContext, useContext } from "react";
+import type { UserSafe } from "./types";
 
-export const UserContext = createContext<{ user: any; setUser: (user: any) => void }>({
+export const UserContext = createContext<{
+  user: UserSafe | null;
+  setUser: (user: UserSafe | null) => void;
+}>({
   user: null,
   setUser: () => {},
 });

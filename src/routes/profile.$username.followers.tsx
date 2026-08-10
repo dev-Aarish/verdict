@@ -3,6 +3,7 @@ import { TopBar } from "@/components/TopBar";
 import { getFollowersListFn, followUserFn, unfollowUserFn, getFollowStatusFn } from "@/api/follows";
 import { useUser } from "@/lib/user-context";
 import { useState, useEffect } from "react";
+import type { User } from "@/lib/types";
 
 export const Route = createFileRoute("/profile/$username/followers")({
   head: ({ params }) => ({
@@ -17,7 +18,7 @@ export const Route = createFileRoute("/profile/$username/followers")({
 function FollowersPage() {
   const { username } = Route.useParams();
   const { user } = useUser();
-  const [followers, setFollowers] = useState<any[]>([]);
+  const [followers, setFollowers] = useState<User[]>([]);
   const [loading, setLoading] = useState(true);
   const [followState, setFollowState] = useState<Record<string, boolean>>({});
 
@@ -28,7 +29,7 @@ function FollowersPage() {
         if (user) {
           const states: Record<string, boolean> = {};
           await Promise.all(
-            res.users.map(async (u: any) => {
+            res.users.map(async (u: User) => {
               if (u.username === user.username) return;
               const status = await getFollowStatusFn({ data: { username: u.username } });
               states[u.username] = status.isFollowing;

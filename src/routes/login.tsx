@@ -64,8 +64,8 @@ function LoginPage() {
                   });
                   setUser(user);
                   navigate({ to: "/profile/$username", params: { username: user.username } });
-                } catch (err: any) {
-                  alert(err.message);
+                } catch (err) {
+                  alert(err instanceof Error ? err.message : "Login failed");
                 } finally {
                   setIsSubmitting(false);
                 }

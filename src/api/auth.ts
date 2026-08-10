@@ -149,8 +149,10 @@ export const googleAuthFn = createServerFn({ method: "POST" })
         issuer: ["accounts.google.com", "https://accounts.google.com"],
       });
       payload = result.payload;
-    } catch (err: any) {
-      throw new Error(`Google verification failed: ${err.message}`);
+    } catch (err) {
+      throw new Error(
+        `Google verification failed: ${err instanceof Error ? err.message : "unknown error"}`,
+      );
     }
 
     const email = payload.email as string | undefined;
