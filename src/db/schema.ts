@@ -1,17 +1,16 @@
-import { sqliteTable, text, integer } from "drizzle-orm/sqlite-core";
-import { sql } from "drizzle-orm";
+import { pgTable, text, integer, timestamp, primaryKey } from "drizzle-orm/pg-core";
 
-export const users = sqliteTable("users", {
+export const users = pgTable("users", {
   id: text("id").primaryKey(),
   username: text("username").notNull().unique(),
   email: text("email").notNull().unique(),
   avatarUrl: text("avatar_url"),
   bio: text("bio"),
   passwordHash: text("password_hash"),
-  createdAt: integer("created_at", { mode: "timestamp" }).default(sql`CURRENT_TIMESTAMP`),
+  createdAt: timestamp("created_at", { withTimezone: true }).defaultNow(),
 });
 
-export const movies = sqliteTable("movies", {
+export const movies = pgTable("movies", {
   id: text("id").primaryKey(),
   imdbId: text("imdb_id").notNull().unique(),
   title: text("title").notNull(),
@@ -22,7 +21,7 @@ export const movies = sqliteTable("movies", {
   director: text("director"),
 });
 
-export const watchedEntries = sqliteTable("watched_entries", {
+export const watchedEntries = pgTable("watched_entries", {
   id: text("id").primaryKey(),
   userId: text("user_id")
     .notNull()
@@ -30,12 +29,12 @@ export const watchedEntries = sqliteTable("watched_entries", {
   movieId: text("movie_id")
     .notNull()
     .references(() => movies.id),
-  rating: integer("rating").notNull(), // 1-10
-  watchedAt: integer("watched_at", { mode: "timestamp" }).default(sql`CURRENT_TIMESTAMP`),
+  rating: integer("rating").notNull(),
+  watchedAt: timestamp("watched_at", { withTimezone: true }).defaultNow(),
   note: text("note"),
 });
 
-export const verdicts = sqliteTable("verdicts", {
+export const verdicts = pgTable("verdicts", {
   id: text("id").primaryKey(),
   fromUserId: text("from_user_id")
     .notNull()
@@ -43,12 +42,12 @@ export const verdicts = sqliteTable("verdicts", {
   toUserId: text("to_user_id")
     .notNull()
     .references(() => users.id),
-  score: integer("score").notNull(), // 1-10
+  score: integer("score").notNull(),
   comment: text("comment"),
-  createdAt: integer("created_at", { mode: "timestamp" }).default(sql`CURRENT_TIMESTAMP`),
+  createdAt: timestamp("created_at", { withTimezone: true }).defaultNow(),
 });
 
-export const follows = sqliteTable("follows", {
+export const follows = pgTable("follows", {
   followerId: text("follower_id")
     .notNull()
     .references(() => users.id),
@@ -57,20 +56,20 @@ export const follows = sqliteTable("follows", {
     .references(() => users.id),
 });
 
-export const sessions = sqliteTable("sessions", {
+export const sessions = pgTable("sessions", {
   id: text("id").primaryKey(),
   userId: text("user_id")
     .notNull()
     .references(() => users.id),
-  expiresAt: integer("expires_at", { mode: "timestamp" }).notNull(),
+  expiresAt: timestamp("expires_at", { withTimezone: true }).notNull(),
 });
 
-export const tasteScores = sqliteTable("taste_scores", {
+export const tasteScores = pgTable("taste_scores", {
   userId: text("user_id")
     .notNull()
     .references(() => users.id)
     .primaryKey(),
   score: integer("score").notNull(),
   breakdownJson: text("breakdown_json").notNull(),
-  lastComputed: integer("last_computed", { mode: "timestamp" }).default(sql`CURRENT_TIMESTAMP`),
+  lastComputed: timestamp("last_computed", { withTimezone: true }).defaultNow(),
 });

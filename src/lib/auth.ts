@@ -47,7 +47,7 @@ export async function getSession(sessionId: string) {
     .from(sessions)
     .innerJoin(users, eq(sessions.userId, users.id))
     .where(and(eq(sessions.id, sessionId), gt(sessions.expiresAt, new Date())));
-  return result[0]?.[0] || null;
+  return result[0]?.sessions || null;
 }
 
 export async function deleteSession(sessionId: string) {

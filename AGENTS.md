@@ -16,9 +16,11 @@
 
 ### Database
 
-- **Current:** Local SQLite (`data/sqlite.db`) via better-sqlite3 + Drizzle ORM
-- **Safety:** Database lives in `data/` (`.gitignore`d) — never tracked by git. Auto-backup on `dev`, `db:seed`, and `db:push`. Override path via `DB_PATH` env var.
-- **Cloud Setup (TODO):** Migrate to a cloud database (Supabase, Turso, or Neon) — update `src/db/index.ts` to point to the remote connection string and run Drizzle migrations on deploy.
+- **Current:** Neon Postgres (cloud) via @neondatabase/serverless + Drizzle ORM (neon-http driver)
+- **Connection:** `DATABASE_URL` env var (Neon connection string)
+- **Schema Push:** `bun run db:push` — pushes schema changes to Neon
+- **Seeding:** `bun run db:seed` — seeds alice + bob demo users
+- **Data Migration:** `bun run db:migrate` — one-time SQLite → Neon migration (reads from `data/sqlite.db`)
 
 ## Current Progress
 
