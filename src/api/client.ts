@@ -6,7 +6,7 @@ export async function apiFetch<T>(path: string, options?: RequestInit): Promise<
   let init: RequestInit = { ...options };
 
   if (typeof window === "undefined") {
-    url = `${process.env.API_URL || BACKEND_URL}${path}`;
+    url = `${process.env.API_URL || BACKEND_URL}/api${path}`;
     init = { ...init, signal: AbortSignal.timeout(10000) };
   } else {
     url = `${BACKEND_URL}/api${path}`;
