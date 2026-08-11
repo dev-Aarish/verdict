@@ -6,7 +6,7 @@ export async function apiFetch<T>(path: string, options?: RequestInit): Promise<
     url = `${process.env.API_URL}${path}`;
     init = { ...init, signal: AbortSignal.timeout(10000) };
   } else {
-    url = `/api${path}`;
+    url = `${import.meta.env.VITE_API_URL}/api${path}`;
     init = { ...init, credentials: "include" };
   }
 
