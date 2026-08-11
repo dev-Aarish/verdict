@@ -15,7 +15,9 @@
     "db:migrate": "bun run src/db/migrate.ts",
     "test:e2e": "playwright test",
     "test:e2e:ui": "playwright test --ui",
-    "test:e2e:report": "playwright show-report"
+    "test:e2e:report": "playwright show-report",
+    "dev:api": "cd server && npm run dev",
+    "dev:all": "concurrently \"npm run dev\" \"npm run dev:api\""
   },
   "dependencies": {
     "@hookform/resolvers": "^5.2.2",
@@ -86,6 +88,7 @@
     "@types/uuid": "^11.0.0",
     "@vitejs/plugin-react": "^5.2.0",
     "drizzle-kit": "^0.31.10",
+    "concurrently": "^9.1.2",
     "eslint": "^9.32.0",
     "eslint-config-prettier": "^10.1.1",
     "eslint-plugin-prettier": "^5.2.6",

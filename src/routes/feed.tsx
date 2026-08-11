@@ -136,26 +136,30 @@ function FeedPage() {
                   <div>
                     <p className="mono text-sm text-paper">"{v.comment}"</p>
                     <p className="text-caption mt-1">
-                      <Link
-                        to="/profile/$username"
-                        params={{ username: v.fromUser?.username }}
-                        className="hover:text-brass transition-colors"
-                      >
-                        {v.fromUser?.username}
-                      </Link>
+                      {v.fromUser && (
+                        <Link
+                          to="/profile/$username"
+                          params={{ username: v.fromUser.username }}
+                          className="hover:text-brass transition-colors"
+                        >
+                          {v.fromUser.username}
+                        </Link>
+                      )}
                       {" → "}
-                      <Link
-                        to="/profile/$username"
-                        params={{ username: v.toUser?.username }}
-                        className="hover:text-brass transition-colors"
-                      >
-                        {v.toUser?.username}
-                      </Link>
+                      {v.toUser && (
+                        <Link
+                          to="/profile/$username"
+                          params={{ username: v.toUser.username }}
+                          className="hover:text-brass transition-colors"
+                        >
+                          {v.toUser.username}
+                        </Link>
+                      )}
                     </p>
                   </div>
                   {user && v.fromUser && v.fromUser.username !== user.username && (
                     <button
-                      onClick={() => handleFollowToggle(v.fromUser.username)}
+                      onClick={() => v.fromUser && handleFollowToggle(v.fromUser.username)}
                       className={`px-3 py-1 text-caption text-xs transition-colors cursor-pointer border ${
                         followingState[v.fromUser.username]
                           ? "border-dust/40 text-dust hover:border-marquee-red hover:text-marquee-red"

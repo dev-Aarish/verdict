@@ -36,6 +36,9 @@ Plan.md
 
 .env
 
+# Vercel
+.vercel/
+
 # Database — never track SQLite files in git (branch switches destroy live data)
 data/
 *.db

@@ -14,6 +14,20 @@
 
 ## Infrastructure
 
+### Backend
+
+- **Runtime:** Express on port 4000, `server/` directory
+- **Build:** `tsc` → `server/dist/`
+- **Start:** `npm start` runs `node dist/index.js`
+- **Docker:** `server/Dockerfile` (node:20-alpine) for Railway/Render deployment
+- **Env Vars:** `server/.env.example` lists required config
+
+### Frontend
+
+- **Framework:** TanStack Start on port 3000
+- **Deploy:** Vercel (see `vercel.json` at project root)
+- **API Proxy:** Vercel rewrites `/api/*` → backend host (placeholder `<BACKEND_HOST>` in `vercel.json`)
+
 ### Database
 
 - **Current:** Neon Postgres (cloud) via @neondatabase/serverless + Drizzle ORM (neon-http driver)

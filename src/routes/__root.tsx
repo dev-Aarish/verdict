@@ -19,7 +19,7 @@ import type { UserSafe } from "@/lib/types";
 
 interface MyRouterContext {
   queryClient: QueryClient;
-  user: UserSafe | null;
+  user?: UserSafe | null;
 }
 
 function NotFoundComponent() {
