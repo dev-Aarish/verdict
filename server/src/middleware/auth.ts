@@ -14,6 +14,9 @@ export interface AuthUser {
 
 export interface AuthRequest extends Request {
   user?: AuthUser;
+  params: Record<string, string>;
+  body: any;
+  query: Record<string, string | string[] | undefined>;
 }
 
 async function resolveSession(sessionId: string): Promise<AuthUser | null> {
