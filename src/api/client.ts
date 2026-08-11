@@ -1,12 +1,15 @@
+// TODO: Switch to env var once build pipeline supports import.meta.env / vite define
+const BACKEND_URL = "https://verdict-api-cgu6.onrender.com";
+
 export async function apiFetch<T>(path: string, options?: RequestInit): Promise<T> {
   let url: string;
   let init: RequestInit = { ...options };
 
   if (typeof window === "undefined") {
-    url = `${process.env.API_URL}${path}`;
+    url = `${process.env.API_URL || BACKEND_URL}${path}`;
     init = { ...init, signal: AbortSignal.timeout(10000) };
   } else {
-    url = `${import.meta.env.VITE_API_URL}/api${path}`;
+    url = `${BACKEND_URL}/api${path}`;
     init = { ...init, credentials: "include" };
   }
 
