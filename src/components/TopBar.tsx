@@ -1,4 +1,5 @@
 import { Link } from "@tanstack/react-router";
+import { Logo } from "@/components/Logo";
 import { logoutFn } from "@/api/auth";
 import { useUser } from "@/lib/user-context";
 
@@ -18,8 +19,8 @@ export function TopBar() {
   return (
     <header className="sticky top-0 z-40 border-b border-border/60 bg-ink/80 backdrop-blur-md">
       <div className="mx-auto flex max-w-6xl items-center justify-between px-6 py-4">
-        <Link to="/" className="wordmark text-lg text-paper">
-          Verdict
+        <Link to="/" className="transition-opacity hover:opacity-75" aria-label="Verdict home">
+          <Logo />
         </Link>
         <nav className="flex items-center gap-5">
           <Link to="/feed" className="text-caption hover:text-brass transition-colors">

@@ -2,6 +2,7 @@ import { useUser } from "@/lib/user-context";
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useState } from "react";
 import { TopBar } from "@/components/TopBar";
+import { Logo } from "@/components/Logo";
 import { Stamp } from "@/components/Stamp";
 import { signupFn } from "@/api/auth";
 import { GoogleSignInButton } from "@/components/GoogleSignInButton";
@@ -34,7 +35,7 @@ function SignupPage() {
       <main className="mx-auto grid min-h-[calc(100vh-4rem)] max-w-6xl grid-cols-1 md:grid-cols-2">
         <aside className="relative hidden flex-col justify-between border-r border-border/60 bg-velvet/40 p-10 md:flex">
           <div>
-            <p className="wordmark text-brass text-sm">Verdict</p>
+            <Logo variant="brass" size="sm" />
             <p className="text-caption mt-2">The guest list</p>
           </div>
           <div className="flex flex-col items-start gap-6">

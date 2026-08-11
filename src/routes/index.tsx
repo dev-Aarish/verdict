@@ -1,4 +1,5 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
+import { Logo } from "@/components/Logo";
 import { Stamp } from "@/components/Stamp";
 import { TopBar } from "@/components/TopBar";
 import { globalFeed } from "@/lib/mock";
@@ -144,7 +145,7 @@ function Landing() {
 
       <footer className="hairline mx-auto max-w-6xl px-6 py-10">
         <div className="flex items-center justify-between text-caption text-dust">
-          <span className="wordmark text-paper">Verdict</span>
+          <Logo size="sm" />
           <span>© MMXXVI · A screening room</span>
         </div>
       </footer>

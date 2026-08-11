@@ -1,4 +1,5 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
+import { Logo } from "@/components/Logo";
 import { Stamp } from "@/components/Stamp";
 import { TopBar } from "@/components/TopBar";
 import { getUserWatchedFn } from "@/api/movies";
@@ -170,7 +171,7 @@ function SharePage() {
             <div className="flex h-[72%] flex-col justify-between p-7">
               <div className="flex items-start justify-between">
                 <div>
-                  <p className="wordmark text-brass text-sm">Verdict</p>
+                  <Logo variant="brass" size="sm" />
                   <p className="text-caption mt-1">Est. 2026</p>
                 </div>
                 <div className="text-right">
