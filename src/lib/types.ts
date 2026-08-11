@@ -51,12 +51,12 @@ export interface Verdict {
 }
 
 export interface VerdictWithUser extends Verdict {
-  fromUser: User | null;
-  toUser?: User | null;
+  fromUser: UserSafe | null;
+  toUser?: UserSafe | null;
 }
 
 export interface LeaderboardRow {
   rank: number;
-  user: string;
+  user: UserSafe;
   score: number;
 }

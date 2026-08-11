@@ -202,10 +202,10 @@ function FeedPage() {
                   </span>
                   <Link
                     to="/profile/$username"
-                    params={{ username: row.user }}
+                    params={{ username: row.user.username }}
                     className="text-card-title text-paper hover:text-brass transition-colors"
                   >
-                    {row.user}
+                    {row.user.username}
                   </Link>
                   <span className="mono text-brass">{row.score}</span>
                 </li>

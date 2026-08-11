@@ -119,7 +119,7 @@ export const Route = createRootRouteWithContext<MyRouterContext>()({
     ],
   }),
   loader: async ({ context }) => {
-    const user = await getCurrentUserFn();
+    const { user } = await getCurrentUserFn();
     return { user };
   },
   shellComponent: RootShell,

@@ -4,6 +4,7 @@ import { verdicts, users } from "../db/schema.js";
 import { eq, and, inArray } from "drizzle-orm";
 import { v4 as uuidv4 } from "uuid";
 import { requireAuth, optionalAuth, AuthRequest } from "../middleware/auth.js";
+import { toSafeUser } from "../lib/safe-user.js";
 
 export const verdictsRouter = Router();
 
@@ -105,7 +106,7 @@ verdictsRouter.get("/user/:username", optionalAuth, async (req: Request, res: Re
 
   const result = userVerdicts.map((v) => ({
     ...v,
-    fromUser: fromUserMap.get(v.fromUserId) || null,
+    fromUser: fromUserMap.get(v.fromUserId) ? toSafeUser(fromUserMap.get(v.fromUserId)!) : null,
   }));
 
   res.json({ verdicts: result });

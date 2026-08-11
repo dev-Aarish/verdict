@@ -3,6 +3,7 @@ import { db } from "../db/index.js";
 import { follows, users } from "../db/schema.js";
 import { eq, and, sql, inArray } from "drizzle-orm";
 import { requireAuth, optionalAuth, AuthRequest } from "../middleware/auth.js";
+import { toSafeUser } from "../lib/safe-user.js";
 
 export const followsRouter = Router();
 
@@ -142,7 +143,9 @@ followsRouter.get("/:username/followers", async (req: Request, res: Response) =>
     .where(inArray(users.id, followerIds));
 
   const userMap = new Map(followerUsers.map((u) => [u.id, u]));
-  const result = followerIds.map((id) => userMap.get(id)).filter(Boolean);
+  const result = followerIds
+    .map((id) => (userMap.get(id) ? toSafeUser(userMap.get(id)!) : null))
+    .filter(Boolean);
 
   res.json({ users: result });
 });
@@ -172,7 +175,9 @@ followsRouter.get("/:username/following", async (req: Request, res: Response) =>
     .where(inArray(users.id, followingIds));
 
   const userMap = new Map(followingUsers.map((u) => [u.id, u]));
-  const result = followingIds.map((id) => userMap.get(id)).filter(Boolean);
+  const result = followingIds
+    .map((id) => (userMap.get(id) ? toSafeUser(userMap.get(id)!) : null))
+    .filter(Boolean);
 
   res.json({ users: result });
 });
