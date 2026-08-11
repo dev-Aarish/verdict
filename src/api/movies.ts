@@ -15,18 +15,15 @@ export function addToWatchedFn({ data }: { data: { imdbId: string; title: string
 }
 
 export function getCurrentUserWatchedFn() {
-  return apiFetch<any>("/movies/watched/me");
+  return apiFetch<any>("/movies/me/watched");
 }
 
 export function removeWatchedFn({ data }: { data: { entryId: string } }) {
-  return apiFetch<any>("/movies/watched/remove", {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(data),
+  return apiFetch<any>(`/movies/watched/${data.entryId}`, {
+    method: "DELETE",
   });
 }
 
 export function getUserWatchedFn({ data }: { data: { username: string } }) {
-  const params = new URLSearchParams({ username: data.username });
-  return apiFetch<any>(`/movies/watched/user?${params}`);
+  return apiFetch<any>(`/movies/user/${data.username}`);
 }

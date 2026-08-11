@@ -7,6 +7,5 @@ export interface TasteBreakdown {
 }
 
 export function getTasteScoreFn({ data }: { data: { username: string } }) {
-  const params = new URLSearchParams({ username: data.username });
-  return apiFetch<any>(`/taste-score?${params}`);
+  return apiFetch<any>(`/taste-score/${data.username}/taste-score`);
 }
