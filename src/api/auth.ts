@@ -93,7 +93,7 @@ export const signupFn = createServerFn({ method: "POST" })
     setCookie("auth_session", sessionId, {
       path: "/",
       httpOnly: true,
-      secure: true,
+      secure: false,
       sameSite: "lax",
       maxAge: 7 * 24 * 60 * 60,
     });
@@ -129,7 +129,7 @@ export const loginFn = createServerFn({ method: "POST" })
     setCookie("auth_session", sessionId, {
       path: "/",
       httpOnly: true,
-      secure: true,
+      secure: false,
       sameSite: "lax",
       maxAge: 7 * 24 * 60 * 60,
     });
@@ -205,7 +205,7 @@ export const googleAuthFn = createServerFn({ method: "POST" })
     setCookie("auth_session", sessionId, {
       path: "/",
       httpOnly: true,
-      secure: true,
+      secure: false,
       sameSite: "lax",
       maxAge: 7 * 24 * 60 * 60,
     });
