@@ -1,7 +1,7 @@
 import { apiFetch } from "./client";
 
 export function searchMoviesFn({ data }: { data: { query: string; page?: number } }) {
-  const params = new URLSearchParams({ s: data.query });
+  const params = new URLSearchParams({ q: data.query });
   if (data.page) params.set("page", String(data.page));
   return apiFetch<any>(`/movies/search?${params}`);
 }
