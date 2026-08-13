@@ -12,6 +12,7 @@ import { tasteMatchRouter } from "./routes/taste-match.js";
 import { verdictsRouter } from "./routes/verdicts.js";
 import { followsRouter } from "./routes/follows.js";
 import { feedRouter } from "./routes/feed.js";
+import { watchlistRouter } from "./routes/watchlist.js";
 
 export function createApp() {
   const app = express();
@@ -29,6 +30,7 @@ export function createApp() {
   app.use("/api/verdicts", verdictsRouter);
   app.use("/api/follows", followsRouter);
   app.use("/api/feed", feedRouter);
+  app.use("/api/watchlist", watchlistRouter);
 
   app.use(errorHandler);
 

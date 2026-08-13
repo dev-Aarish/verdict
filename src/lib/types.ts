@@ -64,6 +64,17 @@ export interface WatchedEntryWithMovie extends WatchedEntry {
   movie: Movie | null;
 }
 
+export interface WatchlistEntry {
+  id: string;
+  userId: string;
+  movieId: string;
+  addedAt: Date | null;
+}
+
+export interface WatchlistEntryWithMovie extends WatchlistEntry {
+  movie: Movie | null;
+}
+
 export interface Verdict {
   id: string;
   fromUserId: string;

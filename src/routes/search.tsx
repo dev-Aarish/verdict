@@ -2,6 +2,7 @@ import { createFileRoute, useRouter, Link } from "@tanstack/react-router";
 import { useState, useCallback, useRef, useEffect } from "react";
 import { TopBar } from "@/components/TopBar";
 import { searchMoviesFn, addToWatchedFn, getCurrentUserWatchedFn } from "@/api/movies";
+import { addToWatchlistFn, removeWatchlistFn, getCurrentUserWatchlistFn } from "@/api/watchlist";
 import { searchUsersFn } from "@/api/users";
 import {
   Dialog,
@@ -55,6 +56,7 @@ function SearchPage() {
   const [adding, setAdding] = useState(false);
   const [addError, setAddError] = useState<string | null>(null);
   const [watchedMap, setWatchedMap] = useState<Record<string, number>>({});
+  const [watchlistMap, setWatchlistMap] = useState<Record<string, string>>({});
   const [addedIds, setAddedIds] = useState<Set<string>>(new Set());
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(0);
@@ -66,6 +68,7 @@ function SearchPage() {
   useEffect(() => {
     if (!user) {
       setWatchedMap({});
+      setWatchlistMap({});
       return;
     }
     getCurrentUserWatchedFn().then((data) => {
@@ -74,6 +77,13 @@ function SearchPage() {
         map[entry.imdbId] = entry.rating;
       }
       setWatchedMap(map);
+    });
+    getCurrentUserWatchlistFn().then((data) => {
+      const map: Record<string, string> = {};
+      for (const entry of data.entries) {
+        if (entry.movie?.imdbId) map[entry.movie.imdbId] = entry.id;
+      }
+      setWatchlistMap(map);
     });
   }, [user]);
 
@@ -175,6 +185,29 @@ function SearchPage() {
       setAddError(e instanceof Error ? e.message : "Failed to add movie");
     } finally {
       setAdding(false);
+    }
+  };
+
+  const toggleWatchlist = async (movie: SearchResult) => {
+    if (!user) return;
+    const imdbId = movie.imdbID;
+    if (imdbId in watchlistMap) {
+      await removeWatchlistFn({ data: { entryId: watchlistMap[imdbId] } });
+      setWatchlistMap((prev) => {
+        const next = { ...prev };
+        delete next[imdbId];
+        return next;
+      });
+    } else {
+      await addToWatchlistFn({
+        data: {
+          imdbId: movie.imdbID,
+          title: movie.Title,
+          year: movie.Year,
+          posterUrl: movie.Poster !== "N/A" ? movie.Poster : null,
+        },
+      });
+      setWatchlistMap((prev) => ({ ...prev, [imdbId]: "pending" }));
     }
   };
 
@@ -312,21 +345,38 @@ function SearchPage() {
                         <p className="text-caption text-dust text-xs">{movie.Year}</p>
                       </div>
                       {user && (
-                        <button
-                          onClick={() => {
-                            setSelectedMovie(movie);
-                            setRating([7]);
-                            setAddError(null);
-                          }}
-                          disabled={isAdded}
-                          className={`mt-2 w-full py-1.5 text-xs tracking-widest uppercase font-mono transition-colors ${
-                            isAdded
-                              ? "bg-brass/20 text-brass/60 cursor-default"
-                              : "border border-brass/50 text-brass hover:bg-brass hover:text-ink cursor-pointer"
-                          }`}
-                        >
-                          {isAdded ? `Logged · ${existingRating}/10` : "Log it"}
-                        </button>
+                        <div className="mt-2 flex gap-2">
+                          <button
+                            onClick={() => toggleWatchlist(movie)}
+                            title={
+                              movie.imdbID in watchlistMap
+                                ? "Remove from watchlist"
+                                : "Add to watchlist"
+                            }
+                            className={`flex-1 py-1.5 text-[0.6rem] tracking-widest uppercase font-mono transition-colors ${
+                              movie.imdbID in watchlistMap
+                                ? "bg-brass/15 text-brass border border-brass/40"
+                                : "border border-dust/40 text-dust hover:border-brass/60 hover:text-brass cursor-pointer"
+                            }`}
+                          >
+                            {movie.imdbID in watchlistMap ? "Saved" : "Watch"}
+                          </button>
+                          <button
+                            onClick={() => {
+                              setSelectedMovie(movie);
+                              setRating([7]);
+                              setAddError(null);
+                            }}
+                            disabled={isAdded}
+                            className={`flex-1 py-1.5 text-[0.6rem] tracking-widest uppercase font-mono transition-colors ${
+                              isAdded
+                                ? "bg-brass/20 text-brass/60 cursor-default"
+                                : "border border-brass/50 text-brass hover:bg-brass hover:text-ink cursor-pointer"
+                            }`}
+                          >
+                            {isAdded ? `${existingRating}/10` : "Log it"}
+                          </button>
+                        </div>
                       )}
                     </div>
                   );

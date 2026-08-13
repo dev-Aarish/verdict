@@ -6,6 +6,12 @@ import { v4 as uuidv4 } from "uuid";
 import { requireAuth, AuthRequest } from "../middleware/auth.js";
 import { config } from "../config.js";
 import { toSafeUser } from "../lib/safe-user.js";
+import {
+  fetchOmdbDetail,
+  fromDetail,
+  findOrCreateMovie,
+  type OmdbDetailResult,
+} from "../lib/movie-store.js";
 import { invalidateTasteScore } from "./taste-score.js";
 
 export const moviesRouter = Router();
@@ -16,48 +22,6 @@ interface OmdbSearchResult {
   Year: string;
   Poster: string;
   Type: string;
-}
-
-interface OmdbDetailResult {
-  imdbID: string;
-  Title: string;
-  Year: string;
-  Poster: string;
-  Genre: string;
-  Director: string;
-  Country: string;
-  Plot: string;
-  Actors: string;
-}
-
-async function fetchOmdbDetail(imdbId: string): Promise<OmdbDetailResult | null> {
-  const key = config.omdbApiKey;
-  if (!key) return null;
-
-  const url = new URL("https://www.omdbapi.com/");
-  url.searchParams.set("apikey", key);
-  url.searchParams.set("i", imdbId);
-  url.searchParams.set("type", "movie");
-
-  const fetchRes = await fetch(url.toString());
-  const detail = (await fetchRes.json()) as OmdbDetailResult & { Response?: string; Error?: string };
-
-  if (detail.Response === "False") return null;
-  return detail;
-}
-
-function fromDetail(imdbId: string, detail: OmdbDetailResult) {
-  return {
-    imdbId,
-    title: detail.Title,
-    year: detail.Year && detail.Year !== "N/A" ? detail.Year : null,
-    posterUrl: detail.Poster && detail.Poster !== "N/A" ? detail.Poster : null,
-    genres: detail.Genre && detail.Genre !== "N/A" ? detail.Genre : null,
-    director: detail.Director && detail.Director !== "N/A" ? detail.Director : null,
-    country: detail.Country && detail.Country !== "N/A" ? detail.Country : null,
-    plot: detail.Plot && detail.Plot !== "N/A" ? detail.Plot : null,
-    actors: detail.Actors && detail.Actors !== "N/A" ? detail.Actors : null,
-  };
 }
 
 function mergeMovieFields(movie: typeof movies.$inferSelect, detail: OmdbDetailResult) {
@@ -207,36 +171,10 @@ moviesRouter.post("/watched", requireAuth, async (req: AuthRequest, res: Respons
   const userId = req.user!.id;
 
   // Find or create movie
-  let movie = await db
-    .select()
-    .from(movies)
-    .where(eq(movies.imdbId, imdbId))
-    .then((r) => r[0]);
-
+  const movie = await findOrCreateMovie({ imdbId, title, year, posterUrl });
   if (!movie) {
-    const detail = await fetchOmdbDetail(imdbId);
-    if (!detail) {
-      res.status(400).json({ error: "Failed to fetch movie details" });
-      return;
-    }
-
-    const movieId = uuidv4();
-    const inserted = await db
-      .insert(movies)
-      .values({
-        id: movieId,
-        imdbId,
-        title: detail.Title || title,
-        year: detail.Year || year,
-        posterUrl: detail.Poster && detail.Poster !== "N/A" ? detail.Poster : posterUrl,
-        genres: detail.Genre && detail.Genre !== "N/A" ? detail.Genre : null,
-        director: detail.Director && detail.Director !== "N/A" ? detail.Director : null,
-        country: detail.Country && detail.Country !== "N/A" ? detail.Country : null,
-        plot: detail.Plot && detail.Plot !== "N/A" ? detail.Plot : null,
-        actors: detail.Actors && detail.Actors !== "N/A" ? detail.Actors : null,
-      })
-      .returning();
-    movie = inserted[0];
+    res.status(400).json({ error: "Failed to fetch movie details" });
+    return;
   }
 
   // Check not already watched

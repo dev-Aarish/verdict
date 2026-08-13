@@ -1,8 +1,10 @@
-import { createFileRoute, Link } from "@tanstack/react-router";
+import { createFileRoute, Link, useRouter } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { TopBar } from "@/components/TopBar";
 import { Stamp } from "@/components/Stamp";
 import { getFilmFn } from "@/api/movies";
+import { addToWatchlistFn, removeWatchlistFn, getCurrentUserWatchlistFn } from "@/api/watchlist";
+import { useUser } from "@/lib/user-context";
 import type { FilmPage } from "@/lib/types";
 
 export const Route = createFileRoute("/film/$imdbId")({
@@ -20,9 +22,13 @@ export const Route = createFileRoute("/film/$imdbId")({
 
 function FilmPage() {
   const { imdbId } = Route.useParams();
+  const { user } = useUser();
+  const router = useRouter();
   const [data, setData] = useState<FilmPage | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
+  const [watchlistEntryId, setWatchlistEntryId] = useState<string | null>(null);
+  const [watchlistBusy, setWatchlistBusy] = useState(false);
 
   useEffect(() => {
     setLoading(true);
@@ -32,6 +38,42 @@ function FilmPage() {
       .catch((e: unknown) => setError(e instanceof Error ? e.message : "Failed to load film"))
       .finally(() => setLoading(false));
   }, [imdbId]);
+
+  useEffect(() => {
+    if (!user) return;
+    getCurrentUserWatchlistFn()
+      .then((res) => {
+        const match = res.entries.find((e) => e.movie?.imdbId === imdbId);
+        setWatchlistEntryId(match ? match.id : null);
+      })
+      .catch(() => {});
+  }, [user, imdbId]);
+
+  const toggleWatchlist = async () => {
+    if (!user || !data || watchlistBusy) return;
+    setWatchlistBusy(true);
+    try {
+      if (watchlistEntryId) {
+        await removeWatchlistFn({ data: { entryId: watchlistEntryId } });
+        setWatchlistEntryId(null);
+      } else {
+        const res = await addToWatchlistFn({
+          data: {
+            imdbId: data.movie.imdbId,
+            title: data.movie.title,
+            year: data.movie.year || "",
+            posterUrl: data.movie.posterUrl,
+          },
+        });
+        setWatchlistEntryId(res.entry.id);
+      }
+      router.invalidate();
+    } catch (e) {
+      console.error("Watchlist toggle failed", e);
+    } finally {
+      setWatchlistBusy(false);
+    }
+  };
 
   const posterSrc = (url: string | null) => (url && url !== "N/A" ? url : "/film-placeholder.svg");
 
@@ -132,6 +174,22 @@ function FilmPage() {
 
             {movie.plot && (
               <p className="mt-6 max-w-2xl text-sm leading-relaxed text-paper/80">{movie.plot}</p>
+            )}
+
+            {user && (
+              <button
+                onClick={toggleWatchlist}
+                disabled={watchlistBusy}
+                className={`mt-8 border px-5 py-2 text-caption tracking-widest uppercase font-mono transition-colors disabled:opacity-50 cursor-pointer ${
+                  watchlistEntryId
+                    ? "border-brass/60 bg-brass/10 text-brass"
+                    : "border-brass/50 text-brass hover:bg-brass hover:text-ink"
+                }`}
+              >
+                {watchlistEntryId
+                  ? "On your watchlist — remove"
+                  : "Worth your time? Add to watchlist"}
+              </button>
             )}
 
             {cast.length > 0 && (

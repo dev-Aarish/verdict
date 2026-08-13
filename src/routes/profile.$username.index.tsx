@@ -3,13 +3,19 @@ import { Stamp } from "@/components/Stamp";
 import { TopBar } from "@/components/TopBar";
 import { TasteMatchCard } from "@/components/TasteMatchCard";
 import { getUserWatchedFn, removeWatchedFn } from "@/api/movies";
+import { getUserWatchlistFn, removeWatchlistFn } from "@/api/watchlist";
 import { getTasteScoreFn, type TasteBreakdown } from "@/api/taste-score";
 import { getTasteMatchFn, type TasteMatch } from "@/api/taste-match";
 import { getUserVerdictsFn } from "@/api/verdicts";
 import { followUserFn, unfollowUserFn, getFollowStatusFn, getFollowCountsFn } from "@/api/follows";
 import { useUser } from "@/lib/user-context";
 import { useState, useCallback, useEffect } from "react";
-import type { User, WatchedEntryWithMovie, VerdictWithUser } from "@/lib/types";
+import type {
+  User,
+  WatchedEntryWithMovie,
+  VerdictWithUser,
+  WatchlistEntryWithMovie,
+} from "@/lib/types";
 import {
   AlertDialog,
   AlertDialogTrigger,
@@ -41,6 +47,7 @@ function ProfilePage() {
   const router = useRouter();
   const isOwn = user?.username === username;
   const [entries, setEntries] = useState<WatchedEntryWithMovie[] | null>(null);
+  const [watchlist, setWatchlist] = useState<WatchlistEntryWithMovie[] | null>(null);
   const [profileUser, setProfileUser] = useState<User | null>(null);
   const [tasteScore, setTasteScore] = useState<{ score: number; breakdown: TasteBreakdown } | null>(
     null,
@@ -59,15 +66,17 @@ function ProfilePage() {
     setLoading(true);
     Promise.all([
       getUserWatchedFn({ data: { username } }),
+      getUserWatchlistFn({ data: { username } }).catch(() => ({ entries: [] })),
       getTasteScoreFn({ data: { username } }).catch(() => null),
       getUserVerdictsFn({ data: { username } }).catch(() => ({ verdicts: [] })),
       getFollowStatusFn({ data: { username } }).catch(() => ({ isFollowing: false })),
       getFollowCountsFn({ data: { username } }).catch(() => null),
       getTasteMatchFn({ data: { username } }).catch(() => ({ match: null })),
     ])
-      .then(([data, taste, v, followStatus, counts, match]) => {
+      .then(([data, watch, taste, v, followStatus, counts, match]) => {
         setProfileUser(data.user);
         setEntries(data.entries);
+        setWatchlist(watch.entries);
         setTasteScore(taste);
         setVerdicts(v.verdicts);
         setIsFollowing(followStatus.isFollowing);
@@ -103,6 +112,16 @@ function ProfilePage() {
       router.invalidate();
     } catch (e) {
       console.error("Failed to remove", e);
+    }
+  };
+
+  const handleWatchlistRemove = async (entryId: string) => {
+    try {
+      await removeWatchlistFn({ data: { entryId } });
+      setWatchlist((prev) => prev?.filter((e) => e.id !== entryId) || []);
+      router.invalidate();
+    } catch (e) {
+      console.error("Failed to remove from watchlist", e);
     }
   };
 
@@ -458,6 +477,85 @@ function ProfilePage() {
               >
                 Next
               </button>
+            </div>
+          )}
+        </section>
+
+        <section className="hairline mt-10 pt-8">
+          <div className="flex items-center justify-between mb-6">
+            <h2 className="text-card-title text-paper">Worth Your Time</h2>
+            {isOwn && (watchlist?.length ?? 0) > 0 && (
+              <Link
+                to="/search"
+                className="text-caption text-brass/70 hover:text-brass transition-colors"
+              >
+                + Add more
+              </Link>
+            )}
+          </div>
+
+          {!watchlist || watchlist.length === 0 ? (
+            <div className="text-center py-12">
+              <p className="text-caption text-dust mb-6">
+                Nothing on the queue — films saved to watch for later.
+              </p>
+              {isOwn && (
+                <Link
+                  to="/search"
+                  className="border border-brass px-6 py-3 text-caption text-brass hover:bg-brass hover:text-ink transition-colors"
+                >
+                  Browse films to save →
+                </Link>
+              )}
+            </div>
+          ) : (
+            <div className="grid grid-cols-2 gap-5 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5">
+              {watchlist.map((entry) => {
+                const movie = entry.movie;
+                if (!movie) return null;
+                return (
+                  <div key={entry.id} className="group relative flex flex-col">
+                    <Link
+                      to="/film/$imdbId"
+                      params={{ imdbId: movie.imdbId }}
+                      className="relative aspect-2/3 overflow-hidden bg-velvet ring-1 ring-white/5 block"
+                    >
+                      <img
+                        src={posterSrc(movie.posterUrl)}
+                        alt={movie.title}
+                        className="h-full w-full object-cover"
+                        loading="lazy"
+                        onError={(e) => {
+                          e.currentTarget.src = "/film-placeholder.svg";
+                        }}
+                      />
+                      <div className="absolute inset-0 flex items-center justify-center bg-ink/40 opacity-0 group-hover:opacity-100 transition-opacity">
+                        <span className="text-caption text-paper tracking-widest uppercase font-mono text-xs">
+                          Queue
+                        </span>
+                      </div>
+                    </Link>
+                    <div className="mt-2 flex-1">
+                      <Link
+                        to="/film/$imdbId"
+                        params={{ imdbId: movie.imdbId }}
+                        className="text-sm font-medium text-paper leading-tight hover:text-brass hover:underline transition-colors"
+                      >
+                        {movie.title}
+                      </Link>
+                      <p className="text-caption text-dust text-xs">{movie.year}</p>
+                    </div>
+                    {isOwn && (
+                      <button
+                        onClick={() => handleWatchlistRemove(entry.id)}
+                        className="mt-1 w-full py-1 border border-marquee-red/40 text-marquee-red text-caption text-[0.6rem] opacity-0 group-hover:opacity-100 transition-opacity hover:bg-marquee-red/10 cursor-pointer"
+                      >
+                        Remove
+                      </button>
+                    )}
+                  </div>
+                );
+              })}
             </div>
           )}
         </section>

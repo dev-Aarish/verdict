@@ -36,6 +36,17 @@ export const watchedEntries = pgTable("watched_entries", {
   note: text("note"),
 });
 
+export const watchlistEntries = pgTable("watchlist_entries", {
+  id: text("id").primaryKey(),
+  userId: text("user_id")
+    .notNull()
+    .references(() => users.id),
+  movieId: text("movie_id")
+    .notNull()
+    .references(() => movies.id),
+  addedAt: timestamp("added_at", { withTimezone: true }).defaultNow(),
+});
+
 export const verdicts = pgTable("verdicts", {
   id: text("id").primaryKey(),
   fromUserId: text("from_user_id")
