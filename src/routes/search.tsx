@@ -4,15 +4,7 @@ import { TopBar } from "@/components/TopBar";
 import { searchMoviesFn, addToWatchedFn, getCurrentUserWatchedFn } from "@/api/movies";
 import { addToWatchlistFn, removeWatchlistFn, getCurrentUserWatchlistFn } from "@/api/watchlist";
 import { searchUsersFn } from "@/api/users";
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogDescription,
-  DialogClose,
-} from "@/components/ui/dialog";
-import { Slider } from "@/components/ui/slider";
+import { WatchedEntryDialog } from "@/components/WatchedEntryDialog";
 import { useUser } from "@/lib/user-context";
 
 export const Route = createFileRoute("/search")({
@@ -53,6 +45,7 @@ function SearchPage() {
   const [error, setError] = useState<string | null>(null);
   const [selectedMovie, setSelectedMovie] = useState<SearchResult | null>(null);
   const [rating, setRating] = useState([7]);
+  const [note, setNote] = useState("");
   const [adding, setAdding] = useState(false);
   const [addError, setAddError] = useState<string | null>(null);
   const [watchedMap, setWatchedMap] = useState<Record<string, number>>({});
@@ -174,12 +167,14 @@ function SearchPage() {
           year: selectedMovie.Year,
           posterUrl: selectedMovie.Poster !== "N/A" ? selectedMovie.Poster : null,
           rating: rating[0],
+          note: note.trim() || undefined,
         },
       });
       setAddedIds((prev) => new Set(prev).add(selectedMovie.imdbID));
       setWatchedMap((prev) => ({ ...prev, [selectedMovie.imdbID]: rating[0] }));
       setSelectedMovie(null);
       setRating([7]);
+      setNote("");
       router.invalidate();
     } catch (e: unknown) {
       setAddError(e instanceof Error ? e.message : "Failed to add movie");
@@ -365,6 +360,7 @@ function SearchPage() {
                             onClick={() => {
                               setSelectedMovie(movie);
                               setRating([7]);
+                              setNote("");
                               setAddError(null);
                             }}
                             disabled={isAdded}
@@ -444,67 +440,29 @@ function SearchPage() {
         </div>
       </main>
 
-      <Dialog open={!!selectedMovie} onOpenChange={(open) => !open && setSelectedMovie(null)}>
-        <DialogContent className="border border-dust/30 bg-velvet max-w-sm">
-          <DialogHeader>
-            <DialogTitle className="text-card-title text-paper">{selectedMovie?.Title}</DialogTitle>
-            <DialogDescription className="text-caption text-dust">
-              {selectedMovie?.Year} · Rate your experience
-            </DialogDescription>
-          </DialogHeader>
-
-          {selectedMovie && (
-            <div className="flex flex-col items-center gap-6 py-4">
-              <div className="h-48 w-32 overflow-hidden bg-ink ring-1 ring-white/10">
-                <img
-                  src={posterSrc(selectedMovie.Poster)}
-                  alt={selectedMovie.Title}
-                  className="h-full w-full object-cover"
-                  onError={(e) => {
-                    e.currentTarget.src = "/film-placeholder.svg";
-                  }}
-                />
-              </div>
-
-              <div className="w-full max-w-xs">
-                <div className="flex items-center justify-between mb-2">
-                  <span className="text-caption text-dust text-xs">Your rating</span>
-                  <span className="text-score text-brass text-4xl">{rating[0]}</span>
-                </div>
-                <Slider
-                  value={rating}
-                  onValueChange={(v) => setRating(v)}
-                  min={1}
-                  max={10}
-                  step={1}
-                  className="[&_[data-orientation=horizontal]]:h-2"
-                />
-                <div className="flex justify-between text-caption text-dust text-[0.6rem] mt-1">
-                  <span>Miss</span>
-                  <span>Masterpiece</span>
-                </div>
-              </div>
-
-              {addError && <p className="text-caption text-marquee-red text-xs">{addError}</p>}
-
-              <div className="flex gap-3 w-full">
-                <DialogClose asChild>
-                  <button className="flex-1 border border-dust/40 py-2 text-caption text-dust text-xs hover:text-paper transition-colors cursor-pointer">
-                    Cancel
-                  </button>
-                </DialogClose>
-                <button
-                  onClick={handleAdd}
-                  disabled={adding}
-                  className="flex-1 bg-brass py-2 text-caption text-ink text-xs hover:bg-brass/90 transition-colors disabled:opacity-50 cursor-pointer"
-                >
-                  {adding ? "Adding..." : "Log it"}
-                </button>
-              </div>
-            </div>
-          )}
-        </DialogContent>
-      </Dialog>
+      <WatchedEntryDialog
+        open={!!selectedMovie}
+        onOpenChange={(open) => !open && setSelectedMovie(null)}
+        title={selectedMovie?.Title || ""}
+        subtitle={`${selectedMovie?.Year || ""} · Rate your experience`}
+        posterUrl={
+          selectedMovie?.Poster
+            ? selectedMovie.Poster !== "N/A"
+              ? selectedMovie.Poster
+              : null
+            : null
+        }
+        posterAlt={selectedMovie?.Title || ""}
+        rating={rating[0]}
+        onRatingChange={(r) => setRating([r])}
+        note={note}
+        onNoteChange={setNote}
+        error={addError}
+        submitting={adding}
+        submitLabel="Log it"
+        submitBusyLabel="Adding..."
+        onSubmit={handleAdd}
+      />
     </div>
   );
 }

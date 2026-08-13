@@ -8,7 +8,7 @@ import {
   getUserWatchedFn,
   removeWatchedFn,
   addToWatchedFn,
-  updateWatchedRatingFn,
+  updateWatchedEntryFn,
 } from "@/api/movies";
 import { getUserWatchlistFn, removeWatchlistFn } from "@/api/watchlist";
 import { getTasteScoreFn, type TasteBreakdown } from "@/api/taste-score";
@@ -34,15 +34,7 @@ import {
   AlertDialogCancel,
   AlertDialogAction,
 } from "@/components/ui/alert-dialog";
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogDescription,
-  DialogClose,
-} from "@/components/ui/dialog";
-import { Slider } from "@/components/ui/slider";
+import { WatchedEntryDialog } from "@/components/WatchedEntryDialog";
 
 export const Route = createFileRoute("/profile/$username/")({
   head: ({ params }) => ({
@@ -78,10 +70,12 @@ function ProfilePage() {
   const [tasteMatch, setTasteMatch] = useState<TasteMatch | null>(null);
   const [logMovie, setLogMovie] = useState<WatchlistEntryWithMovie | null>(null);
   const [logRating, setLogRating] = useState([7]);
+  const [logNote, setLogNote] = useState("");
   const [logging, setLogging] = useState(false);
   const [logError, setLogError] = useState<string | null>(null);
   const [editEntry, setEditEntry] = useState<WatchedEntryWithMovie | null>(null);
   const [editRating, setEditRating] = useState([7]);
+  const [editNote, setEditNote] = useState("");
   const [editing, setEditing] = useState(false);
   const [editError, setEditError] = useState<string | null>(null);
   const PAGE_SIZE = 20;
@@ -139,21 +133,36 @@ function ProfilePage() {
     }
   };
 
-  const handleUpdateRating = async () => {
+  const handleUpdateEntry = async () => {
     if (!editEntry) return;
     setEditing(true);
     setEditError(null);
     try {
-      await updateWatchedRatingFn({ data: { entryId: editEntry.id, rating: editRating[0] } });
+      await updateWatchedEntryFn({
+        data: {
+          entryId: editEntry.id,
+          rating: editRating[0],
+          note: editNote.trim() === "" ? null : editNote.trim(),
+        },
+      });
       setEntries(
         (prev) =>
-          prev?.map((e) => (e.id === editEntry.id ? { ...e, rating: editRating[0] } : e)) || [],
+          prev?.map((e) =>
+            e.id === editEntry.id
+              ? {
+                  ...e,
+                  rating: editRating[0],
+                  note: editNote.trim() === "" ? null : editNote.trim(),
+                }
+              : e,
+          ) || [],
       );
       setEditEntry(null);
       setEditRating([7]);
+      setEditNote("");
       router.invalidate();
     } catch (e: unknown) {
-      const msg = e instanceof Error ? e.message : "Failed to update rating";
+      const msg = e instanceof Error ? e.message : "Failed to save changes";
       setEditError(msg);
     } finally {
       setEditing(false);
@@ -183,6 +192,7 @@ function ProfilePage() {
           year: movie.year || "",
           posterUrl: movie.posterUrl,
           rating: logRating[0],
+          note: logNote.trim() || undefined,
         },
       });
       // Once logged, it leaves the queue
@@ -190,6 +200,7 @@ function ProfilePage() {
       setWatchlist((prev) => prev?.filter((e) => e.id !== logMovie.id) || []);
       setLogMovie(null);
       setLogRating([7]);
+      setLogNote("");
       router.invalidate();
     } catch (e: unknown) {
       const msg = e instanceof Error ? e.message : "Failed to log movie";
@@ -199,6 +210,7 @@ function ProfilePage() {
         setWatchlist((prev) => prev?.filter((e) => e.id !== logMovie.id) || []);
         setLogMovie(null);
         setLogRating([7]);
+        setLogNote("");
         router.invalidate();
         return;
       }
@@ -515,6 +527,14 @@ function ProfilePage() {
                           {movie.director}
                         </p>
                       )}
+                      {entry.note && (
+                        <p
+                          className="text-caption text-paper/70 text-[0.6rem] italic mt-1 leading-snug line-clamp-2"
+                          title={entry.note}
+                        >
+                          "{entry.note}"
+                        </p>
+                      )}
                     </div>
                     {isOwn && (
                       <div className="mt-1 flex gap-1">
@@ -522,6 +542,7 @@ function ProfilePage() {
                           onClick={() => {
                             setEditEntry(entry);
                             setEditRating([entry.rating]);
+                            setEditNote(entry.note || "");
                             setEditError(null);
                           }}
                           className="flex-1 py-1 border border-brass/50 text-brass text-caption text-[0.6rem] opacity-0 group-hover:opacity-100 transition-opacity hover:bg-brass hover:text-ink cursor-pointer"
@@ -658,6 +679,7 @@ function ProfilePage() {
                           onClick={() => {
                             setLogMovie(entry);
                             setLogRating([7]);
+                            setLogNote("");
                             setLogError(null);
                           }}
                           className="flex-1 py-1 border border-brass/50 text-brass text-caption text-[0.6rem] opacity-0 group-hover:opacity-100 transition-opacity hover:bg-brass hover:text-ink cursor-pointer"
@@ -680,133 +702,41 @@ function ProfilePage() {
         </section>
       </main>
 
-      <Dialog open={!!logMovie} onOpenChange={(open) => !open && setLogMovie(null)}>
-        <DialogContent className="border border-dust/30 bg-velvet max-w-sm">
-          <DialogHeader>
-            <DialogTitle className="text-card-title text-paper">
-              {logMovie?.movie?.title}
-            </DialogTitle>
-            <DialogDescription className="text-caption text-dust">
-              {logMovie?.movie?.year} · Log it to your watched list
-            </DialogDescription>
-          </DialogHeader>
+      <WatchedEntryDialog
+        open={!!logMovie}
+        onOpenChange={(open) => !open && setLogMovie(null)}
+        title={logMovie?.movie?.title || ""}
+        subtitle={`${logMovie?.movie?.year || ""} · Log it to your watched list`}
+        posterUrl={logMovie?.movie?.posterUrl ?? null}
+        posterAlt={logMovie?.movie?.title || ""}
+        rating={logRating[0]}
+        onRatingChange={(r) => setLogRating([r])}
+        note={logNote}
+        onNoteChange={setLogNote}
+        error={logError}
+        submitting={logging}
+        submitLabel="Log it"
+        submitBusyLabel="Logging..."
+        onSubmit={handleLogFromWatchlist}
+      />
 
-          {logMovie?.movie && (
-            <div className="flex flex-col items-center gap-6 py-4">
-              <div className="h-48 w-32 overflow-hidden bg-ink ring-1 ring-white/10">
-                <img
-                  src={posterSrc(logMovie.movie.posterUrl)}
-                  alt={logMovie.movie.title}
-                  className="h-full w-full object-cover"
-                  onError={(e) => {
-                    e.currentTarget.src = "/film-placeholder.svg";
-                  }}
-                />
-              </div>
-
-              <div className="w-full max-w-xs">
-                <div className="flex items-center justify-between mb-2">
-                  <span className="text-caption text-dust text-xs">Your rating</span>
-                  <span className="text-score text-brass text-4xl">{logRating[0]}</span>
-                </div>
-                <Slider
-                  value={logRating}
-                  onValueChange={(v) => setLogRating(v)}
-                  min={1}
-                  max={10}
-                  step={1}
-                  className="[&_[data-orientation=horizontal]]:h-2"
-                />
-                <div className="flex justify-between text-caption text-dust text-[0.6rem] mt-1">
-                  <span>Miss</span>
-                  <span>Masterpiece</span>
-                </div>
-              </div>
-
-              {logError && <p className="text-caption text-marquee-red text-xs">{logError}</p>}
-
-              <div className="flex gap-3 w-full">
-                <DialogClose asChild>
-                  <button className="flex-1 border border-dust/40 py-2 text-caption text-dust text-xs hover:text-paper transition-colors cursor-pointer">
-                    Cancel
-                  </button>
-                </DialogClose>
-                <button
-                  onClick={handleLogFromWatchlist}
-                  disabled={logging}
-                  className="flex-1 bg-brass py-2 text-caption text-ink text-xs hover:bg-brass/90 transition-colors disabled:opacity-50 cursor-pointer"
-                >
-                  {logging ? "Logging..." : "Log it"}
-                </button>
-              </div>
-            </div>
-          )}
-        </DialogContent>
-      </Dialog>
-
-      <Dialog open={!!editEntry} onOpenChange={(open) => !open && setEditEntry(null)}>
-        <DialogContent className="border border-dust/30 bg-velvet max-w-sm">
-          <DialogHeader>
-            <DialogTitle className="text-card-title text-paper">
-              {editEntry?.movie?.title}
-            </DialogTitle>
-            <DialogDescription className="text-caption text-dust">
-              {editEntry?.movie?.year} · Update your rating
-            </DialogDescription>
-          </DialogHeader>
-
-          {editEntry?.movie && (
-            <div className="flex flex-col items-center gap-6 py-4">
-              <div className="h-48 w-32 overflow-hidden bg-ink ring-1 ring-white/10">
-                <img
-                  src={posterSrc(editEntry.movie.posterUrl)}
-                  alt={editEntry.movie.title}
-                  className="h-full w-full object-cover"
-                  onError={(e) => {
-                    e.currentTarget.src = "/film-placeholder.svg";
-                  }}
-                />
-              </div>
-
-              <div className="w-full max-w-xs">
-                <div className="flex items-center justify-between mb-2">
-                  <span className="text-caption text-dust text-xs">Your rating</span>
-                  <span className="text-score text-brass text-4xl">{editRating[0]}</span>
-                </div>
-                <Slider
-                  value={editRating}
-                  onValueChange={(v) => setEditRating(v)}
-                  min={1}
-                  max={10}
-                  step={1}
-                  className="[&_[data-orientation=horizontal]]:h-2"
-                />
-                <div className="flex justify-between text-caption text-dust text-[0.6rem] mt-1">
-                  <span>Miss</span>
-                  <span>Masterpiece</span>
-                </div>
-              </div>
-
-              {editError && <p className="text-caption text-marquee-red text-xs">{editError}</p>}
-
-              <div className="flex gap-3 w-full">
-                <DialogClose asChild>
-                  <button className="flex-1 border border-dust/40 py-2 text-caption text-dust text-xs hover:text-paper transition-colors cursor-pointer">
-                    Cancel
-                  </button>
-                </DialogClose>
-                <button
-                  onClick={handleUpdateRating}
-                  disabled={editing}
-                  className="flex-1 bg-brass py-2 text-caption text-ink text-xs hover:bg-brass/90 transition-colors disabled:opacity-50 cursor-pointer"
-                >
-                  {editing ? "Saving..." : "Update rating"}
-                </button>
-              </div>
-            </div>
-          )}
-        </DialogContent>
-      </Dialog>
+      <WatchedEntryDialog
+        open={!!editEntry}
+        onOpenChange={(open) => !open && setEditEntry(null)}
+        title={editEntry?.movie?.title || ""}
+        subtitle={`${editEntry?.movie?.year || ""} · Update your rating and note`}
+        posterUrl={editEntry?.movie?.posterUrl ?? null}
+        posterAlt={editEntry?.movie?.title || ""}
+        rating={editRating[0]}
+        onRatingChange={(r) => setEditRating([r])}
+        note={editNote}
+        onNoteChange={setEditNote}
+        error={editError}
+        submitting={editing}
+        submitLabel="Update"
+        submitBusyLabel="Saving..."
+        onSubmit={handleUpdateEntry}
+      />
     </div>
   );
 }

@@ -112,7 +112,13 @@ moviesRouter.get("/film/:imdbId", async (req: Request, res: Response) => {
   const total = ratings.length;
   const freshPercent = total > 0 ? Math.round((freshCount / total) * 100) : null;
   const status =
-    freshPercent === null ? null : freshPercent >= 60 ? "fresh" : freshPercent <= 25 ? "rotten" : "mixed";
+    freshPercent === null
+      ? null
+      : freshPercent >= 60
+        ? "fresh"
+        : freshPercent <= 25
+          ? "rotten"
+          : "mixed";
 
   res.json({
     movie,
@@ -269,7 +275,7 @@ moviesRouter.delete("/watched/:entryId", requireAuth, async (req: AuthRequest, r
 moviesRouter.patch("/watched/:entryId", requireAuth, async (req: AuthRequest, res: Response) => {
   const entryId = req.params.entryId as string;
   const userId = req.user!.id;
-  const { rating } = req.body;
+  const { rating, note } = req.body;
 
   const entry = await db
     .select()
@@ -282,20 +288,40 @@ moviesRouter.patch("/watched/:entryId", requireAuth, async (req: AuthRequest, re
     return;
   }
 
-  const ratingVal = Number(rating);
-  if (!Number.isInteger(ratingVal) || ratingVal < 1 || ratingVal > 10) {
-    res.status(400).json({ error: "Rating must be an integer between 1 and 10" });
+  const changes: { rating?: number; note?: string | null } = {};
+
+  if (rating !== undefined) {
+    const ratingVal = Number(rating);
+    if (!Number.isInteger(ratingVal) || ratingVal < 1 || ratingVal > 10) {
+      res.status(400).json({ error: "Rating must be an integer between 1 and 10" });
+      return;
+    }
+    changes.rating = ratingVal;
+  }
+
+  if (note !== undefined) {
+    if (typeof note !== "string") {
+      res.status(400).json({ error: "Note must be a string" });
+      return;
+    }
+    changes.note = note.trim() === "" ? null : note.trim();
+  }
+
+  if (Object.keys(changes).length === 0) {
+    res.status(400).json({ error: "Nothing to update" });
     return;
   }
 
   const updated = await db
     .update(watchedEntries)
-    .set({ rating: ratingVal })
+    .set(changes)
     .where(eq(watchedEntries.id, entryId))
     .returning()
     .then((r) => r[0]);
 
-  await invalidateTasteScore(userId);
+  if (changes.rating !== undefined) {
+    await invalidateTasteScore(userId);
+  }
 
   res.json({ entry: updated });
 });

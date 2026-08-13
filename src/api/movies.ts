@@ -1,5 +1,5 @@
 import { apiFetch } from "./client";
-import type { FilmPage } from "@/lib/types";
+import type { FilmPage, WatchedEntry } from "@/lib/types";
 
 export function searchMoviesFn({ data }: { data: { query: string; page?: number } }) {
   const params = new URLSearchParams({ q: data.query });
@@ -36,11 +36,16 @@ export function removeWatchedFn({ data }: { data: { entryId: string } }) {
   });
 }
 
-export function updateWatchedRatingFn({ data }: { data: { entryId: string; rating: number } }) {
-  return apiFetch<any>(`/movies/watched/${data.entryId}`, {
+export function updateWatchedEntryFn({
+  data,
+}: {
+  data: { entryId: string; rating?: number; note?: string | null };
+}) {
+  const { entryId, ...body } = data;
+  return apiFetch<{ entry: WatchedEntry }>(`/movies/watched/${entryId}`, {
     method: "PATCH",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ rating: data.rating }),
+    body: JSON.stringify(body),
   });
 }
 
