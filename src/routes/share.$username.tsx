@@ -144,14 +144,7 @@ function SharePage() {
       <TopBar />
 
       <main className="mx-auto max-w-3xl px-6 py-12">
-        <div className="mb-8 flex items-end justify-between gap-4">
-          <div>
-            <p className="text-caption">Shareable</p>
-            <h1 className="text-section text-paper">Verdict card</h1>
-            <p className="mt-2 max-w-md text-sm text-dust">
-              Tear along the perforation. Keep the stub.
-            </p>
-          </div>
+        <div className="mb-8">
           <Link
             to="/profile/$username"
             params={{ username }}
@@ -159,6 +152,13 @@ function SharePage() {
           >
             ← Back to profile
           </Link>
+          <div className="mt-3">
+            <p className="text-caption">Shareable</p>
+            <h1 className="text-section text-paper">Verdict card</h1>
+            <p className="mt-2 max-w-md text-sm text-dust">
+              Tear along the perforation. Keep the stub.
+            </p>
+          </div>
         </div>
 
         {/* The card — 9:16 story format, two-panel ticket stub */}
