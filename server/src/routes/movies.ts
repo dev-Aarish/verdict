@@ -5,6 +5,7 @@ import { eq, and, inArray } from "drizzle-orm";
 import { v4 as uuidv4 } from "uuid";
 import { requireAuth, AuthRequest } from "../middleware/auth.js";
 import { config } from "../config.js";
+import { toSafeUser } from "../lib/safe-user.js";
 
 export const moviesRouter = Router();
 
@@ -25,7 +26,135 @@ interface OmdbDetailResult {
   Director: string;
   Country: string;
   Plot: string;
+  Actors: string;
 }
+
+async function fetchOmdbDetail(imdbId: string): Promise<OmdbDetailResult | null> {
+  const key = config.omdbApiKey;
+  if (!key) return null;
+
+  const url = new URL("https://www.omdbapi.com/");
+  url.searchParams.set("apikey", key);
+  url.searchParams.set("i", imdbId);
+  url.searchParams.set("type", "movie");
+
+  const fetchRes = await fetch(url.toString());
+  const detail = (await fetchRes.json()) as OmdbDetailResult & { Response?: string; Error?: string };
+
+  if (detail.Response === "False") return null;
+  return detail;
+}
+
+function fromDetail(imdbId: string, detail: OmdbDetailResult) {
+  return {
+    imdbId,
+    title: detail.Title,
+    year: detail.Year && detail.Year !== "N/A" ? detail.Year : null,
+    posterUrl: detail.Poster && detail.Poster !== "N/A" ? detail.Poster : null,
+    genres: detail.Genre && detail.Genre !== "N/A" ? detail.Genre : null,
+    director: detail.Director && detail.Director !== "N/A" ? detail.Director : null,
+    country: detail.Country && detail.Country !== "N/A" ? detail.Country : null,
+    plot: detail.Plot && detail.Plot !== "N/A" ? detail.Plot : null,
+    actors: detail.Actors && detail.Actors !== "N/A" ? detail.Actors : null,
+  };
+}
+
+function mergeMovieFields(movie: typeof movies.$inferSelect, detail: OmdbDetailResult) {
+  const fresh = fromDetail(movie.imdbId, detail);
+  return {
+    ...movie,
+    title: movie.title || fresh.title,
+    year: movie.year || fresh.year,
+    posterUrl: movie.posterUrl || fresh.posterUrl,
+    genres: movie.genres || fresh.genres,
+    director: movie.director || fresh.director,
+    country: movie.country || fresh.country,
+    plot: movie.plot || fresh.plot,
+    actors: movie.actors || fresh.actors,
+  };
+}
+
+function needsEnrichment(movie: typeof movies.$inferSelect): boolean {
+  return !movie.plot || !movie.actors || !movie.director || !movie.posterUrl;
+}
+
+// GET /film/:imdbId (public)
+moviesRouter.get("/film/:imdbId", async (req: Request, res: Response) => {
+  const imdbId = req.params.imdbId as string;
+
+  let movie = await db
+    .select()
+    .from(movies)
+    .where(eq(movies.imdbId, imdbId))
+    .then((r) => r[0] || null);
+
+  if (!movie) {
+    const detail = await fetchOmdbDetail(imdbId);
+    if (!detail) {
+      res.status(404).json({ error: "Film not found" });
+      return;
+    }
+    movie = { id: imdbId, ...fromDetail(imdbId, detail) };
+  } else if (needsEnrichment(movie)) {
+    const detail = await fetchOmdbDetail(imdbId);
+    if (detail) {
+      movie = mergeMovieFields(movie, detail);
+      await db
+        .update(movies)
+        .set({
+          title: movie.title,
+          year: movie.year,
+          posterUrl: movie.posterUrl,
+          genres: movie.genres,
+          director: movie.director,
+          country: movie.country,
+          plot: movie.plot,
+          actors: movie.actors,
+        })
+        .where(eq(movies.id, movie.id));
+    }
+  }
+
+  const entries = await db
+    .select()
+    .from(watchedEntries)
+    .where(eq(watchedEntries.movieId, movie.id));
+
+  let community: {
+    user: ReturnType<typeof toSafeUser> | null;
+    rating: number;
+    note: string | null;
+    watchedAt: Date | null;
+  }[] = [];
+
+  if (entries.length > 0) {
+    const userIds = [...new Set(entries.map((e) => e.userId))];
+    const userList = await db.select().from(users).where(inArray(users.id, userIds));
+    const userMap = new Map(userList.map((u) => [u.id, u]));
+
+    community = entries.map((e) => ({
+      user: userMap.get(e.userId) ? toSafeUser(userMap.get(e.userId)!) : null,
+      rating: e.rating,
+      note: e.note,
+      watchedAt: e.watchedAt,
+    }));
+  }
+
+  const ratings = community.map((c) => c.rating);
+  const average =
+    ratings.length > 0 ? ratings.reduce((sum, r) => sum + r, 0) / ratings.length : null;
+  const freshCount = ratings.filter((r) => r >= 7).length;
+  const total = ratings.length;
+  const freshPercent = total > 0 ? Math.round((freshCount / total) * 100) : null;
+  const status =
+    freshPercent === null ? null : freshPercent >= 60 ? "fresh" : freshPercent <= 25 ? "rotten" : "mixed";
+
+  res.json({
+    movie,
+    community,
+    stats: { total, average, freshCount, freshPercent, status },
+  });
+});
 
 // GET /search?q=&page=
 moviesRouter.get("/search", async (req: Request, res: Response) => {
@@ -84,17 +213,9 @@ moviesRouter.post("/watched", requireAuth, async (req: AuthRequest, res: Respons
     .then((r) => r[0]);
 
   if (!movie) {
-    const key = config.omdbApiKey;
-    const url = new URL("https://www.omdbapi.com/");
-    url.searchParams.set("apikey", key);
-    url.searchParams.set("i", imdbId);
-    url.searchParams.set("type", "movie");
-
-    const fetchRes = await fetch(url.toString());
-    const detail = (await fetchRes.json()) as OmdbDetailResult & { Response?: string; Error?: string };
-
-    if (detail.Response === "False") {
-      res.status(400).json({ error: detail.Error || "Failed to fetch movie details" });
+    const detail = await fetchOmdbDetail(imdbId);
+    if (!detail) {
+      res.status(400).json({ error: "Failed to fetch movie details" });
       return;
     }
 
@@ -110,6 +231,8 @@ moviesRouter.post("/watched", requireAuth, async (req: AuthRequest, res: Respons
         genres: detail.Genre && detail.Genre !== "N/A" ? detail.Genre : null,
         director: detail.Director && detail.Director !== "N/A" ? detail.Director : null,
         country: detail.Country && detail.Country !== "N/A" ? detail.Country : null,
+        plot: detail.Plot && detail.Plot !== "N/A" ? detail.Plot : null,
+        actors: detail.Actors && detail.Actors !== "N/A" ? detail.Actors : null,
       })
       .returning();
     movie = inserted[0];

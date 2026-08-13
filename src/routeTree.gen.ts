@@ -18,6 +18,7 @@ import { Route as IndexRouteImport } from './routes/index'
 import { Route as VerdictUsernameRouteImport } from './routes/verdict.$username'
 import { Route as ShareUsernameRouteImport } from './routes/share.$username'
 import { Route as ProfileUsernameRouteImport } from './routes/profile.$username'
+import { Route as FilmImdbIdRouteImport } from './routes/film.$imdbId'
 import { Route as ProfileUsernameFollowingRouteImport } from './routes/profile.$username.following'
 import { Route as ProfileUsernameFollowersRouteImport } from './routes/profile.$username.followers'
 
@@ -66,6 +67,11 @@ const ProfileUsernameRoute = ProfileUsernameRouteImport.update({
   path: '/profile/$username',
   getParentRoute: () => rootRouteImport,
 } as any)
+const FilmImdbIdRoute = FilmImdbIdRouteImport.update({
+  id: '/film/$imdbId',
+  path: '/film/$imdbId',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ProfileUsernameFollowingRoute =
   ProfileUsernameFollowingRouteImport.update({
     id: '/following',
@@ -86,6 +92,7 @@ export interface FileRoutesByFullPath {
   '/search': typeof SearchRoute
   '/signup': typeof SignupRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
+  '/film/$imdbId': typeof FilmImdbIdRoute
   '/profile/$username': typeof ProfileUsernameRouteWithChildren
   '/share/$username': typeof ShareUsernameRoute
   '/verdict/$username': typeof VerdictUsernameRoute
@@ -99,6 +106,7 @@ export interface FileRoutesByTo {
   '/search': typeof SearchRoute
   '/signup': typeof SignupRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
+  '/film/$imdbId': typeof FilmImdbIdRoute
   '/profile/$username': typeof ProfileUsernameRouteWithChildren
   '/share/$username': typeof ShareUsernameRoute
   '/verdict/$username': typeof VerdictUsernameRoute
@@ -113,6 +121,7 @@ export interface FileRoutesById {
   '/search': typeof SearchRoute
   '/signup': typeof SignupRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
+  '/film/$imdbId': typeof FilmImdbIdRoute
   '/profile/$username': typeof ProfileUsernameRouteWithChildren
   '/share/$username': typeof ShareUsernameRoute
   '/verdict/$username': typeof VerdictUsernameRoute
@@ -128,6 +137,7 @@ export interface FileRouteTypes {
     | '/search'
     | '/signup'
     | '/sitemap.xml'
+    | '/film/$imdbId'
     | '/profile/$username'
     | '/share/$username'
     | '/verdict/$username'
@@ -141,6 +151,7 @@ export interface FileRouteTypes {
     | '/search'
     | '/signup'
     | '/sitemap.xml'
+    | '/film/$imdbId'
     | '/profile/$username'
     | '/share/$username'
     | '/verdict/$username'
@@ -154,6 +165,7 @@ export interface FileRouteTypes {
     | '/search'
     | '/signup'
     | '/sitemap.xml'
+    | '/film/$imdbId'
     | '/profile/$username'
     | '/share/$username'
     | '/verdict/$username'
@@ -168,6 +180,7 @@ export interface RootRouteChildren {
   SearchRoute: typeof SearchRoute
   SignupRoute: typeof SignupRoute
   SitemapDotxmlRoute: typeof SitemapDotxmlRoute
+  FilmImdbIdRoute: typeof FilmImdbIdRoute
   ProfileUsernameRoute: typeof ProfileUsernameRouteWithChildren
   ShareUsernameRoute: typeof ShareUsernameRoute
   VerdictUsernameRoute: typeof VerdictUsernameRoute
@@ -238,6 +251,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ProfileUsernameRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/film/$imdbId': {
+      id: '/film/$imdbId'
+      path: '/film/$imdbId'
+      fullPath: '/film/$imdbId'
+      preLoaderRoute: typeof FilmImdbIdRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/profile/$username/following': {
       id: '/profile/$username/following'
       path: '/following'
@@ -276,6 +296,7 @@ const rootRouteChildren: RootRouteChildren = {
   SearchRoute: SearchRoute,
   SignupRoute: SignupRoute,
   SitemapDotxmlRoute: SitemapDotxmlRoute,
+  FilmImdbIdRoute: FilmImdbIdRoute,
   ProfileUsernameRoute: ProfileUsernameRouteWithChildren,
   ShareUsernameRoute: ShareUsernameRoute,
   VerdictUsernameRoute: VerdictUsernameRoute,

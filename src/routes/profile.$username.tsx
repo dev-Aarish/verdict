@@ -361,7 +361,11 @@ function ProfilePage() {
                 if (!movie) return null;
                 return (
                   <div key={entry.id} className="group relative flex flex-col">
-                    <div className="relative aspect-2/3 overflow-hidden bg-velvet ring-1 ring-white/5">
+                    <Link
+                      to="/film/$imdbId"
+                      params={{ imdbId: movie.imdbId }}
+                      className="relative aspect-2/3 overflow-hidden bg-velvet ring-1 ring-white/5 block"
+                    >
                       <img
                         src={posterSrc(movie.posterUrl)}
                         alt={movie.title}
@@ -376,11 +380,15 @@ function ProfilePage() {
                           {entry.rating}
                         </Stamp>
                       </div>
-                    </div>
+                    </Link>
                     <div className="mt-2 flex-1">
-                      <h3 className="text-sm font-medium text-paper leading-tight">
+                      <Link
+                        to="/film/$imdbId"
+                        params={{ imdbId: movie.imdbId }}
+                        className="text-sm font-medium text-paper leading-tight hover:text-brass hover:underline transition-colors"
+                      >
                         {movie.title}
-                      </h3>
+                      </Link>
                       <p className="text-caption text-dust text-xs">
                         {movie.year} · <span className="text-brass">{entry.rating}/10</span>
                       </p>

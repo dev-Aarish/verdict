@@ -286,7 +286,11 @@ function SearchPage() {
                   const existingRating = watchedMap[movie.imdbID];
                   return (
                     <div key={movie.imdbID} className="group flex flex-col">
-                      <div className="aspect-2/3 overflow-hidden bg-velvet ring-1 ring-white/5">
+                      <Link
+                        to="/film/$imdbId"
+                        params={{ imdbId: movie.imdbID }}
+                        className="aspect-2/3 overflow-hidden bg-velvet ring-1 ring-white/5 block"
+                      >
                         <img
                           src={posterSrc(movie.Poster)}
                           alt={movie.Title}
@@ -296,11 +300,15 @@ function SearchPage() {
                             e.currentTarget.src = "/film-placeholder.svg";
                           }}
                         />
-                      </div>
+                      </Link>
                       <div className="mt-2 flex-1">
-                        <h3 className="text-sm font-medium text-paper leading-tight">
+                        <Link
+                          to="/film/$imdbId"
+                          params={{ imdbId: movie.imdbID }}
+                          className="text-sm font-medium text-paper leading-tight hover:text-brass hover:underline transition-colors"
+                        >
                           {movie.Title}
-                        </h3>
+                        </Link>
                         <p className="text-caption text-dust text-xs">{movie.Year}</p>
                       </div>
                       {user && (

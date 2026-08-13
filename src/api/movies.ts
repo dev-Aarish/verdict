@@ -1,4 +1,5 @@
 import { apiFetch } from "./client";
+import type { FilmPage } from "@/lib/types";
 
 export function searchMoviesFn({ data }: { data: { query: string; page?: number } }) {
   const params = new URLSearchParams({ q: data.query });
@@ -6,7 +7,18 @@ export function searchMoviesFn({ data }: { data: { query: string; page?: number 
   return apiFetch<any>(`/movies/search?${params}`);
 }
 
-export function addToWatchedFn({ data }: { data: { imdbId: string; title: string; year: string; posterUrl: string | null; rating: number; note?: string } }) {
+export function addToWatchedFn({
+  data,
+}: {
+  data: {
+    imdbId: string;
+    title: string;
+    year: string;
+    posterUrl: string | null;
+    rating: number;
+    note?: string;
+  };
+}) {
   return apiFetch<any>("/movies/watched", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
@@ -26,4 +38,8 @@ export function removeWatchedFn({ data }: { data: { entryId: string } }) {
 
 export function getUserWatchedFn({ data }: { data: { username: string } }) {
   return apiFetch<any>(`/movies/user/${data.username}`);
+}
+
+export function getFilmFn({ data }: { data: { imdbId: string } }) {
+  return apiFetch<FilmPage>(`/movies/film/${data.imdbId}`);
 }

@@ -26,6 +26,29 @@ export interface Movie {
   genres: string | null;
   country: string | null;
   director: string | null;
+  plot: string | null;
+  actors: string | null;
+}
+
+export interface CommunityRating {
+  user: UserSafe | null;
+  rating: number;
+  note: string | null;
+  watchedAt: Date | null;
+}
+
+export interface FilmStats {
+  total: number;
+  average: number | null;
+  freshCount: number;
+  freshPercent: number | null;
+  status: "fresh" | "rotten" | "mixed" | null;
+}
+
+export interface FilmPage {
+  movie: Movie;
+  community: CommunityRating[];
+  stats: FilmStats;
 }
 
 export interface WatchedEntry {

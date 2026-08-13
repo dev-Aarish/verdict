@@ -19,6 +19,8 @@ export const movies = pgTable("movies", {
   genres: text("genres"),
   country: text("country"),
   director: text("director"),
+  plot: text("plot"),
+  actors: text("actors"),
 });
 
 export const watchedEntries = pgTable("watched_entries", {
