@@ -18,6 +18,7 @@ import { Route as IndexRouteImport } from './routes/index'
 import { Route as VerdictUsernameRouteImport } from './routes/verdict.$username'
 import { Route as ShareUsernameRouteImport } from './routes/share.$username'
 import { Route as ProfileUsernameRouteImport } from './routes/profile.$username'
+import { Route as OgUsernameRouteImport } from './routes/og.$username'
 import { Route as FilmImdbIdRouteImport } from './routes/film.$imdbId'
 import { Route as ProfileUsernameIndexRouteImport } from './routes/profile.$username.index'
 import { Route as ProfileUsernameFollowingRouteImport } from './routes/profile.$username.following'
@@ -68,6 +69,11 @@ const ProfileUsernameRoute = ProfileUsernameRouteImport.update({
   path: '/profile/$username',
   getParentRoute: () => rootRouteImport,
 } as any)
+const OgUsernameRoute = OgUsernameRouteImport.update({
+  id: '/og/$username',
+  path: '/og/$username',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const FilmImdbIdRoute = FilmImdbIdRouteImport.update({
   id: '/film/$imdbId',
   path: '/film/$imdbId',
@@ -99,6 +105,7 @@ export interface FileRoutesByFullPath {
   '/signup': typeof SignupRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
   '/film/$imdbId': typeof FilmImdbIdRoute
+  '/og/$username': typeof OgUsernameRoute
   '/profile/$username': typeof ProfileUsernameRouteWithChildren
   '/share/$username': typeof ShareUsernameRoute
   '/verdict/$username': typeof VerdictUsernameRoute
@@ -114,6 +121,7 @@ export interface FileRoutesByTo {
   '/signup': typeof SignupRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
   '/film/$imdbId': typeof FilmImdbIdRoute
+  '/og/$username': typeof OgUsernameRoute
   '/share/$username': typeof ShareUsernameRoute
   '/verdict/$username': typeof VerdictUsernameRoute
   '/profile/$username/followers': typeof ProfileUsernameFollowersRoute
@@ -129,6 +137,7 @@ export interface FileRoutesById {
   '/signup': typeof SignupRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
   '/film/$imdbId': typeof FilmImdbIdRoute
+  '/og/$username': typeof OgUsernameRoute
   '/profile/$username': typeof ProfileUsernameRouteWithChildren
   '/share/$username': typeof ShareUsernameRoute
   '/verdict/$username': typeof VerdictUsernameRoute
@@ -146,6 +155,7 @@ export interface FileRouteTypes {
     | '/signup'
     | '/sitemap.xml'
     | '/film/$imdbId'
+    | '/og/$username'
     | '/profile/$username'
     | '/share/$username'
     | '/verdict/$username'
@@ -161,6 +171,7 @@ export interface FileRouteTypes {
     | '/signup'
     | '/sitemap.xml'
     | '/film/$imdbId'
+    | '/og/$username'
     | '/share/$username'
     | '/verdict/$username'
     | '/profile/$username/followers'
@@ -175,6 +186,7 @@ export interface FileRouteTypes {
     | '/signup'
     | '/sitemap.xml'
     | '/film/$imdbId'
+    | '/og/$username'
     | '/profile/$username'
     | '/share/$username'
     | '/verdict/$username'
@@ -191,6 +203,7 @@ export interface RootRouteChildren {
   SignupRoute: typeof SignupRoute
   SitemapDotxmlRoute: typeof SitemapDotxmlRoute
   FilmImdbIdRoute: typeof FilmImdbIdRoute
+  OgUsernameRoute: typeof OgUsernameRoute
   ProfileUsernameRoute: typeof ProfileUsernameRouteWithChildren
   ShareUsernameRoute: typeof ShareUsernameRoute
   VerdictUsernameRoute: typeof VerdictUsernameRoute
@@ -261,6 +274,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ProfileUsernameRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/og/$username': {
+      id: '/og/$username'
+      path: '/og/$username'
+      fullPath: '/og/$username'
+      preLoaderRoute: typeof OgUsernameRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/film/$imdbId': {
       id: '/film/$imdbId'
       path: '/film/$imdbId'
@@ -316,6 +336,7 @@ const rootRouteChildren: RootRouteChildren = {
   SignupRoute: SignupRoute,
   SitemapDotxmlRoute: SitemapDotxmlRoute,
   FilmImdbIdRoute: FilmImdbIdRoute,
+  OgUsernameRoute: OgUsernameRoute,
   ProfileUsernameRoute: ProfileUsernameRouteWithChildren,
   ShareUsernameRoute: ShareUsernameRoute,
   VerdictUsernameRoute: VerdictUsernameRoute,

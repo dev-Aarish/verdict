@@ -11,22 +11,32 @@ import { toPng } from "html-to-image";
 import { toast } from "sonner";
 
 export const Route = createFileRoute("/share/$username")({
-  head: ({ params }) => ({
-    meta: [
-      { title: `${params.username}'s Verdict card` },
-      {
-        name: "description",
-        content: `Share ${params.username}'s Taste Score.`,
-      },
-      { property: "og:title", content: `${params.username}'s Verdict Card` },
-      {
-        property: "og:description",
-        content: `${params.username} has a Taste Score. See their film verdict card.`,
-      },
-      { property: "og:type", content: "website" },
-      { name: "twitter:card", content: "summary_large_image" },
-    ],
-  }),
+  head: ({ params }) => {
+    const siteUrl =
+      typeof window === "undefined"
+        ? process.env.APP_URL || import.meta.env.VITE_SITE_URL || ""
+        : "";
+    const ogImage = `${siteUrl}/og/${params.username}`;
+    return {
+      meta: [
+        { title: `${params.username}'s Verdict card` },
+        {
+          name: "description",
+          content: `Share ${params.username}'s Taste Score.`,
+        },
+        { property: "og:title", content: `${params.username}'s Verdict Card` },
+        {
+          property: "og:description",
+          content: `${params.username} has a Taste Score. See their film verdict card.`,
+        },
+        { property: "og:type", content: "website" },
+        { property: "og:image", content: ogImage },
+        { name: "twitter:card", content: "summary_large_image" },
+        { name: "twitter:image", content: ogImage },
+        { property: "og:url", content: `${siteUrl}/share/${params.username}` },
+      ],
+    };
+  },
   component: SharePage,
 });
 
