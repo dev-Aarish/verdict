@@ -4,7 +4,12 @@ import { TopBar } from "@/components/TopBar";
 import { TasteMatchCard } from "@/components/TasteMatchCard";
 import { GenreRadar } from "@/components/GenreRadar";
 import { computeGenreDna } from "@/lib/genre-dna";
-import { getUserWatchedFn, removeWatchedFn, addToWatchedFn } from "@/api/movies";
+import {
+  getUserWatchedFn,
+  removeWatchedFn,
+  addToWatchedFn,
+  updateWatchedRatingFn,
+} from "@/api/movies";
 import { getUserWatchlistFn, removeWatchlistFn } from "@/api/watchlist";
 import { getTasteScoreFn, type TasteBreakdown } from "@/api/taste-score";
 import { getTasteMatchFn, type TasteMatch } from "@/api/taste-match";
@@ -75,6 +80,10 @@ function ProfilePage() {
   const [logRating, setLogRating] = useState([7]);
   const [logging, setLogging] = useState(false);
   const [logError, setLogError] = useState<string | null>(null);
+  const [editEntry, setEditEntry] = useState<WatchedEntryWithMovie | null>(null);
+  const [editRating, setEditRating] = useState([7]);
+  const [editing, setEditing] = useState(false);
+  const [editError, setEditError] = useState<string | null>(null);
   const PAGE_SIZE = 20;
 
   useEffect(() => {
@@ -127,6 +136,27 @@ function ProfilePage() {
       router.invalidate();
     } catch (e) {
       console.error("Failed to remove", e);
+    }
+  };
+
+  const handleUpdateRating = async () => {
+    if (!editEntry) return;
+    setEditing(true);
+    setEditError(null);
+    try {
+      await updateWatchedRatingFn({ data: { entryId: editEntry.id, rating: editRating[0] } });
+      setEntries(
+        (prev) =>
+          prev?.map((e) => (e.id === editEntry.id ? { ...e, rating: editRating[0] } : e)) || [],
+      );
+      setEditEntry(null);
+      setEditRating([7]);
+      router.invalidate();
+    } catch (e: unknown) {
+      const msg = e instanceof Error ? e.message : "Failed to update rating";
+      setEditError(msg);
+    } finally {
+      setEditing(false);
     }
   };
 
@@ -487,32 +517,47 @@ function ProfilePage() {
                       )}
                     </div>
                     {isOwn && (
-                      <AlertDialog>
-                        <AlertDialogTrigger asChild>
-                          <button className="mt-1 w-full py-1 border border-marquee-red/40 text-marquee-red text-caption text-[0.6rem] opacity-0 group-hover:opacity-100 transition-opacity hover:bg-marquee-red/10 cursor-pointer">
-                            Remove
-                          </button>
-                        </AlertDialogTrigger>
-                        <AlertDialogContent className="bg-velvet border-white/10">
-                          <AlertDialogHeader>
-                            <AlertDialogTitle className="text-paper">Remove film?</AlertDialogTitle>
-                            <AlertDialogDescription className="text-dust">
-                              Remove "{movie.title}" from your watched list? This cannot be undone.
-                            </AlertDialogDescription>
-                          </AlertDialogHeader>
-                          <AlertDialogFooter>
-                            <AlertDialogCancel className="border-white/10 text-paper bg-transparent hover:bg-white/5">
-                              Cancel
-                            </AlertDialogCancel>
-                            <AlertDialogAction
-                              onClick={() => handleRemove(entry.id)}
-                              className="bg-marquee-red text-white hover:bg-marquee-red/80"
-                            >
+                      <div className="mt-1 flex gap-1">
+                        <button
+                          onClick={() => {
+                            setEditEntry(entry);
+                            setEditRating([entry.rating]);
+                            setEditError(null);
+                          }}
+                          className="flex-1 py-1 border border-brass/50 text-brass text-caption text-[0.6rem] opacity-0 group-hover:opacity-100 transition-opacity hover:bg-brass hover:text-ink cursor-pointer"
+                        >
+                          Rate
+                        </button>
+                        <AlertDialog>
+                          <AlertDialogTrigger asChild>
+                            <button className="flex-1 py-1 border border-marquee-red/40 text-marquee-red text-caption text-[0.6rem] opacity-0 group-hover:opacity-100 transition-opacity hover:bg-marquee-red/10 cursor-pointer">
                               Remove
-                            </AlertDialogAction>
-                          </AlertDialogFooter>
-                        </AlertDialogContent>
-                      </AlertDialog>
+                            </button>
+                          </AlertDialogTrigger>
+                          <AlertDialogContent className="bg-velvet border-white/10">
+                            <AlertDialogHeader>
+                              <AlertDialogTitle className="text-paper">
+                                Remove film?
+                              </AlertDialogTitle>
+                              <AlertDialogDescription className="text-dust">
+                                Remove "{movie.title}" from your watched list? This cannot be
+                                undone.
+                              </AlertDialogDescription>
+                            </AlertDialogHeader>
+                            <AlertDialogFooter>
+                              <AlertDialogCancel className="border-white/10 text-paper bg-transparent hover:bg-white/5">
+                                Cancel
+                              </AlertDialogCancel>
+                              <AlertDialogAction
+                                onClick={() => handleRemove(entry.id)}
+                                className="bg-marquee-red text-white hover:bg-marquee-red/80"
+                              >
+                                Remove
+                              </AlertDialogAction>
+                            </AlertDialogFooter>
+                          </AlertDialogContent>
+                        </AlertDialog>
+                      </div>
                     )}
                   </div>
                 );
@@ -638,7 +683,9 @@ function ProfilePage() {
       <Dialog open={!!logMovie} onOpenChange={(open) => !open && setLogMovie(null)}>
         <DialogContent className="border border-dust/30 bg-velvet max-w-sm">
           <DialogHeader>
-            <DialogTitle className="text-card-title text-paper">{logMovie?.movie?.title}</DialogTitle>
+            <DialogTitle className="text-card-title text-paper">
+              {logMovie?.movie?.title}
+            </DialogTitle>
             <DialogDescription className="text-caption text-dust">
               {logMovie?.movie?.year} · Log it to your watched list
             </DialogDescription>
@@ -690,6 +737,70 @@ function ProfilePage() {
                   className="flex-1 bg-brass py-2 text-caption text-ink text-xs hover:bg-brass/90 transition-colors disabled:opacity-50 cursor-pointer"
                 >
                   {logging ? "Logging..." : "Log it"}
+                </button>
+              </div>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={!!editEntry} onOpenChange={(open) => !open && setEditEntry(null)}>
+        <DialogContent className="border border-dust/30 bg-velvet max-w-sm">
+          <DialogHeader>
+            <DialogTitle className="text-card-title text-paper">
+              {editEntry?.movie?.title}
+            </DialogTitle>
+            <DialogDescription className="text-caption text-dust">
+              {editEntry?.movie?.year} · Update your rating
+            </DialogDescription>
+          </DialogHeader>
+
+          {editEntry?.movie && (
+            <div className="flex flex-col items-center gap-6 py-4">
+              <div className="h-48 w-32 overflow-hidden bg-ink ring-1 ring-white/10">
+                <img
+                  src={posterSrc(editEntry.movie.posterUrl)}
+                  alt={editEntry.movie.title}
+                  className="h-full w-full object-cover"
+                  onError={(e) => {
+                    e.currentTarget.src = "/film-placeholder.svg";
+                  }}
+                />
+              </div>
+
+              <div className="w-full max-w-xs">
+                <div className="flex items-center justify-between mb-2">
+                  <span className="text-caption text-dust text-xs">Your rating</span>
+                  <span className="text-score text-brass text-4xl">{editRating[0]}</span>
+                </div>
+                <Slider
+                  value={editRating}
+                  onValueChange={(v) => setEditRating(v)}
+                  min={1}
+                  max={10}
+                  step={1}
+                  className="[&_[data-orientation=horizontal]]:h-2"
+                />
+                <div className="flex justify-between text-caption text-dust text-[0.6rem] mt-1">
+                  <span>Miss</span>
+                  <span>Masterpiece</span>
+                </div>
+              </div>
+
+              {editError && <p className="text-caption text-marquee-red text-xs">{editError}</p>}
+
+              <div className="flex gap-3 w-full">
+                <DialogClose asChild>
+                  <button className="flex-1 border border-dust/40 py-2 text-caption text-dust text-xs hover:text-paper transition-colors cursor-pointer">
+                    Cancel
+                  </button>
+                </DialogClose>
+                <button
+                  onClick={handleUpdateRating}
+                  disabled={editing}
+                  className="flex-1 bg-brass py-2 text-caption text-ink text-xs hover:bg-brass/90 transition-colors disabled:opacity-50 cursor-pointer"
+                >
+                  {editing ? "Saving..." : "Update rating"}
                 </button>
               </div>
             </div>

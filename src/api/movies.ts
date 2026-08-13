@@ -36,6 +36,14 @@ export function removeWatchedFn({ data }: { data: { entryId: string } }) {
   });
 }
 
+export function updateWatchedRatingFn({ data }: { data: { entryId: string; rating: number } }) {
+  return apiFetch<any>(`/movies/watched/${data.entryId}`, {
+    method: "PATCH",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ rating: data.rating }),
+  });
+}
+
 export function getUserWatchedFn({ data }: { data: { username: string } }) {
   return apiFetch<any>(`/movies/user/${data.username}`);
 }

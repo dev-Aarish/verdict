@@ -265,6 +265,41 @@ moviesRouter.delete("/watched/:entryId", requireAuth, async (req: AuthRequest, r
   res.json({ success: true });
 });
 
+// PATCH /watched/:entryId (requireAuth)
+moviesRouter.patch("/watched/:entryId", requireAuth, async (req: AuthRequest, res: Response) => {
+  const entryId = req.params.entryId as string;
+  const userId = req.user!.id;
+  const { rating } = req.body;
+
+  const entry = await db
+    .select()
+    .from(watchedEntries)
+    .where(eq(watchedEntries.id, entryId))
+    .then((r) => r[0]);
+
+  if (!entry || entry.userId !== userId) {
+    res.status(403).json({ error: "Not authorized" });
+    return;
+  }
+
+  const ratingVal = Number(rating);
+  if (!Number.isInteger(ratingVal) || ratingVal < 1 || ratingVal > 10) {
+    res.status(400).json({ error: "Rating must be an integer between 1 and 10" });
+    return;
+  }
+
+  const updated = await db
+    .update(watchedEntries)
+    .set({ rating: ratingVal })
+    .where(eq(watchedEntries.id, entryId))
+    .returning()
+    .then((r) => r[0]);
+
+  await invalidateTasteScore(userId);
+
+  res.json({ entry: updated });
+});
+
 // GET /user/:username (public)
 moviesRouter.get("/user/:username", async (req: Request, res: Response) => {
   const username = req.params.username as string;
