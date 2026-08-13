@@ -18,6 +18,7 @@ export const Route = createFileRoute("/profile/$username/followers")({
 function FollowersPage() {
   const { username } = Route.useParams();
   const { user } = useUser();
+  const isOwn = user?.username === username;
   const [followers, setFollowers] = useState<User[]>([]);
   const [loading, setLoading] = useState(true);
   const [followState, setFollowState] = useState<Record<string, boolean>>({});
@@ -65,10 +66,12 @@ function FollowersPage() {
           params={{ username }}
           className="text-caption text-brass/70 hover:text-brass transition-colors"
         >
-          ← Back to {username}'s profile
+          {isOwn ? "← Back to your profile" : `← Back to ${username}'s profile`}
         </Link>
 
-        <h1 className="text-section text-paper mt-6">{username}'s Followers</h1>
+        <h1 className="text-section text-paper mt-6">
+          {isOwn ? "Your Followers" : `${username}'s Followers`}
+        </h1>
 
         {loading ? (
           <p className="text-caption text-dust mt-10">Loading...</p>

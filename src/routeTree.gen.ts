@@ -19,6 +19,7 @@ import { Route as VerdictUsernameRouteImport } from './routes/verdict.$username'
 import { Route as ShareUsernameRouteImport } from './routes/share.$username'
 import { Route as ProfileUsernameRouteImport } from './routes/profile.$username'
 import { Route as FilmImdbIdRouteImport } from './routes/film.$imdbId'
+import { Route as ProfileUsernameIndexRouteImport } from './routes/profile.$username.index'
 import { Route as ProfileUsernameFollowingRouteImport } from './routes/profile.$username.following'
 import { Route as ProfileUsernameFollowersRouteImport } from './routes/profile.$username.followers'
 
@@ -72,6 +73,11 @@ const FilmImdbIdRoute = FilmImdbIdRouteImport.update({
   path: '/film/$imdbId',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ProfileUsernameIndexRoute = ProfileUsernameIndexRouteImport.update({
+  id: '/',
+  path: '/',
+  getParentRoute: () => ProfileUsernameRoute,
+} as any)
 const ProfileUsernameFollowingRoute =
   ProfileUsernameFollowingRouteImport.update({
     id: '/following',
@@ -98,6 +104,7 @@ export interface FileRoutesByFullPath {
   '/verdict/$username': typeof VerdictUsernameRoute
   '/profile/$username/followers': typeof ProfileUsernameFollowersRoute
   '/profile/$username/following': typeof ProfileUsernameFollowingRoute
+  '/profile/$username/': typeof ProfileUsernameIndexRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -107,11 +114,11 @@ export interface FileRoutesByTo {
   '/signup': typeof SignupRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
   '/film/$imdbId': typeof FilmImdbIdRoute
-  '/profile/$username': typeof ProfileUsernameRouteWithChildren
   '/share/$username': typeof ShareUsernameRoute
   '/verdict/$username': typeof VerdictUsernameRoute
   '/profile/$username/followers': typeof ProfileUsernameFollowersRoute
   '/profile/$username/following': typeof ProfileUsernameFollowingRoute
+  '/profile/$username': typeof ProfileUsernameIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -127,6 +134,7 @@ export interface FileRoutesById {
   '/verdict/$username': typeof VerdictUsernameRoute
   '/profile/$username/followers': typeof ProfileUsernameFollowersRoute
   '/profile/$username/following': typeof ProfileUsernameFollowingRoute
+  '/profile/$username/': typeof ProfileUsernameIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -143,6 +151,7 @@ export interface FileRouteTypes {
     | '/verdict/$username'
     | '/profile/$username/followers'
     | '/profile/$username/following'
+    | '/profile/$username/'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -152,11 +161,11 @@ export interface FileRouteTypes {
     | '/signup'
     | '/sitemap.xml'
     | '/film/$imdbId'
-    | '/profile/$username'
     | '/share/$username'
     | '/verdict/$username'
     | '/profile/$username/followers'
     | '/profile/$username/following'
+    | '/profile/$username'
   id:
     | '__root__'
     | '/'
@@ -171,6 +180,7 @@ export interface FileRouteTypes {
     | '/verdict/$username'
     | '/profile/$username/followers'
     | '/profile/$username/following'
+    | '/profile/$username/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -258,6 +268,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof FilmImdbIdRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/profile/$username/': {
+      id: '/profile/$username/'
+      path: '/'
+      fullPath: '/profile/$username/'
+      preLoaderRoute: typeof ProfileUsernameIndexRouteImport
+      parentRoute: typeof ProfileUsernameRoute
+    }
     '/profile/$username/following': {
       id: '/profile/$username/following'
       path: '/following'
@@ -278,11 +295,13 @@ declare module '@tanstack/react-router' {
 interface ProfileUsernameRouteChildren {
   ProfileUsernameFollowersRoute: typeof ProfileUsernameFollowersRoute
   ProfileUsernameFollowingRoute: typeof ProfileUsernameFollowingRoute
+  ProfileUsernameIndexRoute: typeof ProfileUsernameIndexRoute
 }
 
 const ProfileUsernameRouteChildren: ProfileUsernameRouteChildren = {
   ProfileUsernameFollowersRoute: ProfileUsernameFollowersRoute,
   ProfileUsernameFollowingRoute: ProfileUsernameFollowingRoute,
+  ProfileUsernameIndexRoute: ProfileUsernameIndexRoute,
 }
 
 const ProfileUsernameRouteWithChildren = ProfileUsernameRoute._addFileChildren(
