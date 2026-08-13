@@ -2,6 +2,8 @@ import { createFileRoute, Link, useRouter } from "@tanstack/react-router";
 import { Stamp } from "@/components/Stamp";
 import { TopBar } from "@/components/TopBar";
 import { TasteMatchCard } from "@/components/TasteMatchCard";
+import { GenreRadar } from "@/components/GenreRadar";
+import { computeGenreDna } from "@/lib/genre-dna";
 import { getUserWatchedFn, removeWatchedFn } from "@/api/movies";
 import { getUserWatchlistFn, removeWatchlistFn } from "@/api/watchlist";
 import { getTasteScoreFn, type TasteBreakdown } from "@/api/taste-score";
@@ -136,6 +138,7 @@ function ProfilePage() {
   }, []);
 
   const filmCount = entries?.length || 0;
+  const dna = entries && entries.length > 0 ? computeGenreDna(entries) : null;
   const avgRating =
     entries && entries.length > 0
       ? (entries.reduce((sum, e) => sum + e.rating, 0) / entries.length).toFixed(1)
@@ -271,28 +274,36 @@ function ProfilePage() {
 
         {!isOwn && user && tasteMatch && <TasteMatchCard username={username} match={tasteMatch} />}
 
-        {tasteScore && (
-          <div className="hairline mt-10 pt-8 w-full max-w-md mx-auto">
-            <div className="flex items-center justify-center gap-8 mb-6">
-              <div className="flex flex-col items-center">
-                <span className="text-[2.5rem] font-bold text-brass leading-none">
-                  {tasteScore.score}
-                </span>
-                <span className="text-caption text-dust mt-1">Taste Score</span>
-              </div>
-              <div className="flex gap-6">
-                {(
-                  [
-                    { label: "Diversity", value: tasteScore.breakdown.diversity },
-                    { label: "Obscurity", value: tasteScore.breakdown.obscurity },
-                    { label: "Consistency", value: tasteScore.breakdown.consistency },
-                  ] as const
-                ).map((item) => (
-                  <div key={item.label} className="flex flex-col items-center">
-                    <span className="text-lg font-semibold text-brass">{item.value}</span>
-                    <span className="text-caption text-dust text-xs">{item.label}</span>
+        {dna && (
+          <div className="hairline mt-10 pt-8 w-full max-w-2xl mx-auto">
+            <div className="flex flex-col items-center justify-center gap-10 md:flex-row md:gap-14">
+              {tasteScore && (
+                <div className="flex items-center justify-center gap-8">
+                  <div className="flex flex-col items-center">
+                    <span className="text-[2.5rem] font-bold text-brass leading-none">
+                      {tasteScore.score}
+                    </span>
+                    <span className="text-caption text-dust mt-1">Taste Score</span>
                   </div>
-                ))}
+                  <div className="flex gap-6">
+                    {(
+                      [
+                        { label: "Diversity", value: tasteScore.breakdown.diversity },
+                        { label: "Obscurity", value: tasteScore.breakdown.obscurity },
+                        { label: "Consistency", value: tasteScore.breakdown.consistency },
+                      ] as const
+                    ).map((item) => (
+                      <div key={item.label} className="flex flex-col items-center">
+                        <span className="text-lg font-semibold text-brass">{item.value}</span>
+                        <span className="text-caption text-dust text-xs">{item.label}</span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+              <div className="flex flex-col items-center">
+                <span className="text-caption mb-3 text-dust">Genre DNA</span>
+                <GenreRadar dna={dna} size={190} />
               </div>
             </div>
           </div>

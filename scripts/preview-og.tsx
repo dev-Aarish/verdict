@@ -9,9 +9,13 @@ import React from "react";
 import { ImageResponse } from "@vercel/og";
 import { writeFileSync } from "node:fs";
 import { OgCard, getFonts, clampUsername } from "../src/routes/-og-card";
+import { computeGenreDna } from "../src/lib/genre-dna";
 
 const [usernameArg, outArg] = process.argv.slice(2);
-const outPath = outArg === "--out" ? process.argv[process.argv.length - 1] : `preview-${usernameArg ?? "demo"}.png`;
+const outPath =
+  outArg === "--out"
+    ? process.argv[process.argv.length - 1]
+    : `preview-${usernameArg ?? "demo"}.png`;
 
 const BACKEND = process.env.API_URL || "http://localhost:4000";
 
@@ -29,6 +33,7 @@ async function demoData() {
     ],
     quote: "They film every frame like it's the last one.",
     quoteFrom: "bob",
+    dna: { action: 32, drama: 78, comedy: 41, horror: 24, thriller: 51, mystery: 44 },
   };
 }
 
@@ -37,9 +42,13 @@ async function liveData(username: string) {
     return fetch(`${BACKEND}/api${p}`).then((r) => (r.ok ? r.json() : null));
   }
   const [watched, score, v] = await Promise.all([
-    j<{ user: unknown; entries: { movie?: { title?: string; year?: string }; rating: number }[] }>(
-      `/movies/user/${username}`,
-    ),
+    j<{
+      user: unknown;
+      entries: {
+        movie?: { title?: string; year?: string; genres?: string | null };
+        rating: number;
+      }[];
+    }>(`/movies/user/${username}`),
     j<{ score?: number } | null>(`/users/${username}/taste-score`),
     j<{ verdicts?: { comment?: string; fromUser?: { username?: string } }[] }>(
       `/verdicts/user/${username}`,
@@ -47,6 +56,10 @@ async function liveData(username: string) {
   ]);
   if (!watched?.user) throw new Error(`user "${username}" not found via ${BACKEND}`);
   const first = v?.verdicts?.[0];
+  const entries = watched.entries as {
+    movie?: { title?: string; year?: string; genres?: string | null } | null;
+    rating: number;
+  }[];
   return {
     username: clampUsername(username),
     score: Math.round(score?.score ?? 0),
@@ -58,6 +71,7 @@ async function liveData(username: string) {
     })),
     quote: first?.comment || null,
     quoteFrom: first?.fromUser?.username || null,
+    dna: entries.length > 0 ? computeGenreDna(entries) : null,
   };
 }
 

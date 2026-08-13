@@ -2,6 +2,8 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { Logo } from "@/components/Logo";
 import { Stamp } from "@/components/Stamp";
 import { TopBar } from "@/components/TopBar";
+import { GenreRadar } from "@/components/GenreRadar";
+import { computeGenreDna } from "@/lib/genre-dna";
 import { getUserWatchedFn } from "@/api/movies";
 import { getTasteScoreFn } from "@/api/taste-score";
 import { getUserVerdictsFn } from "@/api/verdicts";
@@ -134,6 +136,7 @@ function SharePage() {
   }));
   const tasteScore = data.score?.score || 0;
   const filmCount = data.watched.entries.length;
+  const dna = filmCount > 0 ? computeGenreDna(data.watched.entries) : null;
   const firstVerdict = data.verdicts[0];
 
   return (
@@ -193,10 +196,11 @@ function SharePage() {
               <div className="flex flex-col items-center text-center">
                 <p className="text-caption mb-3">The taste of</p>
                 <p className="text-card-title text-paper">@{username}</p>
-                <div className="mt-5">
+                <div className="mt-5 flex items-center justify-center gap-4">
                   <Stamp size="lg" rotation={-4} label="Taste Score" animate="settle">
                     {tasteScore}
                   </Stamp>
+                  {dna && <GenreRadar dna={dna} size={118} />}
                 </div>
                 {firstVerdict && (
                   <>

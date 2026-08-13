@@ -2,6 +2,9 @@
 // /og/:username server route and by the standalone render smoke-test.
 // (Files beginning with "-" are not treated as routes by TanStack.)
 
+import { GenreRadar } from "@/components/GenreRadar";
+import type { GenreDna } from "@/lib/genre-dna";
+
 // Brand palette — "Screening Room at Dusk" (oklch converted to hex).
 const INK = "#11131d"; // background
 const VELVET = "#1c1e2b"; // panels
@@ -19,6 +22,7 @@ export type OgData = {
   films: OgEntry[];
   quote: string | null;
   quoteFrom: string | null;
+  dna: GenreDna | null;
 };
 
 async function fetchFont(weightCss: string, family: string): Promise<ArrayBuffer> {
@@ -147,7 +151,7 @@ function ReelNumber({ n }: { n: number }) {
   );
 }
 
-export function OgCard({ username, score, filmCount, films, quote, quoteFrom }: OgData) {
+export function OgCard({ username, score, filmCount, films, quote, quoteFrom, dna }: OgData) {
   const width = 1200;
   const height = 630;
 
@@ -264,49 +268,78 @@ export function OgCard({ username, score, filmCount, films, quote, quoteFrom }: 
           >
             {`NOW SHOWING — ${filmCount} FILMS`}
           </span>
-          <div style={{ marginTop: 18, display: "flex", flexDirection: "column", gap: 12 }}>
-            {(films.length ? films : []).map((f, i) => (
-              <div
-                key={i}
-                style={{
-                  display: "flex",
-                  flexDirection: "row",
-                  alignItems: "baseline",
-                  width: 636,
-                  borderBottom: "1px solid rgba(116,113,108,0.28)",
-                  paddingBottom: 8,
-                  gap: 12,
-                }}
-              >
-                <span
+          <div style={{ marginTop: 18, display: "flex", flexDirection: "row", gap: 40 }}>
+            <div
+              style={{ display: "flex", flexDirection: "column", gap: 12, flex: 1, minWidth: 0 }}
+            >
+              {(films.length ? films : []).map((f, i) => (
+                <div
+                  key={i}
                   style={{
-                    fontFamily: "JetBrainsMono",
-                    fontWeight: 500,
-                    fontSize: 17,
-                    color: PAPER,
-                    whiteSpace: "nowrap",
-                    overflow: "hidden",
-                    textOverflow: "ellipsis",
+                    display: "flex",
+                    flexDirection: "row",
+                    alignItems: "baseline",
+                    width: "100%",
+                    borderBottom: "1px solid rgba(116,113,108,0.28)",
+                    paddingBottom: 8,
+                    gap: 12,
                   }}
                 >
-                  {f.title}
-                </span>
-                <span style={{ fontFamily: "JetBrainsMono", fontSize: 15, color: DUST }}>
-                  {`· ${f.year}`}
-                </span>
+                  <span
+                    style={{
+                      fontFamily: "JetBrainsMono",
+                      fontWeight: 500,
+                      fontSize: 17,
+                      color: PAPER,
+                      whiteSpace: "nowrap",
+                      overflow: "hidden",
+                      textOverflow: "ellipsis",
+                    }}
+                  >
+                    {f.title}
+                  </span>
+                  <span style={{ fontFamily: "JetBrainsMono", fontSize: 15, color: DUST }}>
+                    {`· ${f.year}`}
+                  </span>
+                  <span
+                    style={{
+                      marginLeft: "auto",
+                      fontFamily: "JetBrainsMono",
+                      fontWeight: 500,
+                      fontSize: 17,
+                      color: BRASS,
+                    }}
+                  >
+                    {f.rating}
+                  </span>
+                </div>
+              ))}
+            </div>
+            {dna && (
+              <div
+                style={{
+                  display: "flex",
+                  flexDirection: "column",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  gap: 12,
+                  flexShrink: 0,
+                }}
+              >
+                <GenreRadar dna={dna} size={180} labelFont="JetBrainsMono" />
                 <span
                   style={{
-                    marginLeft: "auto",
                     fontFamily: "JetBrainsMono",
                     fontWeight: 500,
-                    fontSize: 17,
+                    fontSize: 13,
+                    letterSpacing: "0.34em",
                     color: BRASS,
                   }}
                 >
-                  {f.rating}
+                  GENRE DNA
                 </span>
               </div>
-            ))}
+            )}
           </div>
         </div>
 

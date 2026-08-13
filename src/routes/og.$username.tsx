@@ -5,6 +5,7 @@ import { getUserWatchedFn } from "@/api/movies";
 import { getTasteScoreFn } from "@/api/taste-score";
 import { getUserVerdictsFn } from "@/api/verdicts";
 import type { WatchedEntryWithMovie, VerdictWithUser } from "@/lib/types";
+import { computeGenreDna } from "@/lib/genre-dna";
 import { OgCard, getFonts, type OgData } from "./-og-card";
 
 function extractUsername(url: string): string {
@@ -53,6 +54,7 @@ async function serveOg(safeUsername: string) {
       })),
       quote: firstVerdict?.comment || null,
       quoteFrom: firstVerdict?.fromUser?.username || null,
+      dna: entries.length > 0 ? computeGenreDna(entries) : null,
     };
   } catch {
     return new Response("Server error", { status: 500 });
