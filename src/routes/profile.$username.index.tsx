@@ -4,7 +4,7 @@ import { TopBar } from "@/components/TopBar";
 import { TasteMatchCard } from "@/components/TasteMatchCard";
 import { GenreRadar } from "@/components/GenreRadar";
 import { computeGenreDna } from "@/lib/genre-dna";
-import { getUserWatchedFn, removeWatchedFn } from "@/api/movies";
+import { getUserWatchedFn, removeWatchedFn, addToWatchedFn } from "@/api/movies";
 import { getUserWatchlistFn, removeWatchlistFn } from "@/api/watchlist";
 import { getTasteScoreFn, type TasteBreakdown } from "@/api/taste-score";
 import { getTasteMatchFn, type TasteMatch } from "@/api/taste-match";
@@ -29,6 +29,15 @@ import {
   AlertDialogCancel,
   AlertDialogAction,
 } from "@/components/ui/alert-dialog";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+  DialogClose,
+} from "@/components/ui/dialog";
+import { Slider } from "@/components/ui/slider";
 
 export const Route = createFileRoute("/profile/$username/")({
   head: ({ params }) => ({
@@ -62,6 +71,10 @@ function ProfilePage() {
     null,
   );
   const [tasteMatch, setTasteMatch] = useState<TasteMatch | null>(null);
+  const [logMovie, setLogMovie] = useState<WatchlistEntryWithMovie | null>(null);
+  const [logRating, setLogRating] = useState([7]);
+  const [logging, setLogging] = useState(false);
+  const [logError, setLogError] = useState<string | null>(null);
   const PAGE_SIZE = 20;
 
   useEffect(() => {
@@ -124,6 +137,44 @@ function ProfilePage() {
       router.invalidate();
     } catch (e) {
       console.error("Failed to remove from watchlist", e);
+    }
+  };
+
+  const handleLogFromWatchlist = async () => {
+    if (!logMovie?.movie) return;
+    const movie = logMovie.movie;
+    setLogging(true);
+    setLogError(null);
+    try {
+      await addToWatchedFn({
+        data: {
+          imdbId: movie.imdbId,
+          title: movie.title,
+          year: movie.year || "",
+          posterUrl: movie.posterUrl,
+          rating: logRating[0],
+        },
+      });
+      // Once logged, it leaves the queue
+      await removeWatchlistFn({ data: { entryId: logMovie.id } });
+      setWatchlist((prev) => prev?.filter((e) => e.id !== logMovie.id) || []);
+      setLogMovie(null);
+      setLogRating([7]);
+      router.invalidate();
+    } catch (e: unknown) {
+      const msg = e instanceof Error ? e.message : "Failed to log movie";
+      if (msg.includes("already in watched")) {
+        // Already watched — just clear it from the queue
+        await removeWatchlistFn({ data: { entryId: logMovie.id } });
+        setWatchlist((prev) => prev?.filter((e) => e.id !== logMovie.id) || []);
+        setLogMovie(null);
+        setLogRating([7]);
+        router.invalidate();
+        return;
+      }
+      setLogError(msg);
+    } finally {
+      setLogging(false);
     }
   };
 
@@ -557,12 +608,24 @@ function ProfilePage() {
                       <p className="text-caption text-dust text-xs">{movie.year}</p>
                     </div>
                     {isOwn && (
-                      <button
-                        onClick={() => handleWatchlistRemove(entry.id)}
-                        className="mt-1 w-full py-1 border border-marquee-red/40 text-marquee-red text-caption text-[0.6rem] opacity-0 group-hover:opacity-100 transition-opacity hover:bg-marquee-red/10 cursor-pointer"
-                      >
-                        Remove
-                      </button>
+                      <div className="mt-1 flex gap-1">
+                        <button
+                          onClick={() => {
+                            setLogMovie(entry);
+                            setLogRating([7]);
+                            setLogError(null);
+                          }}
+                          className="flex-1 py-1 border border-brass/50 text-brass text-caption text-[0.6rem] opacity-0 group-hover:opacity-100 transition-opacity hover:bg-brass hover:text-ink cursor-pointer"
+                        >
+                          Log it
+                        </button>
+                        <button
+                          onClick={() => handleWatchlistRemove(entry.id)}
+                          className="flex-1 py-1 border border-marquee-red/40 text-marquee-red text-caption text-[0.6rem] opacity-0 group-hover:opacity-100 transition-opacity hover:bg-marquee-red/10 cursor-pointer"
+                        >
+                          Remove
+                        </button>
+                      </div>
                     )}
                   </div>
                 );
@@ -571,6 +634,68 @@ function ProfilePage() {
           )}
         </section>
       </main>
+
+      <Dialog open={!!logMovie} onOpenChange={(open) => !open && setLogMovie(null)}>
+        <DialogContent className="border border-dust/30 bg-velvet max-w-sm">
+          <DialogHeader>
+            <DialogTitle className="text-card-title text-paper">{logMovie?.movie?.title}</DialogTitle>
+            <DialogDescription className="text-caption text-dust">
+              {logMovie?.movie?.year} · Log it to your watched list
+            </DialogDescription>
+          </DialogHeader>
+
+          {logMovie?.movie && (
+            <div className="flex flex-col items-center gap-6 py-4">
+              <div className="h-48 w-32 overflow-hidden bg-ink ring-1 ring-white/10">
+                <img
+                  src={posterSrc(logMovie.movie.posterUrl)}
+                  alt={logMovie.movie.title}
+                  className="h-full w-full object-cover"
+                  onError={(e) => {
+                    e.currentTarget.src = "/film-placeholder.svg";
+                  }}
+                />
+              </div>
+
+              <div className="w-full max-w-xs">
+                <div className="flex items-center justify-between mb-2">
+                  <span className="text-caption text-dust text-xs">Your rating</span>
+                  <span className="text-score text-brass text-4xl">{logRating[0]}</span>
+                </div>
+                <Slider
+                  value={logRating}
+                  onValueChange={(v) => setLogRating(v)}
+                  min={1}
+                  max={10}
+                  step={1}
+                  className="[&_[data-orientation=horizontal]]:h-2"
+                />
+                <div className="flex justify-between text-caption text-dust text-[0.6rem] mt-1">
+                  <span>Miss</span>
+                  <span>Masterpiece</span>
+                </div>
+              </div>
+
+              {logError && <p className="text-caption text-marquee-red text-xs">{logError}</p>}
+
+              <div className="flex gap-3 w-full">
+                <DialogClose asChild>
+                  <button className="flex-1 border border-dust/40 py-2 text-caption text-dust text-xs hover:text-paper transition-colors cursor-pointer">
+                    Cancel
+                  </button>
+                </DialogClose>
+                <button
+                  onClick={handleLogFromWatchlist}
+                  disabled={logging}
+                  className="flex-1 bg-brass py-2 text-caption text-ink text-xs hover:bg-brass/90 transition-colors disabled:opacity-50 cursor-pointer"
+                >
+                  {logging ? "Logging..." : "Log it"}
+                </button>
+              </div>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
