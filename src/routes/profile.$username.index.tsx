@@ -35,6 +35,7 @@ import {
   AlertDialogAction,
 } from "@/components/ui/alert-dialog";
 import { WatchedEntryDialog } from "@/components/WatchedEntryDialog";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 
 export const Route = createFileRoute("/profile/$username/")({
   head: ({ params }) => ({
@@ -528,12 +529,20 @@ function ProfilePage() {
                         </p>
                       )}
                       {entry.note && (
-                        <p
-                          className="text-caption text-paper/70 text-[0.6rem] italic mt-1 leading-snug line-clamp-2"
-                          title={entry.note}
-                        >
-                          "{entry.note}"
-                        </p>
+                        <TooltipProvider delayDuration={200}>
+                          <Tooltip>
+                            <TooltipTrigger asChild>
+                              <p className="text-caption text-paper/70 text-[0.6rem] italic mt-1 leading-snug line-clamp-2 cursor-help">
+                                "{entry.note}"
+                              </p>
+                            </TooltipTrigger>
+                            <TooltipContent className="max-w-xs border border-white/15 bg-velvet px-3 py-2 text-paper shadow-xl">
+                              <p className="text-xs leading-snug italic whitespace-pre-line">
+                                {entry.note}
+                              </p>
+                            </TooltipContent>
+                          </Tooltip>
+                        </TooltipProvider>
                       )}
                     </div>
                     {isOwn && (
