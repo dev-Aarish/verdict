@@ -147,6 +147,12 @@ async function computeTasteScore(userId: string): Promise<TasteScoreResult> {
   return { score, breakdown };
 }
 
+// Invalidates a user's cached taste score so it is recomputed on next fetch.
+// Called whenever the underlying watched entries change (add/remove a film).
+export async function invalidateTasteScore(userId: string): Promise<void> {
+  await db.delete(tasteScores).where(eq(tasteScores.userId, userId));
+}
+
 // GET /:username/taste-score (public)
 tasteScoreRouter.get("/:username/taste-score", async (req: Request, res: Response) => {
   const username = req.params.username as string;

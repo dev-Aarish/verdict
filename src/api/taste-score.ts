@@ -7,5 +7,5 @@ export interface TasteBreakdown {
 }
 
 export function getTasteScoreFn({ data }: { data: { username: string } }) {
-  return apiFetch<any>(`/taste-score/${data.username}/taste-score`);
+  return apiFetch<any>(`/users/${data.username}/taste-score`);
 }

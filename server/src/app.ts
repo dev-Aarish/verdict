@@ -8,6 +8,7 @@ import { authRouter } from "./routes/auth.js";
 import { moviesRouter } from "./routes/movies.js";
 import { usersRouter } from "./routes/users.js";
 import { tasteScoreRouter } from "./routes/taste-score.js";
+import { tasteMatchRouter } from "./routes/taste-match.js";
 import { verdictsRouter } from "./routes/verdicts.js";
 import { followsRouter } from "./routes/follows.js";
 import { feedRouter } from "./routes/feed.js";
@@ -24,6 +25,7 @@ export function createApp() {
   app.use("/api/movies", moviesRouter);
   app.use("/api/users", usersRouter);
   app.use("/api/users", tasteScoreRouter);
+  app.use("/api/users", tasteMatchRouter);
   app.use("/api/verdicts", verdictsRouter);
   app.use("/api/follows", followsRouter);
   app.use("/api/feed", feedRouter);

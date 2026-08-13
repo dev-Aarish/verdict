@@ -6,6 +6,7 @@ import { v4 as uuidv4 } from "uuid";
 import { requireAuth, AuthRequest } from "../middleware/auth.js";
 import { config } from "../config.js";
 import { toSafeUser } from "../lib/safe-user.js";
+import { invalidateTasteScore } from "./taste-score.js";
 
 export const moviesRouter = Router();
 
@@ -263,6 +264,8 @@ moviesRouter.post("/watched", requireAuth, async (req: AuthRequest, res: Respons
     .returning()
     .then((r) => r[0]);
 
+  await invalidateTasteScore(userId);
+
   res.json({ entry, movie });
 });
 
@@ -320,6 +323,7 @@ moviesRouter.delete("/watched/:entryId", requireAuth, async (req: AuthRequest, r
   }
 
   await db.delete(watchedEntries).where(eq(watchedEntries.id, entryId));
+  await invalidateTasteScore(userId);
   res.json({ success: true });
 });
 

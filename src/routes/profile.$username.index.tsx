@@ -1,8 +1,10 @@
 import { createFileRoute, Link, useRouter } from "@tanstack/react-router";
 import { Stamp } from "@/components/Stamp";
 import { TopBar } from "@/components/TopBar";
+import { TasteMatchCard } from "@/components/TasteMatchCard";
 import { getUserWatchedFn, removeWatchedFn } from "@/api/movies";
 import { getTasteScoreFn, type TasteBreakdown } from "@/api/taste-score";
+import { getTasteMatchFn, type TasteMatch } from "@/api/taste-match";
 import { getUserVerdictsFn } from "@/api/verdicts";
 import { followUserFn, unfollowUserFn, getFollowStatusFn, getFollowCountsFn } from "@/api/follows";
 import { useUser } from "@/lib/user-context";
@@ -50,6 +52,7 @@ function ProfilePage() {
   const [followCounts, setFollowCounts] = useState<{ followers: number; following: number } | null>(
     null,
   );
+  const [tasteMatch, setTasteMatch] = useState<TasteMatch | null>(null);
   const PAGE_SIZE = 20;
 
   useEffect(() => {
@@ -60,14 +63,16 @@ function ProfilePage() {
       getUserVerdictsFn({ data: { username } }).catch(() => ({ verdicts: [] })),
       getFollowStatusFn({ data: { username } }).catch(() => ({ isFollowing: false })),
       getFollowCountsFn({ data: { username } }).catch(() => null),
+      getTasteMatchFn({ data: { username } }).catch(() => ({ match: null })),
     ])
-      .then(([data, taste, v, followStatus, counts]) => {
+      .then(([data, taste, v, followStatus, counts, match]) => {
         setProfileUser(data.user);
         setEntries(data.entries);
         setTasteScore(taste);
         setVerdicts(v.verdicts);
         setIsFollowing(followStatus.isFollowing);
         setFollowCounts(counts);
+        setTasteMatch(match.match);
       })
       .catch(() => {})
       .finally(() => setLoading(false));
@@ -244,6 +249,8 @@ function ProfilePage() {
             )}
           </div>
         </div>
+
+        {!isOwn && user && tasteMatch && <TasteMatchCard username={username} match={tasteMatch} />}
 
         {tasteScore && (
           <div className="hairline mt-10 pt-8 w-full max-w-md mx-auto">
