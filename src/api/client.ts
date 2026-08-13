@@ -12,12 +12,25 @@ function getBackendUrl(): string {
   return viteApiUrl || LOCAL_API_URL;
 }
 
+// Forward the incoming browser request's cookies to the backend during SSR.
+// Without this, server-rendered pages (and any full page reload) always see an
+// anonymous user even when a valid session cookie exists.
+async function getServerRequestCookie(): Promise<string | null> {
+  const { getStartContext } = await import("@tanstack/start-storage-context");
+  const context = getStartContext({ throwIfNotFound: false });
+  return context?.request.headers.get("cookie") ?? null;
+}
+
 export async function apiFetch<T>(path: string, options?: RequestInit): Promise<T> {
   const url = `${getBackendUrl()}/api${path}`;
   let init: RequestInit = { ...options };
 
   if (typeof window === "undefined") {
     init = { ...init, signal: AbortSignal.timeout(10000) };
+    const cookie = await getServerRequestCookie();
+    if (cookie) {
+      init = { ...init, headers: { ...init.headers, cookie } };
+    }
   } else {
     init = { ...init, credentials: "include" };
   }

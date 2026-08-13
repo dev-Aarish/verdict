@@ -148,6 +148,17 @@ function RootComponent() {
   const { user: initialUser } = Route.useLoaderData();
   const [user, setUser] = useState(initialUser);
 
+  useEffect(() => {
+    // Re-verify the session from the browser (sends the auth cookie) after
+    // hydration. SSR can't always forward cookies to the API, so without this
+    // a full page reload would silently sign the user out.
+    getCurrentUserFn()
+      .then(({ user: freshUser }) => {
+        if (JSON.stringify(freshUser) !== JSON.stringify(initialUser)) setUser(freshUser);
+      })
+      .catch(() => {});
+  }, [initialUser]);
+
   return (
     <QueryClientProvider client={queryClient}>
       <UserContext.Provider value={{ user, setUser }}>
