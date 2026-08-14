@@ -300,11 +300,11 @@ moviesRouter.patch("/watched/:entryId", requireAuth, async (req: AuthRequest, re
   }
 
   if (note !== undefined) {
-    if (typeof note !== "string") {
+    if (typeof note !== "string" && note !== null) {
       res.status(400).json({ error: "Note must be a string" });
       return;
     }
-    changes.note = note.trim() === "" ? null : note.trim();
+    changes.note = typeof note === "string" && note.trim() !== "" ? note.trim() : null;
   }
 
   if (Object.keys(changes).length === 0) {
