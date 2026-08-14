@@ -1,4 +1,5 @@
 import { test, expect } from "@playwright/test";
+import { waitForHydration, fillStable, searchFilms } from "./helpers";
 
 test.describe("Search page", () => {
   test("renders with Films tab active by default", async ({ page }) => {
@@ -23,14 +24,12 @@ test.describe("Search page", () => {
   });
 
   test("films search shows results for valid query", async ({ page }) => {
-    await page.goto("/search");
-    const input = page.getByPlaceholder("Search by title...");
-    await input.fill("Batman");
-    await expect(page.locator("img[alt]").first()).toBeVisible({ timeout: 15000 });
+    await searchFilms(page, "Batman");
   });
 
   test("films search shows no results message for nonsense query", async ({ page }) => {
     await page.goto("/search");
+    await waitForHydration(page);
     const input = page.getByPlaceholder("Search by title...");
     await input.fill("xyznonexistentmovie123");
     await expect(page.getByText("No films found.")).toBeVisible({ timeout: 15000 });
@@ -38,18 +37,21 @@ test.describe("Search page", () => {
 
   test("switching to People tab changes placeholder", async ({ page }) => {
     await page.goto("/search");
+    await waitForHydration(page);
     await page.getByRole("button", { name: "People" }).click();
     await expect(page.getByPlaceholder("Search by username...")).toBeVisible();
   });
 
   test("people tab shows minimum character hint", async ({ page }) => {
     await page.goto("/search");
+    await waitForHydration(page);
     await page.getByRole("button", { name: "People" }).click();
     await expect(page.getByText("Type a username to search.")).toBeVisible();
   });
 
   test("people search works with 1 character", async ({ page }) => {
     await page.goto("/search");
+    await waitForHydration(page);
     await page.getByRole("button", { name: "People" }).click();
     const input = page.getByPlaceholder("Search by username...");
     await input.fill("a");
@@ -80,9 +82,10 @@ test.describe("Rating dialog", () => {
     const id = crypto.randomUUID().slice(0, 8);
     page.on("dialog", (d) => d.accept());
     await page.goto("/signup");
-    await page.getByPlaceholder("mira_k").fill(`srch_${id}`);
-    await page.getByPlaceholder("you@screening.room").fill(`srch_${id}@test.com`);
-    await page.getByPlaceholder("At least 8 characters").fill("password123");
+    await waitForHydration(page);
+    await fillStable(page, "mira_k", `srch_${id}`);
+    await fillStable(page, "you@screening.room", `srch_${id}@test.com`);
+    await fillStable(page, "At least 8 characters", "password123");
     await page.getByRole("button", { name: /Enter the room/ }).click();
     await expect(page).toHaveURL(/\/profile\//, { timeout: 15000 });
 
@@ -102,9 +105,10 @@ test.describe("Rating dialog", () => {
     const id = crypto.randomUUID().slice(0, 8);
     page.on("dialog", (d) => d.accept());
     await page.goto("/signup");
-    await page.getByPlaceholder("mira_k").fill(`dlg_${id}`);
-    await page.getByPlaceholder("you@screening.room").fill(`dlg_${id}@test.com`);
-    await page.getByPlaceholder("At least 8 characters").fill("password123");
+    await waitForHydration(page);
+    await fillStable(page, "mira_k", `dlg_${id}`);
+    await fillStable(page, "you@screening.room", `dlg_${id}@test.com`);
+    await fillStable(page, "At least 8 characters", "password123");
     await page.getByRole("button", { name: /Enter the room/ }).click();
     await expect(page).toHaveURL(/\/profile\//, { timeout: 15000 });
 

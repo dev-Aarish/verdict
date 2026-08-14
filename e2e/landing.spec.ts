@@ -20,7 +20,7 @@ test.describe("Landing page", () => {
     await page.goto("/");
     await page.getByRole("link", { name: /Get your Verdict/ }).first().click();
     await expect(page).toHaveURL(/\/signup/);
-    await expect(page.getByText("Get on the list")).toBeVisible();
+    await expect(page.getByRole("heading", { name: "Get on the list" })).toBeVisible();
   });
 
   test("example profile link navigates to a profile", async ({ page }) => {

@@ -38,13 +38,13 @@ test.describe("Navigation", () => {
     await page.goto("/");
     await page.getByRole("link", { name: /Sign in/ }).first().click();
     await expect(page).toHaveURL(/\/login/);
-    await expect(page.getByText("Sign in")).toBeVisible();
+    await expect(page.getByRole("heading", { name: "Sign in" })).toBeVisible();
   });
 
   test("navigate to signup page", async ({ page }) => {
     await page.goto("/");
     await page.getByRole("link", { name: /Get on the list/ }).first().click();
     await expect(page).toHaveURL(/\/signup/);
-    await expect(page.getByText("Get on the list")).toBeVisible();
+    await expect(page.getByRole("heading", { name: "Get on the list" })).toBeVisible();
   });
 });
