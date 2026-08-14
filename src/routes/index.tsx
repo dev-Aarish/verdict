@@ -35,7 +35,7 @@ function Landing() {
 
       <main className="mx-auto max-w-6xl px-6">
         {/* Hero */}
-        <section className="grid gap-12 py-20 md:grid-cols-[1.15fr_1fr] md:items-center md:py-32">
+        <section className="grid gap-12 pb-20 pt-14 md:grid-cols-[1.15fr_1fr] md:items-center md:pb-32 md:pt-24">
           <div>
             <p className="text-caption mb-6">Est. 2026 · Screening Room</p>
             <h1 className="text-hero text-paper">
