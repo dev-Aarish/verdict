@@ -313,7 +313,7 @@ function SearchPage() {
                   const isAdded = addedIds.has(movie.imdbID) || movie.imdbID in watchedMap;
                   const existingRating = watchedMap[movie.imdbID];
                   return (
-                    <div key={movie.imdbID} className="group flex flex-col">
+                    <div key={movie.imdbID} className="group flex flex-col" data-testid="search-result">
                       <Link
                         to="/film/$imdbId"
                         params={{ imdbId: movie.imdbID }}

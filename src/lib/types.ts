@@ -58,6 +58,7 @@ export interface WatchedEntry {
   rating: number;
   watchedAt: Date | null;
   note: string | null;
+  position: number;
 }
 
 export interface WatchedEntryWithMovie extends WatchedEntry {

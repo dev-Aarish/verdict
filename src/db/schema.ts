@@ -34,6 +34,7 @@ export const watchedEntries = pgTable("watched_entries", {
   rating: integer("rating").notNull(),
   watchedAt: timestamp("watched_at", { withTimezone: true }).defaultNow(),
   note: text("note"),
+  position: integer("position").notNull().default(0),
 });
 
 export const watchlistEntries = pgTable("watchlist_entries", {

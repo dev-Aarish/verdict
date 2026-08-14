@@ -30,6 +30,14 @@ export function getCurrentUserWatchedFn() {
   return apiFetch<any>("/movies/me/watched");
 }
 
+export function reorderWatchedFn({ data }: { data: { entryIds: string[] } }) {
+  return apiFetch<{ success: boolean }>("/movies/watched/reorder", {
+    method: "PUT",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(data),
+  });
+}
+
 export function removeWatchedFn({ data }: { data: { entryId: string } }) {
   return apiFetch<any>(`/movies/watched/${data.entryId}`, {
     method: "DELETE",

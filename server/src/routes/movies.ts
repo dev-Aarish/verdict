@@ -1,7 +1,7 @@
 import { Router, Request, Response } from "express";
 import { db } from "../db/index.js";
 import { movies, watchedEntries, users } from "../db/schema.js";
-import { eq, and, inArray } from "drizzle-orm";
+import { eq, and, inArray, asc, sql } from "drizzle-orm";
 import { v4 as uuidv4 } from "uuid";
 import { requireAuth, AuthRequest } from "../middleware/auth.js";
 import { config } from "../config.js";
@@ -195,6 +195,13 @@ moviesRouter.post("/watched", requireAuth, async (req: AuthRequest, res: Respons
     return;
   }
 
+  // Append to the end of the user's custom order
+  const [maxRow] = await db
+    .select({ max: sql<number>`MAX(${watchedEntries.position})` })
+    .from(watchedEntries)
+    .where(eq(watchedEntries.userId, userId));
+  const position = (Number(maxRow?.max) || -1) + 1;
+
   // Insert watchedEntry
   const entry = await db
     .insert(watchedEntries)
@@ -204,6 +211,7 @@ moviesRouter.post("/watched", requireAuth, async (req: AuthRequest, res: Respons
       movieId: movie.id,
       rating,
       note: note || null,
+      position,
     })
     .returning()
     .then((r) => r[0]);
@@ -326,6 +334,38 @@ moviesRouter.patch("/watched/:entryId", requireAuth, async (req: AuthRequest, re
   res.json({ entry: updated });
 });
 
+// PUT /watched/reorder (requireAuth) — persist the user's custom film order
+moviesRouter.put("/watched/reorder", requireAuth, async (req: AuthRequest, res: Response) => {
+  const userId = req.user!.id;
+  const { entryIds } = req.body ?? {};
+
+  if (!Array.isArray(entryIds) || new Set(entryIds).size !== entryIds.length) {
+    res.status(400).json({ error: "entryIds must be an array of unique entry ids" });
+    return;
+  }
+
+  const userEntries = await db
+    .select({ id: watchedEntries.id })
+    .from(watchedEntries)
+    .where(eq(watchedEntries.userId, userId))
+    .then((r) => r);
+
+  const owned = new Set(userEntries.map((e) => e.id));
+  if (owned.size !== entryIds.length || !entryIds.every((id) => owned.has(id))) {
+    res.status(400).json({ error: "entryIds must cover all of your watched entries" });
+    return;
+  }
+
+  for (let i = 0; i < entryIds.length; i++) {
+    await db
+      .update(watchedEntries)
+      .set({ position: i })
+      .where(and(eq(watchedEntries.id, entryIds[i]), eq(watchedEntries.userId, userId)));
+  }
+
+  res.json({ success: true });
+});
+
 // GET /user/:username (public)
 moviesRouter.get("/user/:username", async (req: Request, res: Response) => {
   const username = req.params.username as string;
@@ -345,7 +385,7 @@ moviesRouter.get("/user/:username", async (req: Request, res: Response) => {
     .select()
     .from(watchedEntries)
     .where(eq(watchedEntries.userId, user.id))
-    .orderBy(watchedEntries.watchedAt)
+    .orderBy(asc(watchedEntries.position), asc(watchedEntries.watchedAt))
     .then((r) => r);
 
   const movieIds = entries.map((e) => e.movieId);

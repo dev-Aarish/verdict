@@ -9,6 +9,7 @@ import {
   removeWatchedFn,
   addToWatchedFn,
   updateWatchedEntryFn,
+  reorderWatchedFn,
 } from "@/api/movies";
 import { getUserWatchlistFn, removeWatchlistFn } from "@/api/watchlist";
 import { getTasteScoreFn, type TasteBreakdown } from "@/api/taste-score";
@@ -16,7 +17,7 @@ import { getTasteMatchFn, type TasteMatch } from "@/api/taste-match";
 import { getUserVerdictsFn } from "@/api/verdicts";
 import { followUserFn, unfollowUserFn, getFollowStatusFn, getFollowCountsFn } from "@/api/follows";
 import { useUser } from "@/lib/user-context";
-import { useState, useCallback, useEffect } from "react";
+import { useState, useCallback, useEffect, useMemo } from "react";
 import type {
   User,
   WatchedEntryWithMovie,
@@ -36,6 +37,7 @@ import {
 } from "@/components/ui/alert-dialog";
 import { WatchedEntryDialog } from "@/components/WatchedEntryDialog";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+import { ArrowDown, ArrowUp } from "lucide-react";
 
 export const Route = createFileRoute("/profile/$username/")({
   head: ({ params }) => ({
@@ -49,6 +51,16 @@ export const Route = createFileRoute("/profile/$username/")({
   }),
   component: ProfilePage,
 });
+
+type SortMode = "custom" | "rating-desc" | "rating-asc" | "title-asc" | "recent";
+
+const SORT_OPTIONS: { value: SortMode; label: string }[] = [
+  { value: "custom", label: "Custom order" },
+  { value: "rating-desc", label: "Rating: High → Low" },
+  { value: "rating-asc", label: "Rating: Low → High" },
+  { value: "title-asc", label: "Title A–Z" },
+  { value: "recent", label: "Recently watched" },
+];
 
 function ProfilePage() {
   const { username } = Route.useParams();
@@ -79,6 +91,7 @@ function ProfilePage() {
   const [editNote, setEditNote] = useState("");
   const [editing, setEditing] = useState(false);
   const [editError, setEditError] = useState<string | null>(null);
+  const [sortMode, setSortMode] = useState<SortMode>("custom");
   const PAGE_SIZE = 20;
 
   useEffect(() => {
@@ -221,10 +234,55 @@ function ProfilePage() {
     }
   };
 
-  const totalPages = entries ? Math.ceil(entries.length / PAGE_SIZE) : 0;
-  const paginatedEntries = entries
-    ? entries.slice((currentPage - 1) * PAGE_SIZE, currentPage * PAGE_SIZE)
+  const watchedTime = (e: WatchedEntryWithMovie) => {
+    const t = e.watchedAt;
+    if (!t) return 0;
+    return new Date(typeof t === "number" ? t * 1000 : t).getTime() || 0;
+  };
+
+  const sortedEntries = useMemo(() => {
+    if (!entries) return null;
+    const arr = [...entries];
+    switch (sortMode) {
+      case "rating-desc":
+        arr.sort((a, b) => b.rating - a.rating);
+        break;
+      case "rating-asc":
+        arr.sort((a, b) => a.rating - b.rating);
+        break;
+      case "title-asc":
+        arr.sort((a, b) => (a.movie?.title || "").localeCompare(b.movie?.title || ""));
+        break;
+      case "recent":
+        arr.sort((a, b) => watchedTime(b) - watchedTime(a));
+        break;
+      default:
+        break; // "custom": keep the server's position order
+    }
+    return arr;
+  }, [entries, sortMode]);
+
+  const totalPages = sortedEntries ? Math.ceil(sortedEntries.length / PAGE_SIZE) : 0;
+  const paginatedEntries = sortedEntries
+    ? sortedEntries.slice((currentPage - 1) * PAGE_SIZE, currentPage * PAGE_SIZE)
     : [];
+
+  const handleMove = async (entryId: string, direction: "up" | "down") => {
+    if (!entries) return;
+    const idx = entries.findIndex((e) => e.id === entryId);
+    const target = direction === "up" ? idx - 1 : idx + 1;
+    if (idx === -1 || target < 0 || target >= entries.length) return;
+    const next = [...entries];
+    const [moved] = next.splice(idx, 1);
+    next.splice(target, 0, moved);
+    setEntries(next);
+    try {
+      await reorderWatchedFn({ data: { entryIds: next.map((e) => e.id) } });
+      router.invalidate();
+    } catch (e) {
+      console.error("Failed to reorder", e);
+    }
+  };
 
   const goToPage = useCallback((page: number) => {
     setCurrentPage(page);
@@ -459,16 +517,40 @@ function ProfilePage() {
         )}
 
         <section className="hairline mt-10 pt-8">
-          <div className="flex items-center justify-between mb-6">
+          <div className="flex flex-wrap items-center justify-between gap-3 mb-6">
             <h2 className="text-card-title text-paper">Watched Films</h2>
-            {isOwn && filmCount > 0 && (
-              <Link
-                to="/search"
-                className="text-caption text-brass/70 hover:text-brass transition-colors"
-              >
-                + Add more
-              </Link>
-            )}
+            <div className="flex items-center gap-4">
+              {filmCount > 0 && (
+                <label className="flex items-center gap-2">
+                  <span className="text-caption text-dust text-[0.6rem] tracking-widest uppercase font-mono">
+                    Sort
+                  </span>
+                  <select
+                    data-testid="sort-select"
+                    value={sortMode}
+                    onChange={(e) => {
+                      setSortMode(e.target.value as SortMode);
+                      setCurrentPage(1);
+                    }}
+                    className="bg-transparent border border-dust/30 px-2 py-1.5 text-caption text-brass text-xs cursor-pointer outline-none hover:border-brass/60"
+                  >
+                    {SORT_OPTIONS.map((opt) => (
+                      <option key={opt.value} value={opt.value} className="bg-velvet text-paper">
+                        {opt.label}
+                      </option>
+                    ))}
+                  </select>
+                </label>
+              )}
+              {isOwn && filmCount > 0 && (
+                <Link
+                  to="/search"
+                  className="text-caption text-brass/70 hover:text-brass transition-colors"
+                >
+                  + Add more
+                </Link>
+              )}
+            </div>
           </div>
 
           {!entries || entries.length === 0 ? (
@@ -491,7 +573,7 @@ function ProfilePage() {
                 const movie = entry.movie;
                 if (!movie) return null;
                 return (
-                  <div key={entry.id} className="group relative flex flex-col">
+                  <div key={entry.id} className="group relative flex flex-col" data-testid="watched-film">
                     <Link
                       to="/film/$imdbId"
                       params={{ imdbId: movie.imdbId }}
@@ -516,6 +598,7 @@ function ProfilePage() {
                       <Link
                         to="/film/$imdbId"
                         params={{ imdbId: movie.imdbId }}
+                        data-testid="film-title"
                         className="text-sm font-medium text-paper leading-tight hover:text-brass hover:underline transition-colors"
                       >
                         {movie.title}
@@ -547,6 +630,24 @@ function ProfilePage() {
                     </div>
                     {isOwn && (
                       <div className="mt-1 flex gap-1">
+                        {sortMode === "custom" && (
+                          <>
+                            <button
+                              onClick={() => handleMove(entry.id, "up")}
+                              aria-label={`Move ${movie.title} up`}
+                              className="py-1 px-1.5 border border-dust/40 text-dust opacity-0 group-hover:opacity-100 transition-opacity hover:text-brass hover:border-brass/60 cursor-pointer"
+                            >
+                              <ArrowUp className="h-3 w-3" />
+                            </button>
+                            <button
+                              onClick={() => handleMove(entry.id, "down")}
+                              aria-label={`Move ${movie.title} down`}
+                              className="py-1 px-1.5 border border-dust/40 text-dust opacity-0 group-hover:opacity-100 transition-opacity hover:text-brass hover:border-brass/60 cursor-pointer"
+                            >
+                              <ArrowDown className="h-3 w-3" />
+                            </button>
+                          </>
+                        )}
                         <button
                           onClick={() => {
                             setEditEntry(entry);
