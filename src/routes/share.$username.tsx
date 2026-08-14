@@ -168,7 +168,7 @@ function SharePage() {
             className="ticket-stub relative aspect-[9/16] overflow-hidden border-2 border-brass/40 bg-ink text-left"
             style={{
               backgroundImage:
-                "radial-gradient(ellipse at 50% -10%, oklch(0.30 0.03 275) 0%, transparent 55%), radial-gradient(ellipse at 50% 110%, oklch(0.22 0.02 275) 0%, transparent 60%)",
+                "radial-gradient(ellipse at 50% -10%, oklch(0.30 0.005 85) 0%, transparent 55%), radial-gradient(ellipse at 50% 110%, oklch(0.22 0.005 85) 0%, transparent 60%)",
             }}
           >
             {/* Perforation seam — split into two panels (top ~72% / stub ~28%) */}
@@ -223,7 +223,7 @@ function SharePage() {
             <div
               className="relative h-[28%] p-6"
               style={{
-                background: "linear-gradient(180deg, transparent 0%, oklch(0.22 0.025 275) 100%)",
+                background: "linear-gradient(180deg, transparent 0%, oklch(0.22 0.005 85) 100%)",
               }}
             >
               <div className="flex items-center justify-between">

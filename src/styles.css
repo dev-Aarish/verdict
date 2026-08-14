@@ -49,8 +49,8 @@
 }
 
 :root {
-  --ink: oklch(0.19 0.02 275);
-  --velvet: oklch(0.24 0.025 275);
+  --ink: oklch(0.19 0.005 85);
+  --velvet: oklch(0.24 0.005 85);
   --brass: oklch(0.75 0.11 82);
   --marquee-red: oklch(0.48 0.14 27);
   --paper: oklch(0.93 0.02 85);

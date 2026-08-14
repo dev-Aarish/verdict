@@ -6,13 +6,13 @@ import { GenreRadar } from "@/components/GenreRadar";
 import type { GenreDna } from "@/lib/genre-dna";
 
 // Brand palette — "Screening Room at Dusk" (oklch converted to hex).
-const INK = "#11131d"; // background
-const VELVET = "#1c1e2b"; // panels
+const INK = "#151411"; // background
+const VELVET = "#201f1d"; // panels
 const BRASS = "#d1a757"; // sole positive accent
 const PAPER = "#eee7d9"; // foreground
 const DUST = "#74716c"; // muted
-const GLOW_TOP = "#292d3d"; // violet bloom behind the mark
-const GLOW_BOTTOM = "#181a24"; // floor glow
+const GLOW_TOP = "#2f2e2b"; // warm bloom behind the mark
+const GLOW_BOTTOM = "#1c1a18"; // floor glow
 
 export type OgEntry = { title: string; year: string; rating: number };
 export type OgData = {
