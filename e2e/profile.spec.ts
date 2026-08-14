@@ -155,8 +155,10 @@ test.describe("Profile - viewing other users", () => {
 });
 
 test.describe("Profile - non-existent user", () => {
-  test("shows User not found for invalid username", async ({ page }) => {
+  test("shows branded 404 for invalid username", async ({ page }) => {
     await page.goto("/profile/thisuserdoesnotexist12345");
-    await expect(page.getByText("User not found.")).toBeVisible({ timeout: 10000 });
+    await expect(page.getByText("This reel isn't in the archive.")).toBeVisible({
+      timeout: 10000,
+    });
   });
 });

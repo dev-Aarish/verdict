@@ -1,5 +1,6 @@
 import { createFileRoute, Link, useRouter } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
+import { ErrorScreen } from "@/components/ErrorScreen";
 import { TopBar } from "@/components/TopBar";
 import { Stamp } from "@/components/Stamp";
 import { getFilmFn } from "@/api/movies";
@@ -89,15 +90,11 @@ function FilmPage() {
   }
 
   if (error || !data) {
-    return (
-      <div className="min-h-screen">
-        <TopBar />
-        <main className="mx-auto max-w-6xl px-6 py-12">
-          <p className="text-caption text-marquee-red text-center py-24">
-            {error || "Film not found."}
-          </p>
-        </main>
-      </div>
+    const isNotFound = /not found/i.test(error || "");
+    return isNotFound ? (
+      <ErrorScreen variant="not-found" code={404} path={`/film/${imdbId}`} />
+    ) : (
+      <ErrorScreen variant="error" code={500} />
     );
   }
 

@@ -1,4 +1,5 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
+import { ErrorScreen } from "@/components/ErrorScreen";
 import { Logo } from "@/components/Logo";
 import { Stamp } from "@/components/Stamp";
 import { TopBar } from "@/components/TopBar";
@@ -118,14 +119,7 @@ function SharePage() {
   }
 
   if (!data?.watched?.user) {
-    return (
-      <div className="min-h-screen">
-        <TopBar />
-        <main className="mx-auto max-w-3xl px-6 py-12 text-center">
-          <p className="text-caption text-dust py-24">User not found.</p>
-        </main>
-      </div>
-    );
+    return <ErrorScreen variant="not-found" code={404} path={`/share/${username}`} />;
   }
 
   const topFilms = data.watched.entries.slice(0, 5).map((e: WatchedEntryWithMovie, i: number) => ({

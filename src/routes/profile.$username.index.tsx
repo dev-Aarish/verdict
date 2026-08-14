@@ -1,4 +1,5 @@
 import { createFileRoute, Link, useRouter } from "@tanstack/react-router";
+import { ErrorScreen } from "@/components/ErrorScreen";
 import { Stamp } from "@/components/Stamp";
 import { TopBar } from "@/components/TopBar";
 import { TasteMatchCard } from "@/components/TasteMatchCard";
@@ -322,14 +323,7 @@ function ProfilePage() {
   }
 
   if (!profileUser) {
-    return (
-      <div className="min-h-screen">
-        <TopBar />
-        <main className="mx-auto max-w-6xl px-6 py-12">
-          <p className="text-caption text-dust text-center py-24">User not found.</p>
-        </main>
-      </div>
-    );
+    return <ErrorScreen variant="not-found" code={404} path={`/profile/${username}`} />;
   }
 
   return (

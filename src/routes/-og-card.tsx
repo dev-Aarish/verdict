@@ -72,7 +72,7 @@ export function clampUsername(username: string): string {
   return username.length > 26 ? `${username.slice(0, 23)}…` : username;
 }
 
-function ClapboardMark({ size = 40 }: { size?: number }) {
+export function ClapboardMark({ size = 40 }: { size?: number }) {
   return (
     <div
       style={{

@@ -43,9 +43,11 @@ test.describe("Film details page", () => {
     await expect(page).toHaveURL(/\/search/);
   });
 
-  test("shows an error for an unknown film id", async ({ page }) => {
+  test("shows branded 404 for an unknown film id", async ({ page }) => {
     await page.goto("/film/tt0000000");
-    await expect(page.getByText(/Film not found/)).toBeVisible({ timeout: 15_000 });
+    await expect(page.getByText("This reel isn't in the archive.")).toBeVisible({
+      timeout: 15_000,
+    });
   });
 });
 

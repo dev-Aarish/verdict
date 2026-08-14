@@ -14,6 +14,7 @@ import { Route as SignupRouteImport } from './routes/signup'
 import { Route as SearchRouteImport } from './routes/search'
 import { Route as LoginRouteImport } from './routes/login'
 import { Route as FeedRouteImport } from './routes/feed'
+import { Route as SplatRouteImport } from './routes/$'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as VerdictUsernameRouteImport } from './routes/verdict.$username'
 import { Route as ShareUsernameRouteImport } from './routes/share.$username'
@@ -23,6 +24,7 @@ import { Route as FilmImdbIdRouteImport } from './routes/film.$imdbId'
 import { Route as ProfileUsernameIndexRouteImport } from './routes/profile.$username.index'
 import { Route as ProfileUsernameFollowingRouteImport } from './routes/profile.$username.following'
 import { Route as ProfileUsernameFollowersRouteImport } from './routes/profile.$username.followers'
+import { Route as OgErrorCodeRouteImport } from './routes/og.error.$code'
 
 const SitemapDotxmlRoute = SitemapDotxmlRouteImport.update({
   id: '/sitemap.xml',
@@ -47,6 +49,11 @@ const LoginRoute = LoginRouteImport.update({
 const FeedRoute = FeedRouteImport.update({
   id: '/feed',
   path: '/feed',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const SplatRoute = SplatRouteImport.update({
+  id: '/$',
+  path: '/$',
   getParentRoute: () => rootRouteImport,
 } as any)
 const IndexRoute = IndexRouteImport.update({
@@ -96,9 +103,15 @@ const ProfileUsernameFollowersRoute =
     path: '/followers',
     getParentRoute: () => ProfileUsernameRoute,
   } as any)
+const OgErrorCodeRoute = OgErrorCodeRouteImport.update({
+  id: '/og/error/$code',
+  path: '/og/error/$code',
+  getParentRoute: () => rootRouteImport,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/$': typeof SplatRoute
   '/feed': typeof FeedRoute
   '/login': typeof LoginRoute
   '/search': typeof SearchRoute
@@ -109,12 +122,14 @@ export interface FileRoutesByFullPath {
   '/profile/$username': typeof ProfileUsernameRouteWithChildren
   '/share/$username': typeof ShareUsernameRoute
   '/verdict/$username': typeof VerdictUsernameRoute
+  '/og/error/$code': typeof OgErrorCodeRoute
   '/profile/$username/followers': typeof ProfileUsernameFollowersRoute
   '/profile/$username/following': typeof ProfileUsernameFollowingRoute
   '/profile/$username/': typeof ProfileUsernameIndexRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/$': typeof SplatRoute
   '/feed': typeof FeedRoute
   '/login': typeof LoginRoute
   '/search': typeof SearchRoute
@@ -124,6 +139,7 @@ export interface FileRoutesByTo {
   '/og/$username': typeof OgUsernameRoute
   '/share/$username': typeof ShareUsernameRoute
   '/verdict/$username': typeof VerdictUsernameRoute
+  '/og/error/$code': typeof OgErrorCodeRoute
   '/profile/$username/followers': typeof ProfileUsernameFollowersRoute
   '/profile/$username/following': typeof ProfileUsernameFollowingRoute
   '/profile/$username': typeof ProfileUsernameIndexRoute
@@ -131,6 +147,7 @@ export interface FileRoutesByTo {
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/$': typeof SplatRoute
   '/feed': typeof FeedRoute
   '/login': typeof LoginRoute
   '/search': typeof SearchRoute
@@ -141,6 +158,7 @@ export interface FileRoutesById {
   '/profile/$username': typeof ProfileUsernameRouteWithChildren
   '/share/$username': typeof ShareUsernameRoute
   '/verdict/$username': typeof VerdictUsernameRoute
+  '/og/error/$code': typeof OgErrorCodeRoute
   '/profile/$username/followers': typeof ProfileUsernameFollowersRoute
   '/profile/$username/following': typeof ProfileUsernameFollowingRoute
   '/profile/$username/': typeof ProfileUsernameIndexRoute
@@ -149,6 +167,7 @@ export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
     | '/'
+    | '/$'
     | '/feed'
     | '/login'
     | '/search'
@@ -159,12 +178,14 @@ export interface FileRouteTypes {
     | '/profile/$username'
     | '/share/$username'
     | '/verdict/$username'
+    | '/og/error/$code'
     | '/profile/$username/followers'
     | '/profile/$username/following'
     | '/profile/$username/'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
+    | '/$'
     | '/feed'
     | '/login'
     | '/search'
@@ -174,12 +195,14 @@ export interface FileRouteTypes {
     | '/og/$username'
     | '/share/$username'
     | '/verdict/$username'
+    | '/og/error/$code'
     | '/profile/$username/followers'
     | '/profile/$username/following'
     | '/profile/$username'
   id:
     | '__root__'
     | '/'
+    | '/$'
     | '/feed'
     | '/login'
     | '/search'
@@ -190,6 +213,7 @@ export interface FileRouteTypes {
     | '/profile/$username'
     | '/share/$username'
     | '/verdict/$username'
+    | '/og/error/$code'
     | '/profile/$username/followers'
     | '/profile/$username/following'
     | '/profile/$username/'
@@ -197,6 +221,7 @@ export interface FileRouteTypes {
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  SplatRoute: typeof SplatRoute
   FeedRoute: typeof FeedRoute
   LoginRoute: typeof LoginRoute
   SearchRoute: typeof SearchRoute
@@ -207,6 +232,7 @@ export interface RootRouteChildren {
   ProfileUsernameRoute: typeof ProfileUsernameRouteWithChildren
   ShareUsernameRoute: typeof ShareUsernameRoute
   VerdictUsernameRoute: typeof VerdictUsernameRoute
+  OgErrorCodeRoute: typeof OgErrorCodeRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -244,6 +270,13 @@ declare module '@tanstack/react-router' {
       path: '/feed'
       fullPath: '/feed'
       preLoaderRoute: typeof FeedRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/$': {
+      id: '/$'
+      path: '/$'
+      fullPath: '/$'
+      preLoaderRoute: typeof SplatRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/': {
@@ -309,6 +342,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ProfileUsernameFollowersRouteImport
       parentRoute: typeof ProfileUsernameRoute
     }
+    '/og/error/$code': {
+      id: '/og/error/$code'
+      path: '/og/error/$code'
+      fullPath: '/og/error/$code'
+      preLoaderRoute: typeof OgErrorCodeRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
@@ -330,6 +370,7 @@ const ProfileUsernameRouteWithChildren = ProfileUsernameRoute._addFileChildren(
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  SplatRoute: SplatRoute,
   FeedRoute: FeedRoute,
   LoginRoute: LoginRoute,
   SearchRoute: SearchRoute,
@@ -340,6 +381,7 @@ const rootRouteChildren: RootRouteChildren = {
   ProfileUsernameRoute: ProfileUsernameRouteWithChildren,
   ShareUsernameRoute: ShareUsernameRoute,
   VerdictUsernameRoute: VerdictUsernameRoute,
+  OgErrorCodeRoute: OgErrorCodeRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
