@@ -429,7 +429,7 @@ function ProfilePage() {
                     <span className="text-[2.5rem] font-bold text-brass leading-none">
                       {tasteScore.score}
                     </span>
-                    <span className="text-caption text-dust mt-1">Taste Score</span>
+                    <span className="text-caption text-dust mt-1 whitespace-nowrap">Taste Score</span>
                   </div>
                   <div className="flex gap-6">
                     {(
@@ -441,14 +441,14 @@ function ProfilePage() {
                     ).map((item) => (
                       <div key={item.label} className="flex flex-col items-center">
                         <span className="text-lg font-semibold text-brass">{item.value}</span>
-                        <span className="text-caption text-dust text-xs">{item.label}</span>
+                        <span className="text-caption text-dust text-xs whitespace-nowrap">{item.label}</span>
                       </div>
                     ))}
                   </div>
                 </div>
               )}
               <div className="flex flex-col items-center">
-                <span className="text-caption mb-3 text-dust">Genre DNA</span>
+                <span className="text-caption mb-3 text-dust whitespace-nowrap">Genre DNA</span>
                 <GenreRadar dna={dna} size={190} />
               </div>
             </div>
