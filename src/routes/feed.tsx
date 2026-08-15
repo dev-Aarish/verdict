@@ -192,24 +192,26 @@ function FeedPage() {
             <p className="text-caption text-dust mt-10">No scores computed yet.</p>
           ) : (
             <ul className="hairline mt-10 divide-y divide-border/40">
-              {leaderboard.map((row) => (
-                <li
-                  key={row.rank}
-                  className="grid grid-cols-[2rem_1fr_auto] items-center gap-4 py-4"
-                >
-                  <span className="mono text-sm text-dust">
-                    {String(row.rank).padStart(2, "0")}
-                  </span>
-                  <Link
-                    to="/profile/$username"
-                    params={{ username: row.user.username }}
-                    className="text-card-title text-paper hover:text-brass transition-colors"
+              {leaderboard
+                .filter((row) => row.user)
+                .map((row) => (
+                  <li
+                    key={row.rank}
+                    className="grid grid-cols-[2rem_1fr_auto] items-center gap-4 py-4"
                   >
-                    {row.user.username}
-                  </Link>
-                  <span className="mono text-brass">{row.score}</span>
-                </li>
-              ))}
+                    <span className="mono text-sm text-dust">
+                      {String(row.rank).padStart(2, "0")}
+                    </span>
+                    <Link
+                      to="/profile/$username"
+                      params={{ username: row.user!.username }}
+                      className="text-card-title text-paper hover:text-brass transition-colors"
+                    >
+                      {row.user!.username}
+                    </Link>
+                    <span className="mono text-brass">{row.score}</span>
+                  </li>
+                ))}
             </ul>
           )}
         </aside>

@@ -54,10 +54,15 @@ feedRouter.get("/verdicts", optionalAuth, async (req: AuthRequest, res: Response
     .where(and(inArray(users.id, allUserIds), eq(users.isTest, false)));
   const userMap = new Map(allUsers.map((u) => [u.id, u]));
 
-  const result = recentVerdicts.map((v) => ({
+  // Drop verdicts that involve test/removed users so the feed only shows real activity.
+  const visibleVerdicts = recentVerdicts.filter(
+    (v) => userMap.has(v.fromUserId) && userMap.has(v.toUserId)
+  );
+
+  const result = visibleVerdicts.map((v) => ({
     id: v.id,
-    fromUser: userMap.get(v.fromUserId) ? toSafeUser(userMap.get(v.fromUserId)!) : null,
-    toUser: userMap.get(v.toUserId) ? toSafeUser(userMap.get(v.toUserId)!) : null,
+    fromUser: toSafeUser(userMap.get(v.fromUserId)!),
+    toUser: toSafeUser(userMap.get(v.toUserId)!),
     score: v.score,
     comment: v.comment,
     createdAt: v.createdAt,
@@ -67,9 +72,23 @@ feedRouter.get("/verdicts", optionalAuth, async (req: AuthRequest, res: Response
 });
 
 feedRouter.get("/leaderboard", async (_req: Request, res: Response) => {
+  // Only rank real (non-test) users so test data never shows up on the board.
+  const nonTestUsers = await db
+    .select({ id: users.id })
+    .from(users)
+    .where(eq(users.isTest, false));
+
+  if (nonTestUsers.length === 0) {
+    res.json([]);
+    return;
+  }
+
+  const nonTestUserIds = nonTestUsers.map((u) => u.id);
+
   const scores = await db
     .select()
     .from(tasteScores)
+    .where(inArray(tasteScores.userId, nonTestUserIds))
     .orderBy(desc(tasteScores.score))
     .limit(50);
 

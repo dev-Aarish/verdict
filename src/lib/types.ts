@@ -92,6 +92,6 @@ export interface VerdictWithUser extends Verdict {
 
 export interface LeaderboardRow {
   rank: number;
-  user: UserSafe;
+  user: UserSafe | null;
   score: number;
 }
