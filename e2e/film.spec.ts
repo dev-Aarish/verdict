@@ -1,5 +1,5 @@
 import { test, expect } from "@playwright/test";
-import { makeUser, signup, searchFilms } from "./helpers";
+import { makeUser, signup, searchFilms, logFirstFilm } from "./helpers";
 
 test.describe("Film details page", () => {
   test.setTimeout(60_000);
@@ -36,11 +36,26 @@ test.describe("Film details page", () => {
     });
   });
 
-  test("back to search link returns to search", async ({ page }) => {
+  test("back link returns to the previous page (search)", async ({ page }) => {
     await searchFilms(page, "The Dark Knight");
     await page.locator("img[alt]").first().click();
-    await page.getByText("← Back to search").click();
+    await page.getByText("← Back").click();
     await expect(page).toHaveURL(/\/search/);
+  });
+
+  test("back link returns to the profile it was opened from", async ({ page }) => {
+    const user = makeUser("filmback");
+    await signup(page, user);
+    await logFirstFilm(page, { query: "The Dark Knight" });
+
+    // Head to the user's own profile and open the film from there.
+    await page.getByRole("link", { name: "Profile" }).click();
+    await expect(page).toHaveURL(new RegExp(`/profile/${user.username}`), { timeout: 10_000 });
+    await page.locator('[data-testid="watched-film"] img').first().click();
+    await expect(page).toHaveURL(/\/film\/tt\d+/, { timeout: 15_000 });
+
+    await page.getByText("← Back").click();
+    await expect(page).toHaveURL(new RegExp(`/profile/${user.username}`), { timeout: 10_000 });
   });
 
   test("shows branded 404 for an unknown film id", async ({ page }) => {

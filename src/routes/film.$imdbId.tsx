@@ -78,6 +78,18 @@ function FilmPage() {
 
   const posterSrc = (url: string | null) => (url && url !== "N/A" ? url : "/film-placeholder.svg");
 
+  // Return the visitor to wherever they came from (profile, search, feed, …)
+  // instead of always dropping them on /search. Falls back to search when the
+  // film page was opened directly (shared link, fresh tab) and there's no
+  // in-app history entry to go back to.
+  const goBack = () => {
+    if (router.history.canGoBack()) {
+      router.history.back();
+    } else {
+      router.navigate({ to: "/search" });
+    }
+  };
+
   if (loading) {
     return (
       <div className="min-h-screen">
@@ -112,9 +124,12 @@ function FilmPage() {
     <div className="min-h-screen">
       <TopBar />
       <main className="mx-auto max-w-6xl px-6 py-12">
-        <Link to="/search" className="text-caption text-dust hover:text-brass transition-colors">
-          ← Back to search
-        </Link>
+        <button
+          onClick={goBack}
+          className="cursor-pointer bg-transparent border-none text-caption text-dust hover:text-brass transition-colors"
+        >
+          ← Back
+        </button>
 
         <div className="mt-8 flex flex-col gap-10 md:flex-row">
           <div className="shrink-0">
