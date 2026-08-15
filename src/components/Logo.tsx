@@ -89,7 +89,7 @@ export function LogoMark({ className }: LogoMarkProps) {
 
 interface LogoProps {
   variant?: "paper" | "brass";
-  size?: "sm" | "md" | "lg";
+  size?: "sm" | "md" | "lg" | "xl";
   markOnly?: boolean;
   className?: string;
 }
@@ -98,6 +98,7 @@ const sizeMap = {
   sm: { mark: "h-5 w-5", word: "text-sm" },
   md: { mark: "h-6 w-6", word: "text-lg" },
   lg: { mark: "h-9 w-9", word: "text-2xl" },
+  xl: { mark: "h-10 w-10 md:h-14 md:w-14", word: "text-4xl md:text-6xl" },
 } as const;
 
 export function Logo({ variant = "paper", size = "md", markOnly = false, className }: LogoProps) {
