@@ -5,6 +5,7 @@ import { TopBar } from "@/components/TopBar";
 import { TasteMatchCard } from "@/components/TasteMatchCard";
 import { GenreRadar } from "@/components/GenreRadar";
 import { computeGenreDna } from "@/lib/genre-dna";
+import { formatRuntime } from "@/lib/utils";
 import {
   getUserWatchedFn,
   removeWatchedFn,
@@ -683,7 +684,9 @@ function ProfilePage() {
                         {movie.title}
                       </Link>
                       <p className="text-caption text-dust text-xs">
-                        {movie.year} · <span className="text-brass">{entry.rating}/10</span>
+                        {[movie.year, formatRuntime(movie.runtime)].filter(Boolean).join(" · ")}
+                        {" · "}
+                        <span className="text-brass">{entry.rating}/10</span>
                       </p>
                       {movie.director && (
                         <p className="text-caption text-dust text-[0.6rem] mt-0.5">
@@ -860,7 +863,9 @@ function ProfilePage() {
                       >
                         {movie.title}
                       </Link>
-                      <p className="text-caption text-dust text-xs">{movie.year}</p>
+                      <p className="text-caption text-dust text-xs">
+                        {[movie.year, formatRuntime(movie.runtime)].filter(Boolean).join(" · ")}
+                      </p>
                     </div>
                     {isOwn && (
                       <div className="mt-1 flex gap-1">

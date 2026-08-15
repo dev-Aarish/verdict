@@ -28,6 +28,16 @@ export interface Movie {
   director: string | null;
   plot: string | null;
   actors: string | null;
+  runtime: number | null;
+  rated: string | null;
+  released: string | null;
+  writer: string | null;
+  language: string | null;
+  awards: string | null;
+  boxOffice: string | null;
+  production: string | null;
+  dvd: string | null;
+  website: string | null;
 }
 
 export interface CommunityRating {

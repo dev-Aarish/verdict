@@ -23,7 +23,7 @@ test.describe("Film details page", () => {
     await searchFilms(page, "The Dark Knight");
     await page.locator("img[alt]").first().click();
     await expect(page.getByText(/Directed by/)).toBeVisible({ timeout: 15_000 });
-    await expect(page.getByText(/Christopher Nolan/)).toBeVisible();
+    await expect(page.getByText("Christopher Nolan", { exact: true })).toBeVisible();
     await expect(page.getByText("Cast")).toBeVisible();
     await expect(page.getByText(/Christian Bale/)).toBeVisible();
   });

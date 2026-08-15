@@ -14,6 +14,16 @@ export interface OmdbDetailResult {
   Country: string;
   Plot: string;
   Actors: string;
+  Runtime: string;
+  Rated: string;
+  Released: string;
+  Writer: string;
+  Language: string;
+  Awards: string;
+  BoxOffice: string;
+  Production: string;
+  DVD: string;
+  Website: string;
 }
 
 type MovieModel = typeof movies.$inferSelect;
@@ -37,6 +47,16 @@ export async function fetchOmdbDetail(imdbId: string): Promise<OmdbDetailResult 
   return detail;
 }
 
+function parseRuntime(raw: string): number | null {
+  if (!raw || raw === "N/A") return null;
+  const minutes = parseInt(raw, 10);
+  return Number.isFinite(minutes) && minutes > 0 ? minutes : null;
+}
+
+function clean(value: string | undefined | null): string | null {
+  return value && value !== "N/A" ? value : null;
+}
+
 export function fromDetail(imdbId: string, detail: OmdbDetailResult) {
   return {
     imdbId,
@@ -48,6 +68,16 @@ export function fromDetail(imdbId: string, detail: OmdbDetailResult) {
     country: detail.Country && detail.Country !== "N/A" ? detail.Country : null,
     plot: detail.Plot && detail.Plot !== "N/A" ? detail.Plot : null,
     actors: detail.Actors && detail.Actors !== "N/A" ? detail.Actors : null,
+    runtime: parseRuntime(detail.Runtime),
+    rated: clean(detail.Rated),
+    released: clean(detail.Released),
+    writer: clean(detail.Writer),
+    language: clean(detail.Language),
+    awards: clean(detail.Awards),
+    boxOffice: clean(detail.BoxOffice),
+    production: clean(detail.Production),
+    dvd: clean(detail.DVD),
+    website: clean(detail.Website),
   };
 }
 
@@ -85,6 +115,16 @@ export async function findOrCreateMovie(fields: {
       country: detailFields.country,
       plot: detailFields.plot,
       actors: detailFields.actors,
+      runtime: detailFields.runtime,
+      rated: detailFields.rated,
+      released: detailFields.released,
+      writer: detailFields.writer,
+      language: detailFields.language,
+      awards: detailFields.awards,
+      boxOffice: detailFields.boxOffice,
+      production: detailFields.production,
+      dvd: detailFields.dvd,
+      website: detailFields.website,
     })
     .returning();
 

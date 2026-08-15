@@ -22,6 +22,16 @@ export const movies = pgTable("movies", {
   director: text("director"),
   plot: text("plot"),
   actors: text("actors"),
+  runtime: integer("runtime"),
+  rated: text("rated"),
+  released: text("released"),
+  writer: text("writer"),
+  language: text("language"),
+  awards: text("awards"),
+  boxOffice: text("box_office"),
+  production: text("production"),
+  dvd: text("dvd"),
+  website: text("website"),
 });
 
 export const watchedEntries = pgTable("watched_entries", {

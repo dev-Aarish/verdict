@@ -36,11 +36,36 @@ function mergeMovieFields(movie: typeof movies.$inferSelect, detail: OmdbDetailR
     country: movie.country || fresh.country,
     plot: movie.plot || fresh.plot,
     actors: movie.actors || fresh.actors,
+    runtime: movie.runtime || fresh.runtime,
+    rated: movie.rated || fresh.rated,
+    released: movie.released || fresh.released,
+    writer: movie.writer || fresh.writer,
+    language: movie.language || fresh.language,
+    awards: movie.awards || fresh.awards,
+    boxOffice: movie.boxOffice || fresh.boxOffice,
+    production: movie.production || fresh.production,
+    dvd: movie.dvd || fresh.dvd,
+    website: movie.website || fresh.website,
   };
 }
 
 function needsEnrichment(movie: typeof movies.$inferSelect): boolean {
-  return !movie.plot || !movie.actors || !movie.director || !movie.posterUrl;
+  // Fields we expect on (nearly) every film. The occasionally-absent extras
+  // (box office, DVD, production, website) are still merged in whenever an
+  // enrichment happens, but don't trigger refetches on their own — otherwise
+  // films that genuinely lack them would hit OMDb on every view.
+  return (
+    !movie.plot ||
+    !movie.actors ||
+    !movie.director ||
+    !movie.posterUrl ||
+    !movie.runtime ||
+    !movie.rated ||
+    !movie.released ||
+    !movie.writer ||
+    !movie.language ||
+    !movie.awards
+  );
 }
 
 // GET /film/:imdbId (public)
@@ -75,6 +100,16 @@ moviesRouter.get("/film/:imdbId", async (req: Request, res: Response) => {
           country: movie.country,
           plot: movie.plot,
           actors: movie.actors,
+          runtime: movie.runtime,
+          rated: movie.rated,
+          released: movie.released,
+          writer: movie.writer,
+          language: movie.language,
+          awards: movie.awards,
+          boxOffice: movie.boxOffice,
+          production: movie.production,
+          dvd: movie.dvd,
+          website: movie.website,
         })
         .where(eq(movies.id, movie.id));
     }

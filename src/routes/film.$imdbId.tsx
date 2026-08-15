@@ -6,6 +6,7 @@ import { Stamp } from "@/components/Stamp";
 import { getFilmFn } from "@/api/movies";
 import { addToWatchlistFn, removeWatchlistFn, getCurrentUserWatchlistFn } from "@/api/watchlist";
 import { useUser } from "@/lib/user-context";
+import { formatRuntime } from "@/lib/utils";
 import type { FilmPage } from "@/lib/types";
 
 export const Route = createFileRoute("/film/$imdbId")({
@@ -150,6 +151,7 @@ function FilmPage() {
             <h1 className="text-section text-paper">{movie.title}</h1>
             <p className="text-caption text-dust mt-1">
               {movie.year}
+              {formatRuntime(movie.runtime) && <> · {formatRuntime(movie.runtime)}</>}
               {genres.length > 0 && <> · {genres.join(" · ")}</>}
               {movie.country && <>, {movie.country.split(",")[0]}</>}
             </p>
@@ -221,6 +223,53 @@ function FilmPage() {
             )}
           </div>
         </div>
+
+        {(() => {
+          const facts = [
+            { label: "Rated", value: movie.rated },
+            { label: "Released", value: movie.released },
+            { label: "Language", value: movie.language },
+            { label: "Box Office", value: movie.boxOffice },
+            { label: "Production", value: movie.production },
+            { label: "Writer", value: movie.writer },
+            { label: "Awards", value: movie.awards },
+            { label: "DVD", value: movie.dvd },
+          ].filter((f) => f.value);
+
+          if (facts.length === 0 && !movie.website) return null;
+
+          return (
+            <section className="hairline mt-12 pt-8">
+              <h2 className="text-card-title text-paper mb-6">The Print</h2>
+              <dl className="grid max-w-3xl grid-cols-1 gap-x-12 sm:grid-cols-2">
+                {facts.map((f) => (
+                  <div
+                    key={f.label}
+                    className="flex items-baseline justify-between gap-6 border-b border-dust/10 py-3"
+                  >
+                    <dt className="text-caption text-dust text-xs shrink-0">{f.label}</dt>
+                    <dd className="text-sm text-paper/80 text-right">{f.value}</dd>
+                  </div>
+                ))}
+                {movie.website && (
+                  <div className="flex items-baseline justify-between gap-6 border-b border-dust/10 py-3">
+                    <dt className="text-caption text-dust text-xs shrink-0">Website</dt>
+                    <dd className="text-sm text-right">
+                      <a
+                        href={movie.website}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-brass hover:underline break-all"
+                      >
+                        {movie.website.replace(/^https?:\/\//, "")}
+                      </a>
+                    </dd>
+                  </div>
+                )}
+              </dl>
+            </section>
+          );
+        })()}
 
         <section className="hairline mt-12 pt-8">
           <h2 className="text-card-title text-paper mb-6">Who logged it ({stats.total})</h2>
