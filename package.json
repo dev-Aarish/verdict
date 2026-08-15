@@ -17,7 +17,7 @@
     "test:e2e:ui": "playwright test --ui",
     "test:e2e:report": "playwright show-report",
     "dev:api": "cd server && npm run dev",
-    "dev:all": "concurrently \"npm run dev\" \"npm run dev:api\""
+    "dev:all": "concurrently --names vite,api --prefix-colors \"#bae1ff,#ffb3ba\" \"npm run dev\" \"npm run dev:api\""
   },
   "dependencies": {
     "@hookform/resolvers": "^5.2.2",
