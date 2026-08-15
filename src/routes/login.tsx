@@ -28,14 +28,14 @@ function LoginPage() {
   return (
     <div className="min-h-screen">
       <TopBar />
-      <main className="mx-auto grid min-h-[calc(100vh-4rem)] max-w-6xl grid-cols-1 md:grid-cols-2">
+      <main className="grid min-h-[calc(100vh-4rem)] grid-cols-1 md:grid-cols-2">
         {/* Left: marquee panel */}
-        <aside className="relative hidden flex-col justify-between border-r border-border/60 bg-velvet/40 p-10 md:flex">
+        <aside className="relative hidden flex-col items-center justify-between border-r border-border/60 bg-velvet/40 p-10 text-center md:flex">
           <div>
             <Logo variant="brass" size="sm" />
             <p className="text-caption mt-2">Members' entrance</p>
           </div>
-          <div className="flex flex-col items-start gap-6">
+          <div className="flex flex-col items-center gap-6">
             <Stamp size="lg" rotation={-5} label="Now Showing">
               You
             </Stamp>
@@ -48,7 +48,7 @@ function LoginPage() {
         </aside>
 
         {/* Right: form */}
-        <section className="flex flex-col justify-center px-6 py-16 md:px-14">
+        <section className="flex flex-col items-center justify-center px-6 py-16 md:px-14">
           <div className="mx-auto w-full max-w-sm">
             <p className="text-caption">Members</p>
             <h1 className="text-section text-paper mt-1">Sign in</h1>
