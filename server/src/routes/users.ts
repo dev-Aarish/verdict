@@ -1,7 +1,7 @@
 import { Router, Request, Response } from "express";
 import { db } from "../db/index.js";
 import { users, watchedEntries } from "../db/schema.js";
-import { like, sql, inArray } from "drizzle-orm";
+import { like, sql, inArray, eq, and } from "drizzle-orm";
 
 export const usersRouter = Router();
 
@@ -16,7 +16,7 @@ usersRouter.get("/search", async (req: Request, res: Response) => {
   const userRows = await db
     .select()
     .from(users)
-    .where(like(users.username, `%${q}%`))
+    .where(and(like(users.username, `%${q}%`), eq(users.isTest, false)))
     .limit(20);
 
   if (userRows.length === 0) {

@@ -1,4 +1,4 @@
-import { pgTable, text, integer, timestamp } from "drizzle-orm/pg-core";
+import { pgTable, text, integer, timestamp, boolean } from "drizzle-orm/pg-core";
 
 export const users = pgTable("users", {
   id: text("id").primaryKey(),
@@ -8,6 +8,7 @@ export const users = pgTable("users", {
   bio: text("bio"),
   passwordHash: text("password_hash"),
   createdAt: timestamp("created_at", { withTimezone: true }).defaultNow(),
+  isTest: boolean("is_test").default(false),
 });
 
 export const movies = pgTable("movies", {

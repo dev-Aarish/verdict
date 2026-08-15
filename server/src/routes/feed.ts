@@ -51,7 +51,7 @@ feedRouter.get("/verdicts", optionalAuth, async (req: AuthRequest, res: Response
   const allUsers = await db
     .select()
     .from(users)
-    .where(inArray(users.id, allUserIds));
+    .where(and(inArray(users.id, allUserIds), eq(users.isTest, false)));
   const userMap = new Map(allUsers.map((u) => [u.id, u]));
 
   const result = recentVerdicts.map((v) => ({
@@ -82,7 +82,7 @@ feedRouter.get("/leaderboard", async (_req: Request, res: Response) => {
   const allUsers = await db
     .select()
     .from(users)
-    .where(inArray(users.id, userIds));
+    .where(and(inArray(users.id, userIds), eq(users.isTest, false)));
   const userMap = new Map(allUsers.map((u) => [u.id, u]));
 
   const result = scores.map((s, index) => ({
