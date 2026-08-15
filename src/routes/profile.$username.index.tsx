@@ -13,6 +13,7 @@ import {
   reorderWatchedFn,
 } from "@/api/movies";
 import { getUserWatchlistFn, removeWatchlistFn } from "@/api/watchlist";
+import { updateProfileFn } from "@/api/users";
 import { getTasteScoreFn, type TasteBreakdown } from "@/api/taste-score";
 import { getTasteMatchFn, type TasteMatch } from "@/api/taste-match";
 import { getUserVerdictsFn } from "@/api/verdicts";
@@ -55,6 +56,8 @@ export const Route = createFileRoute("/profile/$username/")({
 
 type SortMode = "custom" | "rating-desc" | "rating-asc" | "title-asc" | "recent";
 
+const MAX_ABOUT_LENGTH = 200;
+
 const SORT_OPTIONS: { value: SortMode; label: string }[] = [
   { value: "custom", label: "Custom order" },
   { value: "rating-desc", label: "Rating: High → Low" },
@@ -65,7 +68,7 @@ const SORT_OPTIONS: { value: SortMode; label: string }[] = [
 
 function ProfilePage() {
   const { username } = Route.useParams();
-  const { user } = useUser();
+  const { user, setUser } = useUser();
   const router = useRouter();
   const isOwn = user?.username === username;
   const [entries, setEntries] = useState<WatchedEntryWithMovie[] | null>(null);
@@ -93,6 +96,10 @@ function ProfilePage() {
   const [editing, setEditing] = useState(false);
   const [editError, setEditError] = useState<string | null>(null);
   const [sortMode, setSortMode] = useState<SortMode>("custom");
+  const [editingAbout, setEditingAbout] = useState(false);
+  const [aboutDraft, setAboutDraft] = useState("");
+  const [aboutSaving, setAboutSaving] = useState(false);
+  const [aboutError, setAboutError] = useState<string | null>(null);
   const PAGE_SIZE = 20;
 
   useEffect(() => {
@@ -119,6 +126,22 @@ function ProfilePage() {
       .catch(() => {})
       .finally(() => setLoading(false));
   }, [username]);
+
+  const handleSaveAbout = async () => {
+    setAboutSaving(true);
+    setAboutError(null);
+    try {
+      const result = await updateProfileFn({ data: { bio: aboutDraft } });
+      const newBio = result.user?.bio ?? null;
+      setProfileUser((prev) => (prev ? { ...prev, bio: newBio } : prev));
+      setUser(user ? { ...user, bio: newBio } : user);
+      setEditingAbout(false);
+    } catch (e: unknown) {
+      setAboutError(e instanceof Error ? e.message : "Failed to save About");
+    } finally {
+      setAboutSaving(false);
+    }
+  };
 
   const handleFollowToggle = async () => {
     try {
@@ -341,9 +364,71 @@ function ProfilePage() {
           </div>
           <div>
             <h1 className="text-section text-paper">{profileUser.username}</h1>
-            {profileUser.bio && (
-              <p className="mt-2 text-sm text-paper/70 max-w-md">{profileUser.bio}</p>
-            )}
+            <div className="mt-2 mx-auto flex max-w-md flex-col items-center gap-2">
+              {editingAbout ? (
+                <div className="w-full">
+                  <textarea
+                    value={aboutDraft}
+                    onChange={(e) => setAboutDraft(e.target.value)}
+                    maxLength={MAX_ABOUT_LENGTH}
+                    rows={3}
+                    placeholder="Tell people about your taste in film..."
+                    autoFocus
+                    className="w-full resize-none border border-dust/30 bg-transparent px-3 py-2 text-sm text-paper placeholder:text-dust/50 outline-none focus:border-brass/60"
+                  />
+                  <div className="mt-2 flex items-center justify-between gap-3">
+                    <span className="text-caption text-dust text-xs">
+                      {aboutDraft.length}/{MAX_ABOUT_LENGTH}
+                    </span>
+                    <div className="flex items-center gap-2">
+                      {aboutError && (
+                        <span className="text-caption text-marquee-red text-xs">{aboutError}</span>
+                      )}
+                      <button
+                        onClick={() => setEditingAbout(false)}
+                        className="cursor-pointer border border-dust/30 px-3 py-1 text-caption text-dust text-xs transition-colors hover:text-paper"
+                      >
+                        Cancel
+                      </button>
+                      <button
+                        onClick={handleSaveAbout}
+                        disabled={aboutSaving}
+                        className="cursor-pointer border border-brass px-3 py-1 text-caption text-brass text-xs transition-colors hover:bg-brass hover:text-ink disabled:cursor-not-allowed disabled:opacity-40"
+                      >
+                        {aboutSaving ? "Saving..." : "Save"}
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              ) : profileUser.bio ? (
+                <div className="flex items-start justify-center gap-2">
+                  <p className="text-sm text-paper/70">{profileUser.bio}</p>
+                  {isOwn && (
+                    <button
+                      onClick={() => {
+                        setAboutDraft(profileUser.bio || "");
+                        setAboutError(null);
+                        setEditingAbout(true);
+                      }}
+                      className="mt-0.5 shrink-0 cursor-pointer text-caption text-brass/60 text-xs transition-colors hover:text-brass"
+                    >
+                      Edit
+                    </button>
+                  )}
+                </div>
+              ) : isOwn ? (
+                <button
+                  onClick={() => {
+                    setAboutDraft("");
+                    setAboutError(null);
+                    setEditingAbout(true);
+                  }}
+                  className="cursor-pointer text-caption text-brass/60 text-xs transition-colors hover:text-brass"
+                >
+                  + Add about
+                </button>
+              ) : null}
+            </div>
             <div className="mt-3 flex items-center justify-center gap-4 text-caption text-dust">
               <span>
                 {filmCount} film{filmCount !== 1 ? "s" : ""}
