@@ -7,28 +7,19 @@ import { requireAuth, AuthRequest } from "../middleware/auth.js";
 import { config } from "../config.js";
 import { toSafeUser } from "../lib/safe-user.js";
 import {
-  fetchOmdbDetail,
-  fromDetail,
+  searchTmdb,
+  fetchEnrichedDetail,
   findOrCreateMovie,
-  type OmdbDetailResult,
+  type MovieDetailFields,
 } from "../lib/movie-store.js";
 import { invalidateTasteScore } from "./taste-score.js";
 
 export const moviesRouter = Router();
 
-interface OmdbSearchResult {
-  imdbID: string;
-  Title: string;
-  Year: string;
-  Poster: string;
-  Type: string;
-}
-
-function mergeMovieFields(movie: typeof movies.$inferSelect, detail: OmdbDetailResult) {
-  const fresh = fromDetail(movie.imdbId, detail);
+function mergeMovieFields(movie: typeof movies.$inferSelect, fresh: MovieDetailFields) {
   return {
     ...movie,
-    title: movie.title || fresh.title,
+    title: movie.title || fresh.title || "Unknown",
     year: movie.year || fresh.year,
     posterUrl: movie.posterUrl || fresh.posterUrl,
     genres: movie.genres || fresh.genres,
@@ -79,14 +70,14 @@ moviesRouter.get("/film/:imdbId", async (req: Request, res: Response) => {
     .then((r) => r[0] || null);
 
   if (!movie) {
-    const detail = await fetchOmdbDetail(imdbId);
+    const detail = await fetchEnrichedDetail(imdbId);
     if (!detail) {
       res.status(404).json({ error: "Film not found" });
       return;
     }
-    movie = { id: imdbId, ...fromDetail(imdbId, detail) };
+    movie = { id: imdbId, ...detail, title: detail.title || "Unknown" };
   } else if (needsEnrichment(movie)) {
-    const detail = await fetchOmdbDetail(imdbId);
+    const detail = await fetchEnrichedDetail(imdbId);
     if (detail) {
       movie = mergeMovieFields(movie, detail);
       await db
@@ -172,35 +163,28 @@ moviesRouter.get("/search", async (req: Request, res: Response) => {
     return;
   }
 
-  const key = config.omdbApiKey;
+  const key = config.tmdbApiKey;
   if (!key) {
-    res.status(500).json({ error: "OMDb API key not configured" });
+    res.status(500).json({ error: "TMDb API key not configured" });
     return;
   }
 
-  const urlStr = `https://www.omdbapi.com/?apikey=${key}&s=${encodeURIComponent(q)}&type=movie&page=${page}`;
-
-  const fetchRes = await fetch(urlStr);
-  const json = await fetchRes.json();
-
-  if (json.Response === "False") {
+  const result = await searchTmdb(q, page);
+  if (!result) {
     res.json({
       results: [],
       totalResults: 0,
       totalPages: 0,
       page: 1,
-      error: json.Error,
+      error: "Search failed",
     });
     return;
   }
 
-  const totalResults = parseInt(json.totalResults, 10) || 0;
-  const totalPages = Math.min(Math.ceil(totalResults / 10), 100);
-
   res.json({
-    results: json.Search as OmdbSearchResult[],
-    totalResults,
-    totalPages,
+    results: result.results,
+    totalResults: result.totalResults,
+    totalPages: result.totalPages,
     page,
     error: null,
   });
