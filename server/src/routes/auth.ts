@@ -125,6 +125,7 @@ authRouter.post("/signup", async (req: Request, res: Response) => {
     email,
     passwordHash,
     bio: bio || null,
+    isTest: email.endsWith("@test.com"),
   });
 
   const sessionId = uuidv4();

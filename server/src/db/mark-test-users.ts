@@ -1,13 +1,14 @@
 import { neon } from "@neondatabase/serverless";
 import { drizzle } from "drizzle-orm/neon-http";
-import { eq, like } from "drizzle-orm";
+import { eq, like, or } from "drizzle-orm";
 import { users } from "./schema.js";
 
 const sql = neon(process.env.DATABASE_URL!);
 const db = drizzle(sql);
 
 async function markTestUsers() {
-  const result = await db.update(users).set({ isTest: true }).where(like(users.email, "%@test.com"));
+  const testPattern = or(like(users.email, "%@test.com"), like(users.email, "test_%@example.com"));
+  const result = await db.update(users).set({ isTest: true }).where(testPattern);
   console.log(`Marked ${result.rowCount ?? 0} test user(s) as isTest=true`);
 }
 
