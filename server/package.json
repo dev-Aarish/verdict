@@ -10,7 +10,8 @@
     "db:push": "drizzle-kit push",
     "db:seed": "tsx src/db/seed.ts",
     "db:migrate": "tsx src/db/migrate.ts",
-    "db:backfill-plots": "tsx src/db/backfill-plots.ts"
+    "db:backfill-plots": "tsx src/db/backfill-plots.ts",
+    "db:mark-test-users": "node --env-file=.env --import tsx src/db/mark-test-users.ts"
   },
   "dependencies": {
     "@neondatabase/serverless": "^1.1.0",
