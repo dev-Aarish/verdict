@@ -124,7 +124,7 @@ function FilmPage() {
   return (
     <div className="min-h-screen">
       <TopBar />
-      <main className="mx-auto max-w-6xl px-6 py-12">
+      <main className="mx-auto max-w-6xl px-5 py-8 md:px-6 md:py-12">
         <button
           onClick={goBack}
           className="cursor-pointer bg-transparent border-none text-caption text-dust hover:text-brass transition-colors"
@@ -134,7 +134,7 @@ function FilmPage() {
 
         <div className="mt-8 flex flex-col gap-10 md:flex-row">
           <div className="shrink-0">
-            <div className="aspect-2/3 w-56 overflow-hidden bg-velvet ring-1 ring-white/5 sm:w-64">
+            <div className="aspect-2/3 w-44 overflow-hidden bg-velvet ring-1 ring-white/5 sm:w-56 md:w-64">
               <img
                 src={posterSrc(movie.posterUrl)}
                 alt={movie.title}
@@ -245,16 +245,16 @@ function FilmPage() {
                 {facts.map((f) => (
                   <div
                     key={f.label}
-                    className="flex items-baseline justify-between gap-6 border-b border-dust/10 py-3"
+                    className="flex items-baseline justify-between gap-6 border-b border-dust/10 py-3 max-md:flex-col max-md:items-start max-md:gap-1"
                   >
                     <dt className="text-caption text-dust text-xs shrink-0">{f.label}</dt>
-                    <dd className="text-sm text-paper/80 text-right">{f.value}</dd>
+                    <dd className="text-sm text-paper/80 text-right max-md:text-left">{f.value}</dd>
                   </div>
                 ))}
                 {movie.website && (
-                  <div className="flex items-baseline justify-between gap-6 border-b border-dust/10 py-3">
+                  <div className="flex items-baseline justify-between gap-6 border-b border-dust/10 py-3 max-md:flex-col max-md:items-start max-md:gap-1">
                     <dt className="text-caption text-dust text-xs shrink-0">Website</dt>
-                    <dd className="text-sm text-right">
+                    <dd className="text-sm text-right max-md:text-left">
                       <a
                         href={movie.website}
                         target="_blank"
@@ -279,11 +279,11 @@ function FilmPage() {
               Nobody on Verdict has logged this film yet. Be the first jury member.
             </p>
           ) : (
-            <div className="space-y-3">
+            <div className="space-y-3 max-md:space-y-0">
               {community.map((c, i) => (
                 <div
                   key={c.user?.id || i}
-                  className="flex items-center justify-between gap-4 border border-dust/20 p-4"
+                  className="flex items-center justify-between gap-4 border border-dust/20 p-4 max-md:border-x-0 max-md:border-t-0 max-md:border-b max-md:border-dust/10 max-md:px-0 max-md:py-3"
                 >
                   <div className="flex items-center gap-3 min-w-0">
                     <div className="h-9 w-9 shrink-0 overflow-hidden rounded-full bg-dust/20">

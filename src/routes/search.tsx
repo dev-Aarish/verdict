@@ -212,7 +212,7 @@ function SearchPage() {
   return (
     <div className="min-h-screen">
       <TopBar />
-      <main className="mx-auto max-w-6xl px-6 py-12">
+      <main className="mx-auto max-w-6xl px-5 py-8 md:px-6 md:py-12">
         <p className="text-caption mb-3">The Vault</p>
         <h1 className="text-section text-paper">Search</h1>
 
@@ -257,7 +257,7 @@ function SearchPage() {
             placeholder={tab === "films" ? "Search by title..." : "Search by username..."}
             value={query}
             onChange={(e) => handleSearch(e.target.value)}
-            className="w-full border-0 border-b border-dust/30 bg-transparent py-4 text-2xl text-paper placeholder-dust/50 outline-none transition-colors focus:border-brass font-display"
+            className="w-full border-0 border-b border-dust/30 bg-transparent py-3 text-lg text-paper placeholder-dust/50 outline-none transition-colors focus:border-brass font-display md:py-4 md:text-2xl"
             autoFocus
           />
         </div>
@@ -308,7 +308,7 @@ function SearchPage() {
                 {totalPages > 1 && ` · Page ${currentPage} of ${totalPages}`}
               </p>
 
-              <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5">
+              <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 sm:gap-4 md:grid-cols-4 lg:grid-cols-5">
                 {results.map((movie) => {
                   const isAdded = addedIds.has(movie.imdbID) || movie.imdbID in watchedMap;
                   const existingRating = watchedMap[movie.imdbID];
@@ -348,7 +348,7 @@ function SearchPage() {
                                 ? "Remove from watchlist"
                                 : "Add to watchlist"
                             }
-                            className={`flex-1 py-1.5 text-[0.6rem] tracking-widest uppercase font-mono transition-colors ${
+                            className={`flex-1 py-1.5 text-[0.6rem] tracking-widest uppercase font-mono transition-colors max-md:py-2.5 ${
                               movie.imdbID in watchlistMap
                                 ? "bg-brass/15 text-brass border border-brass/40"
                                 : "border border-dust/40 text-dust hover:border-brass/60 hover:text-brass cursor-pointer"
@@ -364,7 +364,7 @@ function SearchPage() {
                               setAddError(null);
                             }}
                             disabled={isAdded}
-                            className={`flex-1 py-1.5 text-[0.6rem] tracking-widest uppercase font-mono transition-colors ${
+                            className={`flex-1 py-1.5 text-[0.6rem] tracking-widest uppercase font-mono transition-colors max-md:py-2.5 ${
                               isAdded
                                 ? "bg-brass/20 text-brass/60 cursor-default"
                                 : "border border-brass/50 text-brass hover:bg-brass hover:text-ink cursor-pointer"
@@ -404,13 +404,13 @@ function SearchPage() {
           )}
 
           {tab === "people" && userResults.length > 0 && (
-            <div className="space-y-3">
+            <div className="space-y-3 max-md:space-y-0">
               {userResults.map((u) => (
                 <Link
                   key={u.id}
                   to="/profile/$username"
                   params={{ username: u.username }}
-                  className="flex items-center gap-4 border border-dust/20 p-4 hover:border-brass/50 transition-colors group"
+                  className="flex items-center gap-4 border border-dust/20 p-4 hover:border-brass/50 transition-colors group max-md:border-x-0 max-md:border-t-0 max-md:border-b max-md:border-dust/10 max-md:px-0 max-md:py-3"
                 >
                   <div className="h-12 w-12 shrink-0 overflow-hidden rounded-full bg-velvet ring-1 ring-white/10">
                     <img

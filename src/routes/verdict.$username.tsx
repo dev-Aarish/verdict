@@ -50,7 +50,7 @@ function LeaveVerdict() {
     <div className="min-h-screen">
       <TopBar />
 
-      <main className="mx-auto flex min-h-[calc(100vh-73px)] max-w-2xl flex-col justify-center px-6 py-16">
+      <main className="mx-auto flex min-h-[calc(100vh-73px)] max-w-2xl flex-col justify-center px-5 py-10 pb-24 md:px-6 md:py-16">
         {!stamped ? (
           <>
             <p className="text-caption mb-4">In the matter of</p>

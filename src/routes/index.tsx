@@ -33,11 +33,11 @@ function Landing() {
     <div className="min-h-screen">
       <TopBar />
 
-      <main className="mx-auto max-w-6xl px-6">
+      <main className="mx-auto max-w-6xl px-5 md:px-6">
         {/* Hero */}
-        <section className="grid gap-12 pb-20 pt-14 md:grid-cols-[1.15fr_1fr] md:items-center md:pb-32 md:pt-24">
+        <section className="grid gap-10 pb-16 pt-10 md:grid-cols-[1.15fr_1fr] md:items-center md:gap-12 md:pb-32 md:pt-24">
           <div>
-            <p className="text-caption mb-6">Est. 2026 · Screening Room</p>
+            <p className="text-caption mb-4 md:mb-6">Est. 2026 · Screening Room</p>
             <h1 className="text-hero text-paper">
               Everyone's a critic.
               <br />
@@ -47,10 +47,10 @@ function Landing() {
               Verdict reads your movie history and renders a score. Then your friends stamp their
               judgment onto your taste — one line, no hedging.
             </p>
-            <div className="mt-10 flex flex-wrap items-center gap-6">
+            <div className="mt-8 flex flex-wrap items-center gap-4 md:mt-10 md:gap-6">
               <Link
                 to="/signup"
-                className="border-2 border-brass bg-brass px-6 py-3 text-caption text-ink hover:bg-transparent hover:text-brass transition-colors"
+                className="border-2 border-brass bg-brass px-5 py-2.5 text-caption text-ink hover:bg-transparent hover:text-brass transition-colors md:px-6 md:py-3"
               >
                 Get your Verdict →
               </Link>
@@ -84,8 +84,8 @@ function Landing() {
         </section>
 
         {/* Credits roll */}
-        <section className="hairline py-14">
-          <p className="text-caption mb-8 text-center">Recent Verdicts</p>
+        <section className="hairline py-10 md:py-14">
+          <p className="text-caption mb-6 text-center md:mb-8">Recent Verdicts</p>
           <div className="relative mx-auto h-64 max-w-2xl overflow-hidden [mask-image:linear-gradient(to_bottom,transparent,black_20%,black_80%,transparent)]">
             <ul className="animate-credits absolute inset-x-0 top-0 space-y-6 text-center">
               {rollList.map((v, i) => (
@@ -102,7 +102,7 @@ function Landing() {
         </section>
 
         {/* How it works — three acts */}
-        <section className="hairline grid gap-10 py-20 md:grid-cols-3">
+        <section className="hairline grid gap-8 py-14 md:grid-cols-3 md:gap-10 md:py-20">
           {[
             {
               n: "I.",
@@ -129,14 +129,14 @@ function Landing() {
         </section>
 
         {/* Closing */}
-        <section className="hairline flex flex-col items-center gap-8 py-24 text-center">
+        <section className="hairline flex flex-col items-center gap-6 py-16 text-center md:gap-8 md:py-24">
           <p className="text-caption">Now Showing</p>
           <h2 className="text-section max-w-2xl text-paper">
             A quiet, formal room where your taste is read out loud.
           </h2>
           <Link
             to="/signup"
-            className="border-2 border-brass bg-brass px-6 py-3 text-caption text-ink hover:bg-transparent hover:text-brass transition-colors"
+            className="border-2 border-brass bg-brass px-5 py-2.5 text-caption text-ink hover:bg-transparent hover:text-brass transition-colors md:px-6 md:py-3"
           >
             Get your Verdict →
           </Link>

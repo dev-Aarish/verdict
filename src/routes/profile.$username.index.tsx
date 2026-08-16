@@ -353,10 +353,10 @@ function ProfilePage() {
   return (
     <div className="min-h-screen">
       <TopBar />
-      <main className="mx-auto max-w-6xl px-6 py-12">
+      <main className="mx-auto max-w-6xl px-5 py-8 md:px-6 md:py-12">
         <div className="flex flex-col items-center gap-6 text-center">
           <div className="relative">
-            <div className="h-24 w-24 overflow-hidden rounded-full bg-dust/20 ring-2 ring-brass">
+            <div className="h-20 w-20 overflow-hidden rounded-full bg-dust/20 ring-2 ring-brass md:h-24 md:w-24">
               <img
                 src={`https://api.dicebear.com/7.x/avataaars/svg?seed=${profileUser.username}`}
                 alt={profileUser.username}
@@ -430,13 +430,13 @@ function ProfilePage() {
                 </button>
               ) : null}
             </div>
-            <div className="mt-3 flex items-center justify-center gap-4 text-caption text-dust">
+            <div className="mt-3 flex flex-wrap items-center justify-center gap-x-4 gap-y-1 text-caption text-dust md:gap-4">
               <span>
                 {filmCount} film{filmCount !== 1 ? "s" : ""}
               </span>
               {followCounts && (
                 <>
-                  <span className="opacity-30">·</span>
+                  <span className="hidden opacity-30 md:inline">·</span>
                   <Link
                     to="/profile/$username/followers"
                     params={{ username }}
@@ -444,7 +444,7 @@ function ProfilePage() {
                   >
                     {followCounts.followers} follower{followCounts.followers !== 1 ? "s" : ""}
                   </Link>
-                  <span className="opacity-30">·</span>
+                  <span className="hidden opacity-30 md:inline">·</span>
                   <Link
                     to="/profile/$username/following"
                     params={{ username }}
@@ -456,7 +456,7 @@ function ProfilePage() {
               )}
               {avgRating && (
                 <>
-                  <span className="opacity-30">·</span>
+                  <span className="hidden opacity-30 md:inline">·</span>
                   <span>
                     Avg <span className="text-brass">{avgRating}</span>/10
                   </span>
@@ -464,7 +464,7 @@ function ProfilePage() {
               )}
               {memberSince && (
                 <>
-                  <span className="opacity-30">·</span>
+                  <span className="hidden opacity-30 md:inline">·</span>
                   <span>Since {memberSince}</span>
                 </>
               )}
@@ -508,16 +508,16 @@ function ProfilePage() {
 
         {dna && (
           <div className="hairline mt-10 pt-8 w-full max-w-2xl mx-auto">
-            <div className="flex flex-col items-center justify-center gap-10 md:flex-row md:gap-14">
+            <div className="flex flex-col items-center justify-center gap-8 md:flex-row md:gap-14">
               {tasteScore && (
-                <div className="flex items-center justify-center gap-8">
+                <div className="flex flex-col items-center justify-center gap-3 md:flex-row md:gap-8">
                   <div className="flex flex-col items-center">
-                    <span className="text-[2.5rem] font-bold text-brass leading-none">
+                    <span className="text-[2rem] font-bold text-brass leading-none md:text-[2.5rem]">
                       {tasteScore.score}
                     </span>
                     <span className="text-caption text-dust mt-1 whitespace-nowrap">Taste Score</span>
                   </div>
-                  <div className="flex gap-6">
+                  <div className="flex gap-5 md:gap-6">
                     {(
                       [
                         { label: "Diversity", value: tasteScore.breakdown.diversity },
@@ -526,7 +526,7 @@ function ProfilePage() {
                       ] as const
                     ).map((item) => (
                       <div key={item.label} className="flex flex-col items-center">
-                        <span className="text-lg font-semibold text-brass">{item.value}</span>
+                        <span className="text-base font-semibold text-brass md:text-lg">{item.value}</span>
                         <span className="text-caption text-dust text-xs whitespace-nowrap">{item.label}</span>
                       </div>
                     ))}
@@ -558,11 +558,14 @@ function ProfilePage() {
             <h2 className="text-card-title text-paper mb-6 text-center">
               Verdicts ({verdicts.length})
             </h2>
-            <div className="space-y-4">
+            <div className="space-y-4 max-md:space-y-0">
               {verdicts.map((v) => {
                 if (!v.fromUser) return null;
                 return (
-                  <div key={v.id} className="border border-dust/20 p-4">
+                  <div
+                    key={v.id}
+                    className="border border-dust/20 p-4 max-md:border-x-0 max-md:border-t-0 max-md:border-b max-md:border-dust/10 max-md:px-0 max-md:py-3"
+                  >
                     <div className="flex items-start justify-between gap-4">
                       <div className="flex items-center gap-3 min-w-0">
                         <div className="h-8 w-8 shrink-0 overflow-hidden rounded-full bg-dust/20">
@@ -648,7 +651,7 @@ function ProfilePage() {
               )}
             </div>
           ) : (
-            <div className="grid grid-cols-2 gap-5 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5">
+            <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 sm:gap-5 md:grid-cols-4 lg:grid-cols-5">
               {paginatedEntries.map((entry) => {
                 const movie = entry.movie;
                 if (!movie) return null;
@@ -679,7 +682,7 @@ function ProfilePage() {
                         to="/film/$imdbId"
                         params={{ imdbId: movie.imdbId }}
                         data-testid="film-title"
-                        className="text-sm font-medium text-paper leading-tight hover:text-brass hover:underline transition-colors"
+                        className="text-sm font-medium text-paper leading-tight hover:text-brass hover:underline transition-colors max-md:text-[13px]"
                       >
                         {movie.title}
                       </Link>
@@ -717,14 +720,14 @@ function ProfilePage() {
                             <button
                               onClick={() => handleMove(entry.id, "up")}
                               aria-label={`Move ${movie.title} up`}
-                              className="py-1 px-1.5 border border-dust/40 text-dust opacity-0 group-hover:opacity-100 transition-opacity hover:text-brass hover:border-brass/60 cursor-pointer"
+                              className="py-1 px-1.5 border border-dust/40 text-dust opacity-0 group-hover:opacity-100 transition-opacity hover:text-brass hover:border-brass/60 cursor-pointer max-md:opacity-100"
                             >
                               <ArrowUp className="h-3 w-3" />
                             </button>
                             <button
                               onClick={() => handleMove(entry.id, "down")}
                               aria-label={`Move ${movie.title} down`}
-                              className="py-1 px-1.5 border border-dust/40 text-dust opacity-0 group-hover:opacity-100 transition-opacity hover:text-brass hover:border-brass/60 cursor-pointer"
+                              className="py-1 px-1.5 border border-dust/40 text-dust opacity-0 group-hover:opacity-100 transition-opacity hover:text-brass hover:border-brass/60 cursor-pointer max-md:opacity-100"
                             >
                               <ArrowDown className="h-3 w-3" />
                             </button>
@@ -737,13 +740,13 @@ function ProfilePage() {
                             setEditNote(entry.note || "");
                             setEditError(null);
                           }}
-                          className="flex-1 py-1 border border-brass/50 text-brass text-caption text-[0.6rem] opacity-0 group-hover:opacity-100 transition-opacity hover:bg-brass hover:text-ink cursor-pointer"
+                          className="flex-1 py-1 border border-brass/50 text-brass text-caption text-[0.6rem] opacity-0 group-hover:opacity-100 transition-opacity hover:bg-brass hover:text-ink cursor-pointer max-md:py-2 max-md:opacity-100"
                         >
                           Rate
                         </button>
                         <AlertDialog>
                           <AlertDialogTrigger asChild>
-                            <button className="flex-1 py-1 border border-marquee-red/40 text-marquee-red text-caption text-[0.6rem] opacity-0 group-hover:opacity-100 transition-opacity hover:bg-marquee-red/10 cursor-pointer">
+                            <button className="flex-1 py-1 border border-marquee-red/40 text-marquee-red text-caption text-[0.6rem] opacity-0 group-hover:opacity-100 transition-opacity hover:bg-marquee-red/10 cursor-pointer max-md:py-2 max-md:opacity-100">
                               Remove
                             </button>
                           </AlertDialogTrigger>
@@ -829,7 +832,7 @@ function ProfilePage() {
               )}
             </div>
           ) : (
-            <div className="grid grid-cols-2 gap-5 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5">
+            <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 sm:gap-5 md:grid-cols-4 lg:grid-cols-5">
               {watchlist.map((entry) => {
                 const movie = entry.movie;
                 if (!movie) return null;
@@ -859,7 +862,7 @@ function ProfilePage() {
                       <Link
                         to="/film/$imdbId"
                         params={{ imdbId: movie.imdbId }}
-                        className="text-sm font-medium text-paper leading-tight hover:text-brass hover:underline transition-colors"
+                        className="text-sm font-medium text-paper leading-tight hover:text-brass hover:underline transition-colors max-md:text-[13px]"
                       >
                         {movie.title}
                       </Link>
@@ -876,13 +879,13 @@ function ProfilePage() {
                             setLogNote("");
                             setLogError(null);
                           }}
-                          className="flex-1 py-1 border border-brass/50 text-brass text-caption text-[0.6rem] opacity-0 group-hover:opacity-100 transition-opacity hover:bg-brass hover:text-ink cursor-pointer"
+                          className="flex-1 py-1 border border-brass/50 text-brass text-caption text-[0.6rem] opacity-0 group-hover:opacity-100 transition-opacity hover:bg-brass hover:text-ink cursor-pointer max-md:py-2 max-md:opacity-100"
                         >
                           Log it
                         </button>
                         <button
                           onClick={() => handleWatchlistRemove(entry.id)}
-                          className="flex-1 py-1 border border-marquee-red/40 text-marquee-red text-caption text-[0.6rem] opacity-0 group-hover:opacity-100 transition-opacity hover:bg-marquee-red/10 cursor-pointer"
+                          className="flex-1 py-1 border border-marquee-red/40 text-marquee-red text-caption text-[0.6rem] opacity-0 group-hover:opacity-100 transition-opacity hover:bg-marquee-red/10 cursor-pointer max-md:py-2 max-md:opacity-100"
                         >
                           Remove
                         </button>

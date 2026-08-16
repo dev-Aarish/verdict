@@ -79,7 +79,7 @@ function FeedPage() {
     <div className="min-h-screen">
       <TopBar />
 
-      <main className="mx-auto grid max-w-5xl gap-16 px-6 py-16 md:grid-cols-[1.4fr_1fr]">
+      <main className="mx-auto grid max-w-5xl gap-10 px-5 py-10 md:grid-cols-[1.4fr_1fr] md:gap-16 md:px-6 md:py-16">
         <section>
           <p className="text-caption mb-3">The Reel</p>
           <h1 className="text-section text-paper">Recent Verdicts</h1>
@@ -130,37 +130,48 @@ function FeedPage() {
               {verdicts.map((v, i) => (
                 <li
                   key={v.id}
-                  className="grid grid-cols-[3rem_1fr_auto_auto] items-center gap-4 py-5"
+                  className="flex flex-col gap-1.5 py-5 md:grid md:grid-cols-[3rem_1fr_auto_auto] md:items-center md:gap-x-4 md:gap-y-1"
                 >
-                  <span className="mono text-xs text-dust">{timeAgo(v.createdAt)}</span>
-                  <div>
-                    <p className="mono text-sm text-paper">"{v.comment}"</p>
-                    <p className="text-caption mt-1">
-                      {v.fromUser && (
-                        <Link
-                          to="/profile/$username"
-                          params={{ username: v.fromUser.username }}
-                          className="hover:text-brass transition-colors"
-                        >
-                          {v.fromUser.username}
-                        </Link>
-                      )}
-                      {" → "}
-                      {v.toUser && (
-                        <Link
-                          to="/profile/$username"
-                          params={{ username: v.toUser.username }}
-                          className="hover:text-brass transition-colors"
-                        >
-                          {v.toUser.username}
-                        </Link>
-                      )}
-                    </p>
+                  {/* Mobile: time left, stamp right. md:contents makes these direct grid items. */}
+                  <div className="flex items-center justify-between gap-3 md:contents">
+                    <span className="mono text-xs text-dust">{timeAgo(v.createdAt)}</span>
+                    <Stamp
+                      size="sm"
+                      rotation={((i * 13) % 7) - 3}
+                      variant={v.score < 5 ? "red" : "brass"}
+                      className="md:hidden"
+                    >
+                      {v.score}
+                    </Stamp>
                   </div>
+                  <p className="mono text-sm text-paper md:order-2 md:col-start-2">
+                    "{v.comment}"
+                  </p>
+                  <p className="text-caption mt-0.5 md:order-3 md:col-start-2">
+                    {v.fromUser && (
+                      <Link
+                        to="/profile/$username"
+                        params={{ username: v.fromUser.username }}
+                        className="hover:text-brass transition-colors"
+                      >
+                        {v.fromUser.username}
+                      </Link>
+                    )}
+                    {" → "}
+                    {v.toUser && (
+                      <Link
+                        to="/profile/$username"
+                        params={{ username: v.toUser.username }}
+                        className="hover:text-brass transition-colors"
+                      >
+                        {v.toUser.username}
+                      </Link>
+                    )}
+                  </p>
                   {user && v.fromUser && v.fromUser.username !== user.username && (
                     <button
                       onClick={() => v.fromUser && handleFollowToggle(v.fromUser.username)}
-                      className={`px-3 py-1 text-caption text-xs transition-colors cursor-pointer border ${
+                      className={`mt-1 w-full py-2.5 text-caption text-xs transition-colors cursor-pointer border md:order-4 md:col-start-3 md:mt-0 md:w-auto md:py-1 ${
                         followingState[v.fromUser.username]
                           ? "border-dust/40 text-dust hover:border-marquee-red hover:text-marquee-red"
                           : "border-brass/50 text-brass hover:bg-brass hover:text-ink"
@@ -173,6 +184,7 @@ function FeedPage() {
                     size="sm"
                     rotation={((i * 13) % 7) - 3}
                     variant={v.score < 5 ? "red" : "brass"}
+                    className="hidden md:block md:order-5 md:col-start-4"
                   >
                     {v.score}
                   </Stamp>

@@ -272,3 +272,36 @@
 @utility animate-credits {
   animation: credits-roll 40s linear infinite;
 }
+
+/*
+ * Mobile — the site is desktop-first; these overrides apply only below md
+ * (767px) and leave the desktop layout untouched. The mobile pass shrinks the
+ * display type, clears tap highlights, and reserves space for the fixed
+ * bottom nav rendered by TopBar.
+ */
+@media (max-width: 767px) {
+  /* Display type: much smaller on phones, still legible */
+  .text-hero {
+    font-size: clamp(1.9rem, 7.5vw, 2.75rem);
+  }
+
+  .text-section {
+    font-size: clamp(1.35rem, 4.5vw, 1.75rem);
+  }
+
+  .text-card-title {
+    font-size: 1.0625rem;
+  }
+
+  /* Room for the fixed bottom nav (TopBar) so nothing is hidden behind it */
+  body {
+    padding-bottom: calc(3.75rem + env(safe-area-inset-bottom));
+  }
+
+  /* No 300ms tap delay, no grey flash on tap */
+  a,
+  button {
+    touch-action: manipulation;
+    -webkit-tap-highlight-color: transparent;
+  }
+}

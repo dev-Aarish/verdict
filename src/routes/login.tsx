@@ -48,7 +48,7 @@ function LoginPage() {
         </aside>
 
         {/* Right: form */}
-        <section className="flex flex-col items-center justify-center px-6 py-16 md:px-14">
+        <section className="flex flex-col items-center justify-center px-5 py-10 pb-20 md:px-14 md:py-16">
           <div className="mx-auto w-full max-w-sm">
             <p className="text-caption">Members</p>
             <h1 className="text-section text-paper mt-1">Sign in</h1>

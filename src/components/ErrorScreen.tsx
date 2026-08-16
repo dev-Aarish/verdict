@@ -45,7 +45,7 @@ export function ErrorScreen({ variant, code, path, onRetry }: ErrorScreenProps) 
     <div className="flex min-h-screen flex-col">
       <TopBar />
 
-      <main className="relative flex flex-1 items-center justify-center overflow-hidden px-6 py-24">
+      <main className="relative flex flex-1 items-center justify-center overflow-hidden px-5 py-16 md:px-6 md:py-24">
         <div className="relative flex max-w-xl flex-col items-center text-center">
           <p className="text-caption text-marquee-red">{eyebrow}</p>
 

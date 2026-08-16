@@ -50,7 +50,7 @@ export function WatchedEntryDialog({
 }: WatchedEntryDialogProps) {
   return (
     <Dialog open={open} onOpenChange={(o) => !o && onOpenChange(o)}>
-      <DialogContent className="border border-dust/30 bg-velvet max-w-sm">
+      <DialogContent className="border border-dust/30 bg-velvet w-[calc(100vw-2rem)] max-w-sm">
         <DialogHeader>
           <DialogTitle className="text-card-title text-paper">{title}</DialogTitle>
           <DialogDescription className="text-caption text-dust">{subtitle}</DialogDescription>

@@ -60,7 +60,7 @@ function FollowersPage() {
   return (
     <div className="min-h-screen">
       <TopBar />
-      <main className="mx-auto max-w-2xl px-6 py-16">
+      <main className="mx-auto max-w-2xl px-5 py-10 md:px-6 md:py-16">
         <Link
           to="/profile/$username"
           params={{ username }}

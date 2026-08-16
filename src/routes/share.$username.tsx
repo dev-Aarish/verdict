@@ -137,7 +137,7 @@ function SharePage() {
     <div className="min-h-screen">
       <TopBar />
 
-      <main className="mx-auto max-w-3xl px-6 py-12">
+      <main className="mx-auto max-w-3xl px-5 py-8 md:px-6 md:py-12">
         <div className="mb-8">
           <Link
             to="/profile/$username"
