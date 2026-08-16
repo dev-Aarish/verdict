@@ -76,7 +76,13 @@ export const Route = createRootRouteWithContext<MyRouterContext>()({
       { rel: "icon", href: "/favicon-16.png", type: "image/png", sizes: "16x16" },
       { rel: "apple-touch-icon", href: "/apple-touch-icon.png" },
       // Self-hosted fonts — preload so they're ready before first paint (no FOUT).
-      { rel: "preload", href: "/fonts/inter-latin.woff2", as: "font", type: "font/woff2", crossOrigin: "anonymous" },
+      {
+        rel: "preload",
+        href: "/fonts/inter-latin.woff2",
+        as: "font",
+        type: "font/woff2",
+        crossOrigin: "anonymous",
+      },
       {
         rel: "preload",
         href: "/fonts/playfair-display-latin.woff2",
@@ -94,8 +100,12 @@ export const Route = createRootRouteWithContext<MyRouterContext>()({
     ],
   }),
   loader: async ({ context }) => {
-    const { user } = await getCurrentUserFn();
-    return { user };
+    try {
+      const { user } = await getCurrentUserFn();
+      return { user };
+    } catch {
+      return { user: null };
+    }
   },
   shellComponent: RootShell,
   component: RootComponent,

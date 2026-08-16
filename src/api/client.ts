@@ -4,6 +4,10 @@
 // - Local dev: both unset → http://localhost:4000 (the local `npm run dev:api` server)
 const LOCAL_API_URL = "http://localhost:4000";
 
+const SSR_FETCH_TIMEOUT_MS = 15_000;
+const SSR_FETCH_RETRIES = 2;
+const SSR_RETRY_BACKOFF_MS = [300, 800];
+
 function getBackendUrl(): string {
   const viteApiUrl = import.meta.env.VITE_API_URL as string | undefined;
   if (typeof window === "undefined") {
@@ -21,26 +25,53 @@ async function getServerRequestCookie(): Promise<string | null> {
   return context?.request.headers.get("cookie") ?? null;
 }
 
+function sleep(ms: number): Promise<void> {
+  return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
 export async function apiFetch<T>(path: string, options?: RequestInit): Promise<T> {
   const url = `${getBackendUrl()}/api${path}`;
-  let init: RequestInit = { ...options };
+  const isServer = typeof window === "undefined";
 
-  if (typeof window === "undefined") {
-    init = { ...init, signal: AbortSignal.timeout(10000) };
+  let headers: HeadersInit | undefined = options?.headers;
+  let credentials: RequestCredentials | undefined;
+
+  if (isServer) {
     const cookie = await getServerRequestCookie();
     if (cookie) {
-      init = { ...init, headers: { ...init.headers, cookie } };
+      headers = { ...(options?.headers ?? {}), cookie };
     }
   } else {
-    init = { ...init, credentials: "include" };
+    credentials = "include";
   }
 
-  const res = await fetch(url, init);
-  const body = await res.json();
+  const attempts = isServer ? SSR_FETCH_RETRIES + 1 : 1;
 
-  if (!res.ok) {
-    throw new Error(body.error || `Request failed: ${res.status}`);
+  for (let attempt = 0; attempt < attempts; attempt++) {
+    if (attempt > 0) {
+      await sleep(SSR_RETRY_BACKOFF_MS[attempt - 1]);
+    }
+
+    const init: RequestInit = { ...options, headers, credentials };
+    if (isServer) {
+      init.signal = AbortSignal.timeout(SSR_FETCH_TIMEOUT_MS);
+    }
+
+    let res: Response;
+    try {
+      res = await fetch(url, init);
+    } catch (error) {
+      if (attempt === attempts - 1) throw error;
+      continue;
+    }
+
+    const body = await res.json().catch(() => ({}));
+    if (!res.ok) {
+      throw new Error(body.error || `Request failed: ${res.status}`);
+    }
+
+    return body as T;
   }
 
-  return body as T;
+  throw new Error("Request failed");
 }
