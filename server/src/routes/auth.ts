@@ -46,10 +46,11 @@ async function resolveUserFromSession(sessionId: string) {
 }
 
 function setSessionCookie(res: Response, sessionId: string) {
+  const isProd = config.nodeEnv === "production";
   res.cookie(COOKIE_NAME, sessionId, {
     httpOnly: true,
-    sameSite: "lax",
-    secure: config.cookieSecure,
+    sameSite: isProd ? "none" : "lax",
+    secure: isProd ? true : config.cookieSecure,
     maxAge: SESSION_DURATION_MS,
     path: "/",
   });
@@ -282,6 +283,12 @@ authRouter.post("/logout", async (req: Request, res: Response) => {
     await db.delete(sessions).where(eq(sessions.id, sessionId));
   }
 
-  res.clearCookie(COOKIE_NAME, { path: "/" });
+  const isProd = config.nodeEnv === "production";
+  res.clearCookie(COOKIE_NAME, {
+    path: "/",
+    httpOnly: true,
+    sameSite: isProd ? "none" : "lax",
+    secure: isProd ? true : config.cookieSecure,
+  });
   res.json({ ok: true });
 });
