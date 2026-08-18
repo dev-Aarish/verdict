@@ -16,7 +16,7 @@ const GLOW_TOP = "#2f2e2b";
 const GLOW_BOTTOM = "#1c1a18";
 
 function trimPath(path: string): string {
-  if (!path || path === "/") return "verdict.app";
+  if (!path || path === "/") return "verdict-critique.vercel.app";
   return path.length > 44 ? `${path.slice(0, 41)}…` : path;
 }
 

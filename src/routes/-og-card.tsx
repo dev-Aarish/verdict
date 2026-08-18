@@ -364,7 +364,7 @@ export function OgCard({ username, score, filmCount, films, quote, quoteFrom, dn
               color: DUST,
             }}
           >
-            verdict.app/@{username}
+            verdict-critique.vercel.app/@{username}
           </span>
         </div>
       </div>

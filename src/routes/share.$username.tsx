@@ -222,7 +222,7 @@ function SharePage() {
             >
               <div className="flex items-center justify-between">
                 <p className="text-caption">Now Showing</p>
-                <p className="text-caption">verdict.app/@{username}</p>
+                <p className="text-caption">verdict-critique.vercel.app/@{username}</p>
               </div>
               <ul className="mt-3 space-y-1">
                 {topFilms.map((f) => (
