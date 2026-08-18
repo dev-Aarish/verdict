@@ -6,6 +6,7 @@ import { Stamp } from "@/components/Stamp";
 import { getFilmFn } from "@/api/movies";
 import { addToWatchlistFn, removeWatchlistFn, getCurrentUserWatchlistFn } from "@/api/watchlist";
 import { useUser } from "@/lib/user-context";
+import { dicebearAvatar } from "@/lib/avatar";
 import { formatRuntime } from "@/lib/utils";
 import type { FilmPage } from "@/lib/types";
 
@@ -288,10 +289,7 @@ function FilmPage() {
                   <div className="flex items-center gap-3 min-w-0">
                     <div className="h-9 w-9 shrink-0 overflow-hidden rounded-full bg-dust/20">
                       <img
-                        src={
-                          c.user?.avatarUrl ||
-                          `https://api.dicebear.com/7.x/avataaars/svg?seed=${c.user?.username || "anon"}`
-                        }
+                        src={c.user?.avatarUrl || dicebearAvatar(c.user?.username || "anon")}
                         alt={c.user?.username || "anonymous"}
                         className="h-full w-full object-cover"
                       />

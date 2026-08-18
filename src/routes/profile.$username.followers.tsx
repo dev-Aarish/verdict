@@ -2,6 +2,7 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { TopBar } from "@/components/TopBar";
 import { getFollowersListFn, followUserFn, unfollowUserFn, getFollowStatusFn } from "@/api/follows";
 import { useUser } from "@/lib/user-context";
+import { avatarUrlFor } from "@/lib/avatar";
 import { useState, useEffect } from "react";
 import type { User } from "@/lib/types";
 
@@ -88,7 +89,7 @@ function FollowersPage() {
                 >
                   <div className="h-10 w-10 shrink-0 overflow-hidden rounded-full bg-dust/20">
                     <img
-                      src={`https://api.dicebear.com/7.x/avataaars/svg?seed=${u.username}`}
+                      src={avatarUrlFor(u.username, u.avatarUrl)}
                       alt={u.username}
                       className="h-full w-full object-cover"
                     />

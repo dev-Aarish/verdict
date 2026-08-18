@@ -73,7 +73,22 @@ test.beforeEach(async ({ page }) => {
 test.describe("Profile page", () => {
   test("shows username and avatar", async ({ page }) => {
     await expect(page.getByRole("heading", { name: USER.username })).toBeVisible();
-    await expect(page.locator(`img[alt="${USER.username}"]`)).toBeVisible();
+    await expect(page.getByRole("main").locator(`img[alt="${USER.username}"]`)).toBeVisible();
+  });
+
+  test("user can change and reset their avatar", async ({ page }) => {
+    const avatar = page.getByRole("main").locator(`img[alt="${USER.username}"]`);
+
+    await page.getByRole("button", { name: "Change avatar" }).click();
+    await expect(page.getByRole("dialog", { name: "Choose your avatar" })).toBeVisible();
+    await page.getByRole("button", { name: /Avatar ember/ }).click();
+    await page.getByRole("button", { name: "Save" }).click();
+    await expect(avatar).toHaveAttribute("src", /seed=ember/);
+
+    await page.getByRole("button", { name: "Change avatar" }).click();
+    await page.getByRole("button", { name: /reset to auto avatar/i }).click();
+    await page.getByRole("button", { name: "Save" }).click();
+    await expect(avatar).toHaveAttribute("src", new RegExp(`seed=${USER.username}`));
   });
 
   test("shows film count", async ({ page }) => {

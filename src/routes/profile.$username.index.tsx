@@ -39,8 +39,10 @@ import {
   AlertDialogAction,
 } from "@/components/ui/alert-dialog";
 import { WatchedEntryDialog } from "@/components/WatchedEntryDialog";
+import { AvatarPickerDialog } from "@/components/AvatarPickerDialog";
+import { avatarUrlFor } from "@/lib/avatar";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
-import { ArrowDown, ArrowUp } from "lucide-react";
+import { ArrowDown, ArrowUp, Pencil } from "lucide-react";
 
 export const Route = createFileRoute("/profile/$username/")({
   head: ({ params }) => ({
@@ -101,6 +103,9 @@ function ProfilePage() {
   const [aboutDraft, setAboutDraft] = useState("");
   const [aboutSaving, setAboutSaving] = useState(false);
   const [aboutError, setAboutError] = useState<string | null>(null);
+  const [avatarOpen, setAvatarOpen] = useState(false);
+  const [avatarSaving, setAvatarSaving] = useState(false);
+  const [avatarError, setAvatarError] = useState<string | null>(null);
   const PAGE_SIZE = 20;
 
   useEffect(() => {
@@ -141,6 +146,22 @@ function ProfilePage() {
       setAboutError(e instanceof Error ? e.message : "Failed to save About");
     } finally {
       setAboutSaving(false);
+    }
+  };
+
+  const handleSaveAvatar = async (avatarUrl: string | null) => {
+    setAvatarSaving(true);
+    setAvatarError(null);
+    try {
+      const result = await updateProfileFn({ data: { avatarUrl } });
+      const newAvatar = result.user?.avatarUrl ?? null;
+      setProfileUser((prev) => (prev ? { ...prev, avatarUrl: newAvatar } : prev));
+      setUser(user ? { ...user, avatarUrl: newAvatar } : user);
+      setAvatarOpen(false);
+    } catch (e: unknown) {
+      setAvatarError(e instanceof Error ? e.message : "Failed to save avatar");
+    } finally {
+      setAvatarSaving(false);
     }
   };
 
@@ -358,10 +379,20 @@ function ProfilePage() {
           <div className="relative">
             <div className="h-20 w-20 overflow-hidden rounded-full bg-dust/20 ring-2 ring-brass md:h-24 md:w-24">
               <img
-                src={`https://api.dicebear.com/7.x/avataaars/svg?seed=${profileUser.username}`}
+                src={avatarUrlFor(profileUser.username, profileUser.avatarUrl)}
                 alt={profileUser.username}
+                className="h-full w-full object-cover"
               />
             </div>
+            {isOwn && (
+              <button
+                onClick={() => setAvatarOpen(true)}
+                aria-label="Change avatar"
+                className="absolute -bottom-1 -right-1 flex h-7 w-7 cursor-pointer items-center justify-center rounded-full border border-brass bg-velvet text-brass transition-colors hover:bg-brass hover:text-ink"
+              >
+                <Pencil className="h-3.5 w-3.5" />
+              </button>
+            )}
           </div>
           <div>
             <h1 className="text-section text-paper">{profileUser.username}</h1>
@@ -570,7 +601,7 @@ function ProfilePage() {
                       <div className="flex items-center gap-3 min-w-0">
                         <div className="h-8 w-8 shrink-0 overflow-hidden rounded-full bg-dust/20">
                           <img
-                            src={`https://api.dicebear.com/7.x/avataaars/svg?seed=${v.fromUser.username}`}
+                            src={avatarUrlFor(v.fromUser.username, v.fromUser.avatarUrl)}
                             alt={v.fromUser.username}
                             className="h-full w-full object-cover"
                           />
@@ -933,6 +964,16 @@ function ProfilePage() {
         submitLabel="Update"
         submitBusyLabel="Saving..."
         onSubmit={handleUpdateEntry}
+      />
+
+      <AvatarPickerDialog
+        open={avatarOpen}
+        onOpenChange={setAvatarOpen}
+        username={profileUser.username}
+        currentAvatarUrl={profileUser.avatarUrl}
+        onSave={handleSaveAvatar}
+        saving={avatarSaving}
+        error={avatarError}
       />
     </div>
   );

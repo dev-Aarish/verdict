@@ -2,6 +2,7 @@ import { Link, useLocation } from "@tanstack/react-router";
 import { Logo } from "@/components/Logo";
 import { logoutFn } from "@/api/auth";
 import { useUser } from "@/lib/user-context";
+import { avatarUrlFor } from "@/lib/avatar";
 import { cn } from "@/lib/utils";
 import { Newspaper, Search, User, LogOut, LogIn, UserPlus } from "lucide-react";
 
@@ -23,9 +24,7 @@ export function TopBar() {
     }
   };
 
-  const avatarUrl = user
-    ? `https://api.dicebear.com/7.x/avataaars/svg?seed=${user.username}`
-    : null;
+  const avatarUrl = user ? avatarUrlFor(user.username, user.avatarUrl) : null;
 
   return (
     <>

@@ -8,31 +8,56 @@ import { toSafeUser } from "../lib/safe-user.js";
 export const usersRouter = Router();
 
 const MAX_ABOUT_LENGTH = 200;
+const MAX_AVATAR_URL_LENGTH = 512;
 
-// PATCH /me (requireAuth) — update the current user's profile (About/bio)
+// PATCH /me (requireAuth) — update the current user's profile (About/bio, avatar)
 usersRouter.patch("/me", requireAuth, async (req: AuthRequest, res: Response) => {
   const userId = req.user!.id;
-  const { bio } = req.body ?? {};
+  const { bio, avatarUrl } = req.body ?? {};
 
-  if (bio === undefined) {
+  if (bio === undefined && avatarUrl === undefined) {
     res.status(400).json({ error: "Nothing to update" });
     return;
   }
 
-  if (typeof bio !== "string") {
+  if (bio !== undefined && typeof bio !== "string") {
     res.status(400).json({ error: "About must be a string" });
     return;
   }
 
-  if (bio.length > MAX_ABOUT_LENGTH) {
+  if (bio !== undefined && bio.length > MAX_ABOUT_LENGTH) {
     res.status(400).json({ error: `About must be ${MAX_ABOUT_LENGTH} characters or fewer` });
     return;
   }
 
-  const trimmed = bio.trim();
+  if (avatarUrl !== undefined && avatarUrl !== null) {
+    if (typeof avatarUrl !== "string" || avatarUrl.length > MAX_AVATAR_URL_LENGTH) {
+      res.status(400).json({ error: "Avatar URL must be a valid string" });
+      return;
+    }
+    try {
+      const url = new URL(avatarUrl);
+      if (url.protocol !== "http:" && url.protocol !== "https:") {
+        throw new Error("Invalid protocol");
+      }
+    } catch {
+      res.status(400).json({ error: "Avatar URL must be a valid http(s) URL" });
+      return;
+    }
+  }
+
+  const updates: Partial<typeof users.$inferInsert> = {};
+  if (bio !== undefined) {
+    const trimmed = bio.trim();
+    updates.bio = trimmed === "" ? null : trimmed;
+  }
+  if (avatarUrl !== undefined) {
+    updates.avatarUrl = avatarUrl;
+  }
+
   const updated = await db
     .update(users)
-    .set({ bio: trimmed === "" ? null : trimmed })
+    .set(updates)
     .where(eq(users.id, userId))
     .returning()
     .then((r) => r[0]);

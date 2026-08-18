@@ -6,6 +6,7 @@ import { addToWatchlistFn, removeWatchlistFn, getCurrentUserWatchlistFn } from "
 import { searchUsersFn } from "@/api/users";
 import { WatchedEntryDialog } from "@/components/WatchedEntryDialog";
 import { useUser } from "@/lib/user-context";
+import { dicebearAvatar } from "@/lib/avatar";
 
 export const Route = createFileRoute("/search")({
   head: () => ({
@@ -313,7 +314,11 @@ function SearchPage() {
                   const isAdded = addedIds.has(movie.imdbID) || movie.imdbID in watchedMap;
                   const existingRating = watchedMap[movie.imdbID];
                   return (
-                    <div key={movie.imdbID} className="group flex flex-col" data-testid="search-result">
+                    <div
+                      key={movie.imdbID}
+                      className="group flex flex-col"
+                      data-testid="search-result"
+                    >
                       <Link
                         to="/film/$imdbId"
                         params={{ imdbId: movie.imdbID }}
@@ -414,10 +419,7 @@ function SearchPage() {
                 >
                   <div className="h-12 w-12 shrink-0 overflow-hidden rounded-full bg-velvet ring-1 ring-white/10">
                     <img
-                      src={
-                        u.avatarUrl ||
-                        `https://api.dicebear.com/7.x/avataaars/svg?seed=${u.username}`
-                      }
+                      src={u.avatarUrl || dicebearAvatar(u.username)}
                       alt={u.username}
                       className="h-full w-full object-cover"
                     />

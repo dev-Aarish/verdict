@@ -6,7 +6,7 @@ export function searchUsersFn({ data }: { data: { query: string } }) {
   return apiFetch<any>(`/users/search?${params}`);
 }
 
-export function updateProfileFn({ data }: { data: { bio: string } }) {
+export function updateProfileFn({ data }: { data: { bio?: string; avatarUrl?: string | null } }) {
   return apiFetch<{ user: UserSafe }>("/users/me", {
     method: "PATCH",
     headers: { "Content-Type": "application/json" },
