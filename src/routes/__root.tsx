@@ -10,6 +10,7 @@ import { useEffect, useState, type ReactNode } from "react";
 import { Toaster } from "sonner";
 
 import appCss from "../styles.css?url";
+import { absoluteUrl } from "../lib/site-url";
 import { reportLovableError } from "../lib/lovable-error-reporting";
 import { getCurrentUserFn } from "@/api/auth";
 import { UserContext } from "@/lib/user-context";
@@ -66,7 +67,9 @@ export const Route = createRootRouteWithContext<MyRouterContext>()({
           "Get a Taste Score. Collect Verdicts. Share the stamp. A screening-room take on movie-rating apps.",
       },
       { property: "og:type", content: "website" },
+      { property: "og:image", content: absoluteUrl("/og/site") },
       { name: "twitter:card", content: "summary_large_image" },
+      { name: "twitter:image", content: absoluteUrl("/og/site") },
       { name: "theme-color", content: "#14151D" },
     ],
     links: [

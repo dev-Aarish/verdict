@@ -19,6 +19,7 @@ import { Route as IndexRouteImport } from './routes/index'
 import { Route as VerdictUsernameRouteImport } from './routes/verdict.$username'
 import { Route as ShareUsernameRouteImport } from './routes/share.$username'
 import { Route as ProfileUsernameRouteImport } from './routes/profile.$username'
+import { Route as OgSiteRouteImport } from './routes/og.site'
 import { Route as OgUsernameRouteImport } from './routes/og.$username'
 import { Route as FilmImdbIdRouteImport } from './routes/film.$imdbId'
 import { Route as ProfileUsernameIndexRouteImport } from './routes/profile.$username.index'
@@ -76,6 +77,11 @@ const ProfileUsernameRoute = ProfileUsernameRouteImport.update({
   path: '/profile/$username',
   getParentRoute: () => rootRouteImport,
 } as any)
+const OgSiteRoute = OgSiteRouteImport.update({
+  id: '/og/site',
+  path: '/og/site',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const OgUsernameRoute = OgUsernameRouteImport.update({
   id: '/og/$username',
   path: '/og/$username',
@@ -119,6 +125,7 @@ export interface FileRoutesByFullPath {
   '/sitemap.xml': typeof SitemapDotxmlRoute
   '/film/$imdbId': typeof FilmImdbIdRoute
   '/og/$username': typeof OgUsernameRoute
+  '/og/site': typeof OgSiteRoute
   '/profile/$username': typeof ProfileUsernameRouteWithChildren
   '/share/$username': typeof ShareUsernameRoute
   '/verdict/$username': typeof VerdictUsernameRoute
@@ -137,6 +144,7 @@ export interface FileRoutesByTo {
   '/sitemap.xml': typeof SitemapDotxmlRoute
   '/film/$imdbId': typeof FilmImdbIdRoute
   '/og/$username': typeof OgUsernameRoute
+  '/og/site': typeof OgSiteRoute
   '/share/$username': typeof ShareUsernameRoute
   '/verdict/$username': typeof VerdictUsernameRoute
   '/og/error/$code': typeof OgErrorCodeRoute
@@ -155,6 +163,7 @@ export interface FileRoutesById {
   '/sitemap.xml': typeof SitemapDotxmlRoute
   '/film/$imdbId': typeof FilmImdbIdRoute
   '/og/$username': typeof OgUsernameRoute
+  '/og/site': typeof OgSiteRoute
   '/profile/$username': typeof ProfileUsernameRouteWithChildren
   '/share/$username': typeof ShareUsernameRoute
   '/verdict/$username': typeof VerdictUsernameRoute
@@ -175,6 +184,7 @@ export interface FileRouteTypes {
     | '/sitemap.xml'
     | '/film/$imdbId'
     | '/og/$username'
+    | '/og/site'
     | '/profile/$username'
     | '/share/$username'
     | '/verdict/$username'
@@ -193,6 +203,7 @@ export interface FileRouteTypes {
     | '/sitemap.xml'
     | '/film/$imdbId'
     | '/og/$username'
+    | '/og/site'
     | '/share/$username'
     | '/verdict/$username'
     | '/og/error/$code'
@@ -210,6 +221,7 @@ export interface FileRouteTypes {
     | '/sitemap.xml'
     | '/film/$imdbId'
     | '/og/$username'
+    | '/og/site'
     | '/profile/$username'
     | '/share/$username'
     | '/verdict/$username'
@@ -229,6 +241,7 @@ export interface RootRouteChildren {
   SitemapDotxmlRoute: typeof SitemapDotxmlRoute
   FilmImdbIdRoute: typeof FilmImdbIdRoute
   OgUsernameRoute: typeof OgUsernameRoute
+  OgSiteRoute: typeof OgSiteRoute
   ProfileUsernameRoute: typeof ProfileUsernameRouteWithChildren
   ShareUsernameRoute: typeof ShareUsernameRoute
   VerdictUsernameRoute: typeof VerdictUsernameRoute
@@ -307,6 +320,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ProfileUsernameRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/og/site': {
+      id: '/og/site'
+      path: '/og/site'
+      fullPath: '/og/site'
+      preLoaderRoute: typeof OgSiteRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/og/$username': {
       id: '/og/$username'
       path: '/og/$username'
@@ -378,6 +398,7 @@ const rootRouteChildren: RootRouteChildren = {
   SitemapDotxmlRoute: SitemapDotxmlRoute,
   FilmImdbIdRoute: FilmImdbIdRoute,
   OgUsernameRoute: OgUsernameRoute,
+  OgSiteRoute: OgSiteRoute,
   ProfileUsernameRoute: ProfileUsernameRouteWithChildren,
   ShareUsernameRoute: ShareUsernameRoute,
   VerdictUsernameRoute: VerdictUsernameRoute,

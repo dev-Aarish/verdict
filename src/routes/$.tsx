@@ -1,5 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { ErrorScreen } from "@/components/ErrorScreen";
+import { absoluteUrl } from "@/lib/site-url";
 
 /**
  * Catch-all — any path that matches no route gets the house 404, stamped in
@@ -9,11 +10,7 @@ import { ErrorScreen } from "@/components/ErrorScreen";
 export const Route = createFileRoute("/$")({
   head: ({ params }) => {
     const path = params._splat ? `/${params._splat}` : "/";
-    const siteUrl =
-      typeof window === "undefined"
-        ? process.env.APP_URL || import.meta.env.VITE_SITE_URL || ""
-        : "";
-    const ogImage = `${siteUrl}/og/error/404?path=${encodeURIComponent(path)}`;
+    const ogImage = absoluteUrl(`/og/error/404?path=${encodeURIComponent(path)}`);
     return {
       meta: [
         { title: "404 · Not in the archive · Verdict" },
@@ -28,6 +25,8 @@ export const Route = createFileRoute("/$")({
         },
         { property: "og:type", content: "website" },
         { property: "og:image", content: ogImage },
+        { property: "og:image:width", content: "1200" },
+        { property: "og:image:height", content: "630" },
         { name: "twitter:card", content: "summary_large_image" },
         { name: "twitter:image", content: ogImage },
       ],

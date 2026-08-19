@@ -12,14 +12,11 @@ import { useState, useEffect, useRef, useCallback } from "react";
 import type { User, WatchedEntryWithMovie, VerdictWithUser } from "@/lib/types";
 import { toPng } from "html-to-image";
 import { toast } from "sonner";
+import { absoluteUrl } from "@/lib/site-url";
 
 export const Route = createFileRoute("/share/$username")({
   head: ({ params }) => {
-    const siteUrl =
-      typeof window === "undefined"
-        ? process.env.APP_URL || import.meta.env.VITE_SITE_URL || ""
-        : "";
-    const ogImage = `${siteUrl}/og/${params.username}`;
+    const ogImage = absoluteUrl(`/og/${params.username}`);
     return {
       meta: [
         { title: `${params.username}'s Verdict card` },
@@ -34,9 +31,11 @@ export const Route = createFileRoute("/share/$username")({
         },
         { property: "og:type", content: "website" },
         { property: "og:image", content: ogImage },
+        { property: "og:image:width", content: "1200" },
+        { property: "og:image:height", content: "630" },
         { name: "twitter:card", content: "summary_large_image" },
         { name: "twitter:image", content: ogImage },
-        { property: "og:url", content: `${siteUrl}/share/${params.username}` },
+        { property: "og:url", content: absoluteUrl(`/share/${params.username}`) },
       ],
     };
   },

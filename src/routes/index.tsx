@@ -3,6 +3,7 @@ import { Footer } from "@/components/Footer";
 import { Stamp } from "@/components/Stamp";
 import { TopBar } from "@/components/TopBar";
 import { globalFeed } from "@/lib/mock";
+import { absoluteUrl } from "@/lib/site-url";
 
 export const Route = createFileRoute("/")({
   head: () => ({
@@ -20,7 +21,9 @@ export const Route = createFileRoute("/")({
           "Get a Taste Score. Collect Verdicts. Share the stamp. A screening-room take on movie-rating apps.",
       },
       { property: "og:type", content: "website" },
+      { property: "og:image", content: absoluteUrl("/og/site") },
       { name: "twitter:card", content: "summary_large_image" },
+      { name: "twitter:image", content: absoluteUrl("/og/site") },
     ],
   }),
   component: Landing,
