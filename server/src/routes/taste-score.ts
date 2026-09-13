@@ -5,13 +5,13 @@ import { eq, inArray, sql } from "drizzle-orm";
 
 export const tasteScoreRouter = Router();
 
-interface TasteBreakdown {
+export interface TasteBreakdown {
   diversity: number;
   obscurity: number;
   consistency: number;
 }
 
-interface TasteScoreResult {
+export interface TasteScoreResult {
   score: number;
   breakdown: TasteBreakdown;
 }
@@ -89,7 +89,7 @@ function computeConsistency(ratings: number[]): number {
   return Math.round(Math.max(0, 1 - stddev / maxStddev) * 100);
 }
 
-async function computeTasteScore(userId: string): Promise<TasteScoreResult> {
+export async function computeTasteScore(userId: string): Promise<TasteScoreResult> {
   const entries = await db.select().from(watchedEntries).where(eq(watchedEntries.userId, userId));
 
   if (entries.length === 0) {

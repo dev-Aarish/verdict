@@ -72,9 +72,10 @@ async function signup(page: import("@playwright/test").Page, user: { username: s
 
 test.describe("Verdict page", () => {
   test.setTimeout(60000);
-  test.beforeEach(async ({ page }) => {
+  test.beforeEach(async ({ page, context }) => {
     page.on("dialog", (d) => d.accept());
     await signup(page, TO_USER);
+    await context.clearCookies();
     await signup(page, FROM_USER);
   });
 
@@ -138,10 +139,9 @@ test.describe("Verdict page", () => {
   test("submitting verdict shows stamped confirmation", async ({ page }) => {
     await page.goto(`/verdict/${TO_USER.username}`);
     await waitForHydration(page);
-    const input = page.locator("input[placeholder='One line. No hedging.']");
-    await input.fill("Excellent taste in films");
+    await fillStable(page, "One line. No hedging.", "Excellent taste in films");
     await page.getByRole("button", { name: /Stamp it/ }).click();
-    await expect(page.getByText("Verdict recorded")).toBeVisible({ timeout: 5000 });
+    await expect(page.getByText("Verdict recorded")).toBeVisible({ timeout: 10_000 });
     await expect(page.getByText("Excellent taste in films")).toBeVisible();
   });
 

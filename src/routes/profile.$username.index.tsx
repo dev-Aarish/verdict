@@ -7,18 +7,16 @@ import { GenreRadar } from "@/components/GenreRadar";
 import { computeGenreDna } from "@/lib/genre-dna";
 import { formatRuntime } from "@/lib/utils";
 import {
-  getUserWatchedFn,
   removeWatchedFn,
   addToWatchedFn,
   updateWatchedEntryFn,
   reorderWatchedFn,
 } from "@/api/movies";
-import { getUserWatchlistFn, removeWatchlistFn } from "@/api/watchlist";
-import { updateProfileFn } from "@/api/users";
-import { getTasteScoreFn, type TasteBreakdown } from "@/api/taste-score";
-import { getTasteMatchFn, type TasteMatch } from "@/api/taste-match";
-import { getUserVerdictsFn } from "@/api/verdicts";
-import { followUserFn, unfollowUserFn, getFollowStatusFn, getFollowCountsFn } from "@/api/follows";
+import { removeWatchlistFn } from "@/api/watchlist";
+import { updateProfileFn, getUserProfileFn, type UserProfileData } from "@/api/users";
+import { type TasteBreakdown } from "@/api/taste-score";
+import { type TasteMatch } from "@/api/taste-match";
+import { followUserFn, unfollowUserFn } from "@/api/follows";
 import { useUser } from "@/lib/user-context";
 import { useState, useCallback, useEffect, useMemo } from "react";
 import type {
@@ -50,9 +48,17 @@ type ProfileSearch = {
 
 export const Route = createFileRoute("/profile/$username/")({
   validateSearch: (search: Record<string, unknown>): ProfileSearch => {
-    return {
-      page: Number(search?.page) || 1,
-    };
+    const page = Number(search?.page);
+    return page && page > 1 ? { page } : {};
+  },
+  loaderDeps: () => ({}),
+  loader: async ({ params }) => {
+    try {
+      const data = await getUserProfileFn({ data: { username: params.username } });
+      return { profileData: data, error: null };
+    } catch (e: unknown) {
+      return { profileData: null, error: e instanceof Error ? e.message : "Failed to load profile" };
+    }
   },
   head: ({ params }) => ({
     meta: [
@@ -82,23 +88,25 @@ function ProfilePage() {
   const { username } = Route.useParams();
   const search = Route.useSearch();
   const navigate = Route.useNavigate();
+  const loaderData = Route.useLoaderData() as { profileData: UserProfileData | null; error: string | null } | undefined;
+  const initialData = loaderData?.profileData;
   const currentPage = search.page || 1;
   const { user, setUser } = useUser();
   const router = useRouter();
   const isOwn = user?.username === username;
-  const [entries, setEntries] = useState<WatchedEntryWithMovie[] | null>(null);
-  const [watchlist, setWatchlist] = useState<WatchlistEntryWithMovie[] | null>(null);
-  const [profileUser, setProfileUser] = useState<User | null>(null);
+  const [entries, setEntries] = useState<WatchedEntryWithMovie[] | null>(initialData?.entries ?? null);
+  const [watchlist, setWatchlist] = useState<WatchlistEntryWithMovie[] | null>(initialData?.watchlist ?? null);
+  const [profileUser, setProfileUser] = useState<User | null>(initialData?.user ?? null);
   const [tasteScore, setTasteScore] = useState<{ score: number; breakdown: TasteBreakdown } | null>(
-    null,
+    initialData?.tasteScore ?? null,
   );
-  const [loading, setLoading] = useState(true);
-  const [verdicts, setVerdicts] = useState<VerdictWithUser[] | null>(null);
-  const [isFollowing, setIsFollowing] = useState(false);
+  const [loading, setLoading] = useState(!initialData && !loaderData?.error);
+  const [verdicts, setVerdicts] = useState<VerdictWithUser[] | null>(initialData?.verdicts ?? null);
+  const [isFollowing, setIsFollowing] = useState(initialData?.isFollowing ?? false);
   const [followCounts, setFollowCounts] = useState<{ followers: number; following: number } | null>(
-    null,
+    initialData?.followCounts ?? null,
   );
-  const [tasteMatch, setTasteMatch] = useState<TasteMatch | null>(null);
+  const [tasteMatch, setTasteMatch] = useState<TasteMatch | null>(initialData?.tasteMatch ?? null);
   const [logMovie, setLogMovie] = useState<WatchlistEntryWithMovie | null>(null);
   const [logRating, setLogRating] = useState([7]);
   const [logNote, setLogNote] = useState("");
@@ -120,29 +128,34 @@ function ProfilePage() {
   const PAGE_SIZE = 20;
 
   useEffect(() => {
+    if (initialData) {
+      setProfileUser(initialData.user);
+      setEntries(initialData.entries);
+      setWatchlist(initialData.watchlist);
+      setTasteScore(initialData.tasteScore);
+      setVerdicts(initialData.verdicts);
+      setIsFollowing(initialData.isFollowing);
+      setFollowCounts(initialData.followCounts);
+      setTasteMatch(initialData.tasteMatch);
+      setLoading(false);
+      return;
+    }
+
     setLoading(true);
-    Promise.all([
-      getUserWatchedFn({ data: { username } }),
-      getUserWatchlistFn({ data: { username } }).catch(() => ({ entries: [] })),
-      getTasteScoreFn({ data: { username } }).catch(() => null),
-      getUserVerdictsFn({ data: { username } }).catch(() => ({ verdicts: [] })),
-      getFollowStatusFn({ data: { username } }).catch(() => ({ isFollowing: false })),
-      getFollowCountsFn({ data: { username } }).catch(() => null),
-      getTasteMatchFn({ data: { username } }).catch(() => ({ match: null })),
-    ])
-      .then(([data, watch, taste, v, followStatus, counts, match]) => {
+    getUserProfileFn({ data: { username } })
+      .then((data) => {
         setProfileUser(data.user);
         setEntries(data.entries);
-        setWatchlist(watch.entries);
-        setTasteScore(taste);
-        setVerdicts(v.verdicts);
-        setIsFollowing(followStatus.isFollowing);
-        setFollowCounts(counts);
-        setTasteMatch(match.match);
+        setWatchlist(data.watchlist);
+        setTasteScore(data.tasteScore);
+        setVerdicts(data.verdicts);
+        setIsFollowing(data.isFollowing);
+        setFollowCounts(data.followCounts);
+        setTasteMatch(data.tasteMatch);
       })
       .catch(() => {})
       .finally(() => setLoading(false));
-  }, [username]);
+  }, [username, initialData]);
 
   const handleSaveAbout = async () => {
     setAboutSaving(true);
@@ -655,7 +668,9 @@ function ProfilePage() {
                     value={sortMode}
                     onChange={(e) => {
                       setSortMode(e.target.value as SortMode);
-                      navigate({ search: (prev: ProfileSearch) => ({ ...prev, page: 1 }) });
+                      if (currentPage > 1) {
+                        navigate({ search: (prev: ProfileSearch) => ({ ...prev, page: undefined }) });
+                      }
                     }}
                     className="bg-transparent border border-dust/30 px-2 py-1.5 text-caption text-brass text-xs cursor-pointer outline-none hover:border-brass/60"
                   >

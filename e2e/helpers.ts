@@ -24,7 +24,7 @@ export function makeUser(prefix: string): TestUser {
  */
 export async function waitForHydration(page: Page) {
   await page.waitForFunction(() => {
-    const el = document.querySelector("input");
+    const el = document.querySelector("input, select, button, a");
     return el != null && Object.keys(el).some((k) => k.startsWith("__reactFiber"));
   }, undefined, { timeout: 10_000 });
 }
@@ -101,7 +101,7 @@ export async function searchFilms(page: Page, query = "Batman") {
   await page.goto("/search");
   await waitForHydration(page);
   await page.getByPlaceholder("Search by title...").fill(query);
-  await expect(page.locator("img[alt]").first()).toBeVisible({ timeout: 15_000 });
+  await expect(page.locator("main img[alt]").first()).toBeVisible({ timeout: 15_000 });
 }
 
 /**

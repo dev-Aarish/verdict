@@ -61,6 +61,7 @@ test.describe("Watched films ordering", () => {
     await logFilm(page, "Arrival", 9);
 
     await page.goto(`/profile/${user.username}`);
+    await waitForHydration(page);
     await page.getByTestId("sort-select").selectOption("rating-desc");
     let titles = await watchedTitles(page);
     expect(titles.slice(0, 2)).toEqual(["Arrival", "Interstellar"]);
@@ -78,6 +79,7 @@ test.describe("Watched films ordering", () => {
     await logFilm(page, "Her", 7);
 
     await page.goto(`/profile/${user.username}`);
+    await waitForHydration(page);
     await page.getByTestId("sort-select").selectOption("title-asc");
     const titles = await watchedTitles(page);
     expect(titles.slice(0, 2)).toEqual(["Her", "Inception"]);
@@ -121,6 +123,7 @@ test.describe("Watched films ordering", () => {
     await signup(page, visitor);
 
     await page.goto(`/profile/${owner.username}`);
+    await waitForHydration(page);
     await expect(page.getByTestId("sort-select")).toBeVisible({ timeout: 10_000 });
     await expect(page.getByRole("button", { name: /Move .* up/ })).toHaveCount(0);
   });

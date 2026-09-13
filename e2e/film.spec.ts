@@ -30,7 +30,7 @@ test.describe("Film details page", () => {
 
   test("shows the Who logged it section", async ({ page }) => {
     await searchFilms(page, "The Dark Knight");
-    await page.locator("img[alt]").first().click();
+    await page.locator("main img[alt]").first().click();
     await expect(page.getByRole("heading", { name: /Who logged it/ })).toBeVisible({
       timeout: 15_000,
     });
@@ -38,7 +38,7 @@ test.describe("Film details page", () => {
 
   test("back link returns to the previous page (search)", async ({ page }) => {
     await searchFilms(page, "The Dark Knight");
-    await page.locator("img[alt]").first().click();
+    await page.locator("main img[alt]").first().click();
     await page.getByText("← Back").click();
     await expect(page).toHaveURL(/\/search/);
   });
@@ -75,7 +75,7 @@ test.describe("Film page watchlist toggle", () => {
     await signup(page, user);
 
     await searchFilms(page, "The Dark Knight");
-    await page.locator("img[alt]").first().click();
+    await page.locator("main img[alt]").first().click();
     await expect(page.getByRole("heading", { name: "The Dark Knight" })).toBeVisible({
       timeout: 15_000,
     });

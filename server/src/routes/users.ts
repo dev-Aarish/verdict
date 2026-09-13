@@ -1,14 +1,214 @@
 import { Router, Request, Response } from "express";
 import { db } from "../db/index.js";
-import { users, watchedEntries } from "../db/schema.js";
-import { like, sql, inArray, eq, and } from "drizzle-orm";
-import { requireAuth, AuthRequest } from "../middleware/auth.js";
+import {
+  users,
+  watchedEntries,
+  watchlistEntries,
+  movies,
+  verdicts,
+  follows,
+  tasteScores,
+} from "../db/schema.js";
+import { like, sql, inArray, eq, and, asc, desc } from "drizzle-orm";
+import { requireAuth, optionalAuth, AuthRequest } from "../middleware/auth.js";
 import { toSafeUser } from "../lib/safe-user.js";
+import { computeTasteScore, type TasteBreakdown } from "./taste-score.js";
+import { computeTasteMatch, type TasteMatchResult } from "../lib/taste-match.js";
 
 export const usersRouter = Router();
 
 const MAX_ABOUT_LENGTH = 200;
 const MAX_AVATAR_URL_LENGTH = 512;
+
+// GET /:username/profile (optionalAuth) — consolidated profile data in a single request
+usersRouter.get("/:username/profile", optionalAuth, async (req: AuthRequest, res: Response) => {
+  const username = req.params.username as string;
+
+  const targetUser = await db
+    .select()
+    .from(users)
+    .where(eq(users.username, username))
+    .then((r) => r[0]);
+
+  if (!targetUser) {
+    res.status(404).json({ error: "User not found" });
+    return;
+  }
+
+  const viewer = req.user;
+  const isOwn = viewer?.id === targetUser.id;
+
+  const [
+    watchedRows,
+    watchlistRows,
+    verdictRows,
+    followerCountRows,
+    followingCountRows,
+    tasteScoreRow,
+    followRow,
+    viewerWatchedRows,
+  ] = await Promise.all([
+    // 1. Watched entries with movie
+    db
+      .select({
+        id: watchedEntries.id,
+        userId: watchedEntries.userId,
+        movieId: watchedEntries.movieId,
+        rating: watchedEntries.rating,
+        note: watchedEntries.note,
+        position: watchedEntries.position,
+        watchedAt: watchedEntries.watchedAt,
+        movie: movies,
+      })
+      .from(watchedEntries)
+      .innerJoin(movies, eq(movies.id, watchedEntries.movieId))
+      .where(eq(watchedEntries.userId, targetUser.id))
+      .orderBy(asc(watchedEntries.position), asc(watchedEntries.watchedAt)),
+
+    // 2. Watchlist entries with movie
+    db
+      .select({
+        id: watchlistEntries.id,
+        userId: watchlistEntries.userId,
+        movieId: watchlistEntries.movieId,
+        addedAt: watchlistEntries.addedAt,
+        movie: movies,
+      })
+      .from(watchlistEntries)
+      .innerJoin(movies, eq(movies.id, watchlistEntries.movieId))
+      .where(eq(watchlistEntries.userId, targetUser.id))
+      .orderBy(desc(watchlistEntries.addedAt)),
+
+    // 3. Verdicts with fromUser
+    db
+      .select({
+        verdict: verdicts,
+        fromUser: users,
+      })
+      .from(verdicts)
+      .innerJoin(users, eq(users.id, verdicts.fromUserId))
+      .where(eq(verdicts.toUserId, targetUser.id))
+      .orderBy(desc(verdicts.createdAt)),
+
+    // 4. Follower count
+    db
+      .select({ count: sql<number>`COUNT(*)` })
+      .from(follows)
+      .where(eq(follows.followeeId, targetUser.id)),
+
+    // 5. Following count
+    db
+      .select({ count: sql<number>`COUNT(*)` })
+      .from(follows)
+      .where(eq(follows.followerId, targetUser.id)),
+
+    // 6. Cached taste score
+    db
+      .select()
+      .from(tasteScores)
+      .where(eq(tasteScores.userId, targetUser.id))
+      .then((r) => r[0]),
+
+    // 7. Follow status (if viewer is logged in and not self)
+    viewer && !isOwn
+      ? db
+          .select()
+          .from(follows)
+          .where(
+            and(
+              eq(follows.followerId, viewer.id),
+              eq(follows.followeeId, targetUser.id),
+            ),
+          )
+          .then((r) => r[0])
+      : Promise.resolve(null),
+
+    // 8. Viewer ratings for taste match (if viewer is logged in and not self)
+    viewer && !isOwn
+      ? db
+          .select({ imdbId: movies.imdbId, rating: watchedEntries.rating })
+          .from(watchedEntries)
+          .innerJoin(movies, eq(movies.id, watchedEntries.movieId))
+          .where(eq(watchedEntries.userId, viewer.id))
+      : Promise.resolve(null),
+  ]);
+
+  // Resolve taste score
+  let tasteScore: { score: number; breakdown: TasteBreakdown } | null = null;
+  const staleThreshold = Date.now() - 1000 * 60 * 60;
+  if (
+    tasteScoreRow &&
+    tasteScoreRow.lastComputed &&
+    tasteScoreRow.lastComputed.getTime() > staleThreshold
+  ) {
+    try {
+      tasteScore = {
+        score: tasteScoreRow.score,
+        breakdown: JSON.parse(tasteScoreRow.breakdownJson) as TasteBreakdown,
+      };
+    } catch {
+      tasteScore = null;
+    }
+  } else {
+    try {
+      tasteScore = await computeTasteScore(targetUser.id);
+    } catch {
+      tasteScore = null;
+    }
+  }
+
+  // Resolve taste match
+  let tasteMatch: TasteMatchResult | null = null;
+  if (viewerWatchedRows && viewerWatchedRows.length > 0 && watchedRows.length > 0) {
+    const targetFilms = watchedRows.map((r) => ({
+      imdbId: r.movie.imdbId,
+      rating: r.rating,
+    }));
+    tasteMatch = computeTasteMatch(viewerWatchedRows, targetFilms);
+  }
+
+  const entries = watchedRows.map((r) => ({
+    id: r.id,
+    userId: r.userId,
+    movieId: r.movieId,
+    rating: r.rating,
+    note: r.note,
+    position: r.position,
+    watchedAt: r.watchedAt,
+    movie: r.movie,
+  }));
+
+  const watchlist = watchlistRows.map((r) => ({
+    id: r.id,
+    userId: r.userId,
+    movieId: r.movieId,
+    addedAt: r.addedAt,
+    movie: r.movie,
+  }));
+
+  const formattedVerdicts = verdictRows.map((r) => ({
+    ...r.verdict,
+    fromUser: r.fromUser ? toSafeUser(r.fromUser) : null,
+  }));
+
+  const followers = Number(followerCountRows[0]?.count || 0);
+  const following = Number(followingCountRows[0]?.count || 0);
+
+  if (!viewer) {
+    res.setHeader("Cache-Control", "public, max-age=15, stale-while-revalidate=60");
+  }
+
+  res.json({
+    user: toSafeUser(targetUser),
+    entries,
+    watchlist,
+    tasteScore,
+    verdicts: formattedVerdicts,
+    isFollowing: !!followRow,
+    followCounts: { followers, following },
+    tasteMatch,
+  });
+});
 
 // PATCH /me (requireAuth) — update the current user's profile (About/bio, avatar)
 usersRouter.patch("/me", requireAuth, async (req: AuthRequest, res: Response) => {
