@@ -1,7 +1,10 @@
 import { Router, Request, Response } from "express";
-import { randomBytes, scryptSync, timingSafeEqual } from "node:crypto";
+import { randomBytes, scrypt, timingSafeEqual } from "node:crypto";
+import { promisify } from "node:util";
 import { v4 as uuidv4 } from "uuid";
 import * as jose from "jose";
+
+const scryptAsync = promisify(scrypt);
 import { eq, and, gt } from "drizzle-orm";
 import { db } from "../db/index.js";
 import { users, sessions } from "../db/schema.js";
@@ -56,16 +59,16 @@ function setSessionCookie(res: Response, sessionId: string) {
   });
 }
 
-function hashPassword(password: string): string {
+async function hashPassword(password: string): Promise<string> {
   const salt = randomBytes(16).toString("hex");
-  const hash = scryptSync(password, salt, 64).toString("hex");
-  return `${salt}:${hash}`;
+  const derivedKey = (await scryptAsync(password, salt, 64)) as Buffer;
+  return `${salt}:${derivedKey.toString("hex")}`;
 }
 
-function verifyPassword(password: string, stored: string): boolean {
+async function verifyPassword(password: string, stored: string): Promise<boolean> {
   const [salt, hash] = stored.split(":");
   const buf = Buffer.from(hash, "hex");
-  const computed = scryptSync(password, salt, 64);
+  const computed = (await scryptAsync(password, salt, 64)) as Buffer;
   return timingSafeEqual(buf, computed);
 }
 
@@ -118,7 +121,7 @@ authRouter.post("/signup", async (req: Request, res: Response) => {
   }
 
   const id = uuidv4();
-  const passwordHash = hashPassword(password);
+  const passwordHash = await hashPassword(password);
 
   await db.insert(users).values({
     id,
@@ -165,7 +168,8 @@ authRouter.post("/login", async (req: Request, res: Response) => {
     return;
   }
 
-  if (!verifyPassword(password, user.passwordHash)) {
+  const isValid = await verifyPassword(password, user.passwordHash);
+  if (!isValid) {
     res.status(401).json({ error: "Invalid email or password" });
     return;
   }
