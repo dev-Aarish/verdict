@@ -20,9 +20,25 @@ function getBackendUrl(): string {
 // Without this, server-rendered pages (and any full page reload) always see an
 // anonymous user even when a valid session cookie exists.
 async function getServerRequestCookie(): Promise<string | null> {
-  const { getStartContext } = await import("@tanstack/start-storage-context");
-  const context = getStartContext({ throwIfNotFound: false });
-  return context?.request.headers.get("cookie") ?? null;
+  if (typeof window !== "undefined") return null;
+
+  try {
+    const pkg = "@tanstack/react-start/server";
+    const { getRequestHeader } = await import(/* @vite-ignore */ pkg);
+    const cookie = getRequestHeader("cookie");
+    if (cookie) return cookie;
+  } catch {
+    // Fallback if react-start/server is unavailable
+  }
+
+  try {
+    const pkg = "@tanstack/start-storage-context";
+    const { getStartContext } = await import(/* @vite-ignore */ pkg);
+    const context = getStartContext({ throwIfNotFound: false });
+    return context?.request?.headers?.get("cookie") ?? null;
+  } catch {
+    return null;
+  }
 }
 
 function sleep(ms: number): Promise<void> {

@@ -135,25 +135,20 @@ function RootComponent() {
   const { queryClient } = Route.useRouteContext();
   const { user: initialUser } = Route.useLoaderData();
   const [user, setUser] = useState(initialUser);
-  const [isHydrating, setIsHydrating] = useState(true);
 
   useEffect(() => {
     // Re-verify the session from the browser (sends the auth cookie) after
-    // hydration. SSR can't always forward cookies to the API, so without this
-    // a full page reload would silently sign the user out.
-    // isHydrating stays true until this settles, so TopBar won't flash the
-    // logged-out buttons before auth state is confirmed.
+    // hydration in case initialUser needs refreshing.
     getCurrentUserFn()
       .then(({ user: freshUser }) => {
         if (JSON.stringify(freshUser) !== JSON.stringify(initialUser)) setUser(freshUser);
       })
-      .catch(() => {})
-      .finally(() => setIsHydrating(false));
+      .catch(() => {});
   }, [initialUser]);
 
   return (
     <QueryClientProvider client={queryClient}>
-      <UserContext.Provider value={{ user, setUser, isHydrating }}>
+      <UserContext.Provider value={{ user, setUser }}>
         <Outlet context={{ queryClient, user }} />
       </UserContext.Provider>
     </QueryClientProvider>
