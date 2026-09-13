@@ -13,7 +13,7 @@ import { config } from "../config.js";
 export const authRouter = Router();
 
 const COOKIE_NAME = "auth_session";
-const SESSION_DURATION_MS = 7 * 24 * 60 * 60 * 1000;
+const SESSION_DURATION_MS = 72 * 60 * 60 * 1000; // 72 hours
 
 function sanitizeUsername(email: string): string {
   let base = email.split("@")[0].toLowerCase().replace(/[^a-z0-9]/g, "");
@@ -81,6 +81,12 @@ authRouter.get("/me", async (req: Request, res: Response) => {
   }
 
   const user = await resolveUserFromSession(sessionId);
+  if (user) {
+    // Extend the session by another 72 hours on active visit
+    const expiresAt = new Date(Date.now() + SESSION_DURATION_MS);
+    await db.update(sessions).set({ expiresAt }).where(eq(sessions.id, sessionId));
+    setSessionCookie(res, sessionId);
+  }
   res.json({ user });
 });
 

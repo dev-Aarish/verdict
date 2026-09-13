@@ -32,7 +32,7 @@ export async function getUserByEmail(email: string) {
 
 export async function createSession(userId: string) {
   const sessionId = uuidv4();
-  const expiresAt = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000); // 7 days
+  const expiresAt = new Date(Date.now() + 72 * 60 * 60 * 1000); // 72 hours
   await db.insert(sessions).values({
     id: sessionId,
     userId,
