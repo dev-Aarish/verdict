@@ -10,7 +10,7 @@ const NAV_ITEM_CLS =
   "flex flex-col items-center justify-center gap-1 py-2 text-[0.6rem] font-mono uppercase tracking-[0.14em] transition-colors";
 
 export function TopBar() {
-  const { user, setUser } = useUser();
+  const { user, setUser, isHydrating } = useUser();
   const location = useLocation();
   const pathname = location.pathname;
 
@@ -46,7 +46,7 @@ export function TopBar() {
               Search
             </Link>
 
-            {user ? (
+            {isHydrating ? null : user ? (
               <>
                 <Link
                   to="/profile/$username"
@@ -79,7 +79,7 @@ export function TopBar() {
 
           {/* Mobile — compact avatar / join shortcut (nav lives in the bottom bar) */}
           <div className="md:hidden">
-            {user ? (
+            {isHydrating ? null : user ? (
               <Link
                 to="/profile/$username"
                 params={{ username: user.username }}
@@ -123,7 +123,7 @@ export function TopBar() {
             <Search className="h-5 w-5" />
             <span>Search</span>
           </Link>
-          {user ? (
+          {isHydrating ? null : user ? (
             <>
               <Link
                 to="/profile/$username"
