@@ -44,7 +44,16 @@ import { avatarUrlFor } from "@/lib/avatar";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { ArrowDown, ArrowUp, Pencil } from "lucide-react";
 
+type ProfileSearch = {
+  page?: number;
+};
+
 export const Route = createFileRoute("/profile/$username/")({
+  validateSearch: (search: Record<string, unknown>): ProfileSearch => {
+    return {
+      page: Number(search?.page) || 1,
+    };
+  },
   head: ({ params }) => ({
     meta: [
       { title: `${params.username}'s profile · Verdict` },
@@ -71,6 +80,9 @@ const SORT_OPTIONS: { value: SortMode; label: string }[] = [
 
 function ProfilePage() {
   const { username } = Route.useParams();
+  const search = Route.useSearch();
+  const navigate = Route.useNavigate();
+  const currentPage = search.page || 1;
   const { user, setUser } = useUser();
   const router = useRouter();
   const isOwn = user?.username === username;
@@ -82,7 +94,6 @@ function ProfilePage() {
   );
   const [loading, setLoading] = useState(true);
   const [verdicts, setVerdicts] = useState<VerdictWithUser[] | null>(null);
-  const [currentPage, setCurrentPage] = useState(1);
   const [isFollowing, setIsFollowing] = useState(false);
   const [followCounts, setFollowCounts] = useState<{ followers: number; following: number } | null>(
     null,
@@ -331,9 +342,9 @@ function ProfilePage() {
   };
 
   const goToPage = useCallback((page: number) => {
-    setCurrentPage(page);
+    navigate({ search: (prev: ProfileSearch) => ({ ...prev, page }) });
     window.scrollTo({ top: 0, behavior: "smooth" });
-  }, []);
+  }, [navigate]);
 
   const filmCount = entries?.length || 0;
   const dna = entries && entries.length > 0 ? computeGenreDna(entries) : null;
@@ -644,7 +655,7 @@ function ProfilePage() {
                     value={sortMode}
                     onChange={(e) => {
                       setSortMode(e.target.value as SortMode);
-                      setCurrentPage(1);
+                      navigate({ search: (prev: ProfileSearch) => ({ ...prev, page: 1 }) });
                     }}
                     className="bg-transparent border border-dust/30 px-2 py-1.5 text-caption text-brass text-xs cursor-pointer outline-none hover:border-brass/60"
                   >
