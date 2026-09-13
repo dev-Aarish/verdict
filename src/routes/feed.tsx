@@ -130,7 +130,7 @@ function FeedPage() {
               {verdicts.map((v, i) => (
                 <li
                   key={v.id}
-                  className="flex flex-col gap-1.5 py-5 md:grid md:grid-cols-[3rem_1fr_auto_auto] md:items-center md:gap-x-4 md:gap-y-1"
+                  className="active-scale flex flex-col gap-1.5 py-5 md:grid md:grid-cols-[3rem_1fr_auto_auto] md:items-center md:gap-x-4 md:gap-y-1"
                 >
                   {/* Mobile: time left, stamp right. md:contents makes these direct grid items. */}
                   <div className="flex items-center justify-between gap-3 md:contents">

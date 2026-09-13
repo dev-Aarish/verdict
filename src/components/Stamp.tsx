@@ -1,5 +1,6 @@
 import { cn } from "@/lib/utils";
 import type { CSSProperties, ReactNode } from "react";
+import { motion } from "framer-motion";
 
 interface StampProps {
   children: ReactNode;
@@ -27,16 +28,24 @@ export function Stamp({
   label,
   className,
 }: StampProps) {
-  const style = { "--stamp-rot": `${rotation}deg` } as CSSProperties;
+  const initialStyles = animate === "slam" ? { scale: 1.8, opacity: 0 } 
+                      : animate === "settle" ? { scale: 1.15, opacity: 0 } 
+                      : { scale: 1, opacity: 1 };
+                      
+  const transition = animate === "slam" 
+    ? { type: "spring", damping: 14, stiffness: 200, mass: 1 } 
+    : { type: "spring", damping: 20, stiffness: 120 };
+
   return (
-    <div
-      style={style}
+    <motion.div
+      initial={initialStyles}
+      animate={{ scale: 1, opacity: 1, rotate: rotation }}
+      transition={transition}
+      style={{ rotate: rotation }}
       className={cn(
         "stamp-frame flex-col gap-1",
         variant === "red" && "stamp-red",
         sizeMap[size],
-        animate === "settle" && "animate-stamp-settle",
-        animate === "slam" && "animate-stamp-slam",
         className,
       )}
     >
@@ -44,6 +53,6 @@ export function Stamp({
         <span className="text-caption text-[0.55rem] tracking-[0.3em] opacity-80">{label}</span>
       )}
       <span className="leading-none">{children}</span>
-    </div>
+    </motion.div>
   );
 }

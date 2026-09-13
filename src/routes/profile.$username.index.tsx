@@ -713,7 +713,7 @@ function ProfilePage() {
                 const movie = entry.movie;
                 if (!movie) return null;
                 return (
-                  <div key={entry.id} className="group relative flex flex-col" data-testid="watched-film">
+                  <div key={entry.id} className="active-scale group relative flex flex-col" data-testid="watched-film">
                     <Link
                       to="/film/$imdbId"
                       params={{ imdbId: movie.imdbId }}

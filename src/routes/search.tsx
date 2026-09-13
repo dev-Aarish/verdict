@@ -316,7 +316,7 @@ function SearchPage() {
                   return (
                     <div
                       key={movie.imdbID}
-                      className="group flex flex-col"
+                      className="active-scale group flex flex-col"
                       data-testid="search-result"
                     >
                       <Link

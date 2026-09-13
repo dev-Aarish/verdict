@@ -28,7 +28,7 @@ export function TopBar() {
 
   return (
     <>
-      <header className="sticky top-0 z-40 border-b border-border/60 bg-ink/80 backdrop-blur-md">
+      <header className="material-glass sticky top-0 z-40 border-b border-border/60 bg-ink/65">
         <div className="mx-auto flex max-w-6xl items-center justify-between px-4 py-2.5 md:px-6 md:py-4">
           <Link to="/" className="transition-opacity hover:opacity-75" aria-label="Verdict home">
             <span className="block origin-left scale-90 md:scale-100">
@@ -105,7 +105,7 @@ export function TopBar() {
       {/* Mobile bottom navigation — fixed, hidden on desktop */}
       <nav
         aria-label="Primary"
-        className="fixed inset-x-0 bottom-0 z-40 border-t border-border/60 bg-ink/95 backdrop-blur-md md:hidden"
+        className="material-glass fixed inset-x-0 bottom-0 z-40 border-t border-border/60 bg-ink/75 md:hidden"
         style={{ paddingBottom: "env(safe-area-inset-bottom)" }}
       >
         <div className="grid grid-cols-4">
