@@ -16,7 +16,7 @@ export interface TasteScoreResult {
   breakdown: TasteBreakdown;
 }
 
-function computeDiversity(
+export function computeDiversity(
   allMovies: { genres: string | null; director: string | null; country: string | null }[],
 ): number {
   const total = allMovies.length;
@@ -51,24 +51,25 @@ function computeDiversity(
   return Math.round(genreScore * 0.5 + directorScore * 0.3 + countryScore * 0.2);
 }
 
-async function computeObscurity(userId: string, movieIds: string[]): Promise<number> {
+export async function computeObscurity(userId: string, movieIds: string[]): Promise<number> {
   if (movieIds.length === 0) return 0;
 
-  const totalUsers = await db
-    .select({ count: sql<number>`COUNT(DISTINCT ${watchedEntries.userId})` })
-    .from(watchedEntries)
-    .then((r) => Number(r[0].count));
+  const [totalUsers, watcherCounts] = await Promise.all([
+    db
+      .select({ count: sql<number>`COUNT(DISTINCT ${watchedEntries.userId})` })
+      .from(watchedEntries)
+      .then((r) => Number(r[0].count)),
+    db
+      .select({
+        movieId: watchedEntries.movieId,
+        count: sql<number>`COUNT(DISTINCT ${watchedEntries.userId})`,
+      })
+      .from(watchedEntries)
+      .where(inArray(watchedEntries.movieId, movieIds))
+      .groupBy(watchedEntries.movieId),
+  ]);
 
   if (totalUsers <= 1) return 100;
-
-  const watcherCounts = await db
-    .select({
-      movieId: watchedEntries.movieId,
-      count: sql<number>`COUNT(DISTINCT ${watchedEntries.userId})`,
-    })
-    .from(watchedEntries)
-    .where(inArray(watchedEntries.movieId, movieIds))
-    .groupBy(watchedEntries.movieId);
 
   const countMap = new Map(watcherCounts.map((r) => [r.movieId, Number(r.count)]));
 
@@ -80,7 +81,7 @@ async function computeObscurity(userId: string, movieIds: string[]): Promise<num
   return Math.round((obscuritySum / movieIds.length) * 100);
 }
 
-function computeConsistency(ratings: number[]): number {
+export function computeConsistency(ratings: number[]): number {
   if (ratings.length === 0) return 0;
   const mean = ratings.reduce((a, b) => a + b, 0) / ratings.length;
   const variance = ratings.reduce((acc, r) => acc + (r - mean) ** 2, 0) / ratings.length;
@@ -89,16 +90,16 @@ function computeConsistency(ratings: number[]): number {
   return Math.round(Math.max(0, 1 - stddev / maxStddev) * 100);
 }
 
-export async function computeTasteScore(userId: string): Promise<TasteScoreResult> {
-  const entries = await db.select().from(watchedEntries).where(eq(watchedEntries.userId, userId));
-
+export async function computeTasteScoreFromEntries(
+  userId: string,
+  entries: { rating: number; movieId: string; movie?: typeof movies.$inferSelect | null }[],
+): Promise<TasteScoreResult> {
   if (entries.length === 0) {
     const result: TasteScoreResult = {
       score: 0,
       breakdown: { diversity: 0, obscurity: 0, consistency: 0 },
     };
-    await db
-      .insert(tasteScores)
+    db.insert(tasteScores)
       .values({
         userId,
         score: 0,
@@ -111,15 +112,15 @@ export async function computeTasteScore(userId: string): Promise<TasteScoreResul
           breakdownJson: JSON.stringify(result.breakdown),
           lastComputed: sql`CURRENT_TIMESTAMP`,
         },
-      });
+      })
+      .catch(() => {});
     return result;
   }
 
   const movieIds = entries.map((e) => e.movieId);
-  const movieList = await db.select().from(movies).where(inArray(movies.id, movieIds));
-
-  const movieMap = new Map(movieList.map((m) => [m.id, m]));
-  const allMovies = entries.map((e) => movieMap.get(e.movieId)).filter(Boolean) as typeof movieList;
+  const allMovies = entries
+    .map((e) => e.movie)
+    .filter(Boolean) as (typeof movies.$inferSelect)[];
 
   const diversity = computeDiversity(allMovies);
   const obscurity = await computeObscurity(userId, movieIds);
@@ -128,8 +129,7 @@ export async function computeTasteScore(userId: string): Promise<TasteScoreResul
   const breakdown: TasteBreakdown = { diversity, obscurity, consistency };
   const score = Math.round(diversity * 0.4 + obscurity * 0.4 + consistency * 0.2);
 
-  await db
-    .insert(tasteScores)
+  db.insert(tasteScores)
     .values({
       userId,
       score,
@@ -142,15 +142,32 @@ export async function computeTasteScore(userId: string): Promise<TasteScoreResul
         breakdownJson: JSON.stringify(breakdown),
         lastComputed: sql`CURRENT_TIMESTAMP`,
       },
-    });
+    })
+    .catch(() => {});
 
   return { score, breakdown };
+}
+
+export async function computeTasteScore(userId: string): Promise<TasteScoreResult> {
+  const entries = await db
+    .select({
+      id: watchedEntries.id,
+      userId: watchedEntries.userId,
+      movieId: watchedEntries.movieId,
+      rating: watchedEntries.rating,
+      movie: movies,
+    })
+    .from(watchedEntries)
+    .innerJoin(movies, eq(movies.id, watchedEntries.movieId))
+    .where(eq(watchedEntries.userId, userId));
+
+  return computeTasteScoreFromEntries(userId, entries);
 }
 
 // Invalidates a user's cached taste score so it is recomputed on next fetch.
 // Called whenever the underlying watched entries change (add/remove a film).
 export async function invalidateTasteScore(userId: string): Promise<void> {
-  await db.delete(tasteScores).where(eq(tasteScores.userId, userId));
+  await db.delete(tasteScores).where(eq(tasteScores.userId, userId)).catch(() => {});
 }
 
 // GET /:username/taste-score (public)
@@ -174,13 +191,17 @@ tasteScoreRouter.get("/:username/taste-score", async (req: Request, res: Respons
     .where(eq(tasteScores.userId, user.id))
     .then((r) => r[0]);
 
-  const staleThreshold = Date.now() - 1000 * 60 * 60;
-  if (existing && existing.lastComputed && existing.lastComputed.getTime() > staleThreshold) {
-    res.json({
-      score: existing.score,
-      breakdown: JSON.parse(existing.breakdownJson) as TasteBreakdown,
-    });
-    return;
+  if (existing) {
+    try {
+      const breakdown = JSON.parse(existing.breakdownJson) as TasteBreakdown;
+      res.json({
+        score: existing.score,
+        breakdown,
+      });
+      return;
+    } catch {
+      // recompute if corrupt
+    }
   }
 
   const result = await computeTasteScore(user.id);

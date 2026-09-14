@@ -9,10 +9,10 @@ import {
   follows,
   tasteScores,
 } from "../db/schema.js";
-import { like, sql, inArray, eq, and, asc, desc } from "drizzle-orm";
-import { requireAuth, optionalAuth, AuthRequest } from "../middleware/auth.js";
+import { like, sql, inArray, eq, and, or, asc, desc } from "drizzle-orm";
+import { requireAuth, optionalAuth, AuthRequest, updateCachedUser } from "../middleware/auth.js";
 import { toSafeUser } from "../lib/safe-user.js";
-import { computeTasteScore, type TasteBreakdown } from "./taste-score.js";
+import { computeTasteScoreFromEntries, type TasteBreakdown } from "./taste-score.js";
 import { computeTasteMatch, type TasteMatchResult } from "../lib/taste-match.js";
 
 export const usersRouter = Router();
@@ -23,27 +23,29 @@ const MAX_AVATAR_URL_LENGTH = 512;
 // GET /:username/profile (optionalAuth) — consolidated profile data in a single request
 usersRouter.get("/:username/profile", optionalAuth, async (req: AuthRequest, res: Response) => {
   const username = req.params.username as string;
+  const viewer = req.user;
 
-  const targetUser = await db
-    .select()
-    .from(users)
-    .where(eq(users.username, username))
-    .then((r) => r[0]);
+  const targetUser =
+    viewer && viewer.username === username
+      ? viewer
+      : await db
+          .select()
+          .from(users)
+          .where(eq(users.username, username))
+          .then((r) => r[0]);
 
   if (!targetUser) {
     res.status(404).json({ error: "User not found" });
     return;
   }
 
-  const viewer = req.user;
   const isOwn = viewer?.id === targetUser.id;
 
   const [
     watchedRows,
     watchlistRows,
     verdictRows,
-    followerCountRows,
-    followingCountRows,
+    followCountRows,
     tasteScoreRow,
     followRow,
     viewerWatchedRows,
@@ -90,26 +92,28 @@ usersRouter.get("/:username/profile", optionalAuth, async (req: AuthRequest, res
       .where(eq(verdicts.toUserId, targetUser.id))
       .orderBy(desc(verdicts.createdAt)),
 
-    // 4. Follower count
+    // 4. Follower & following count in a single query
     db
-      .select({ count: sql<number>`COUNT(*)` })
+      .select({
+        followers: sql<number>`COUNT(CASE WHEN ${follows.followeeId} = ${targetUser.id} THEN 1 END)`,
+        following: sql<number>`COUNT(CASE WHEN ${follows.followerId} = ${targetUser.id} THEN 1 END)`,
+      })
       .from(follows)
-      .where(eq(follows.followeeId, targetUser.id)),
+      .where(
+        or(
+          eq(follows.followeeId, targetUser.id),
+          eq(follows.followerId, targetUser.id),
+        ),
+      ),
 
-    // 5. Following count
-    db
-      .select({ count: sql<number>`COUNT(*)` })
-      .from(follows)
-      .where(eq(follows.followerId, targetUser.id)),
-
-    // 6. Cached taste score
+    // 5. Cached taste score
     db
       .select()
       .from(tasteScores)
       .where(eq(tasteScores.userId, targetUser.id))
       .then((r) => r[0]),
 
-    // 7. Follow status (if viewer is logged in and not self)
+    // 6. Follow status (if viewer is logged in and not self)
     viewer && !isOwn
       ? db
           .select()
@@ -123,7 +127,7 @@ usersRouter.get("/:username/profile", optionalAuth, async (req: AuthRequest, res
           .then((r) => r[0])
       : Promise.resolve(null),
 
-    // 8. Viewer ratings for taste match (if viewer is logged in and not self)
+    // 7. Viewer ratings for taste match (if viewer is logged in and not self)
     viewer && !isOwn
       ? db
           .select({ imdbId: movies.imdbId, rating: watchedEntries.rating })
@@ -135,12 +139,7 @@ usersRouter.get("/:username/profile", optionalAuth, async (req: AuthRequest, res
 
   // Resolve taste score
   let tasteScore: { score: number; breakdown: TasteBreakdown } | null = null;
-  const staleThreshold = Date.now() - 1000 * 60 * 60;
-  if (
-    tasteScoreRow &&
-    tasteScoreRow.lastComputed &&
-    tasteScoreRow.lastComputed.getTime() > staleThreshold
-  ) {
+  if (tasteScoreRow) {
     try {
       tasteScore = {
         score: tasteScoreRow.score,
@@ -149,9 +148,11 @@ usersRouter.get("/:username/profile", optionalAuth, async (req: AuthRequest, res
     } catch {
       tasteScore = null;
     }
-  } else {
+  }
+
+  if (!tasteScore) {
     try {
-      tasteScore = await computeTasteScore(targetUser.id);
+      tasteScore = await computeTasteScoreFromEntries(targetUser.id, watchedRows);
     } catch {
       tasteScore = null;
     }
@@ -191,8 +192,8 @@ usersRouter.get("/:username/profile", optionalAuth, async (req: AuthRequest, res
     fromUser: r.fromUser ? toSafeUser(r.fromUser) : null,
   }));
 
-  const followers = Number(followerCountRows[0]?.count || 0);
-  const following = Number(followingCountRows[0]?.count || 0);
+  const followers = Number(followCountRows[0]?.followers || 0);
+  const following = Number(followCountRows[0]?.following || 0);
 
   if (!viewer) {
     res.setHeader("Cache-Control", "public, max-age=15, stale-while-revalidate=60");
@@ -261,6 +262,10 @@ usersRouter.patch("/me", requireAuth, async (req: AuthRequest, res: Response) =>
     .where(eq(users.id, userId))
     .returning()
     .then((r) => r[0]);
+
+  if (updated) {
+    updateCachedUser(userId, { bio: updated.bio, avatarUrl: updated.avatarUrl });
+  }
 
   res.json({ user: toSafeUser(updated) });
 });

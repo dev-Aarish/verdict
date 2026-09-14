@@ -7,6 +7,7 @@ import { config } from "../config.js";
 export const COOKIE_NAME = "auth_session";
 export const SESSION_DURATION_MS = 72 * 60 * 60 * 1000; // 72 hours
 const REFRESH_THRESHOLD_MS = 15 * 60 * 1000; // 15 minutes throttle for sliding updates
+const CACHE_TTL_MS = 5 * 60 * 1000; // 5 minutes in-memory cache
 
 export interface AuthUser {
   id: string;
@@ -15,6 +16,34 @@ export interface AuthUser {
   avatarUrl: string | null;
   bio: string | null;
   createdAt: Date | null;
+}
+
+interface CachedSession {
+  user: AuthUser;
+  expiresAt: number;
+  cachedAt: number;
+}
+
+const sessionCache = new Map<string, CachedSession>();
+
+export function cacheSession(sessionId: string, user: AuthUser, expiresAt: Date) {
+  sessionCache.set(sessionId, {
+    user,
+    expiresAt: expiresAt.getTime(),
+    cachedAt: Date.now(),
+  });
+}
+
+export function invalidateSession(sessionId: string) {
+  sessionCache.delete(sessionId);
+}
+
+export function updateCachedUser(userId: string, updates: Partial<AuthUser>) {
+  for (const entry of sessionCache.values()) {
+    if (entry.user.id === userId) {
+      entry.user = { ...entry.user, ...updates };
+    }
+  }
 }
 
 export interface AuthRequest extends Request {
@@ -46,41 +75,53 @@ export function clearSessionCookie(res: Response) {
 }
 
 export async function resolveSession(sessionId: string, res?: Response): Promise<AuthUser | null> {
-  const session = await db
-    .select()
+  const now = Date.now();
+  const cached = sessionCache.get(sessionId);
+  if (cached) {
+    if (cached.expiresAt > now && now - cached.cachedAt < CACHE_TTL_MS) {
+      return cached.user;
+    }
+    sessionCache.delete(sessionId);
+  }
+
+  // Single JOIN query to fetch both session and user in one round-trip
+  const row = await db
+    .select({
+      session: sessions,
+      user: users,
+    })
     .from(sessions)
+    .innerJoin(users, eq(users.id, sessions.userId))
     .where(and(eq(sessions.id, sessionId), gt(sessions.expiresAt, new Date())))
     .then((res) => res[0]);
 
-  if (!session) return null;
+  if (!row) return null;
 
-  const user = await db
-    .select()
-    .from(users)
-    .where(eq(users.id, session.userId))
-    .then((res) => res[0]);
+  const authUser: AuthUser = {
+    id: row.user.id,
+    username: row.user.username,
+    email: row.user.email,
+    avatarUrl: row.user.avatarUrl,
+    bio: row.user.bio,
+    createdAt: row.user.createdAt,
+  };
 
-  if (!user) return null;
+  cacheSession(sessionId, authUser, row.session.expiresAt);
 
   // Sliding session extension: if at least 15 mins have elapsed since last extension, extend by 72 hours
-  const now = Date.now();
-  const remaining = session.expiresAt.getTime() - now;
+  const remaining = row.session.expiresAt.getTime() - now;
   if (remaining < SESSION_DURATION_MS - REFRESH_THRESHOLD_MS) {
     const newExpiresAt = new Date(now + SESSION_DURATION_MS);
-    await db.update(sessions).set({ expiresAt: newExpiresAt }).where(eq(sessions.id, sessionId));
+    db.update(sessions)
+      .set({ expiresAt: newExpiresAt })
+      .where(eq(sessions.id, sessionId))
+      .catch(() => {});
     if (res && !res.headersSent) {
       setSessionCookie(res, sessionId);
     }
   }
 
-  return {
-    id: user.id,
-    username: user.username,
-    email: user.email,
-    avatarUrl: user.avatarUrl,
-    bio: user.bio,
-    createdAt: user.createdAt,
-  };
+  return authUser;
 }
 
 export async function optionalAuth(req: AuthRequest, res: Response, next: NextFunction) {
