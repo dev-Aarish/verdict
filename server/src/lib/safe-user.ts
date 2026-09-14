@@ -4,7 +4,7 @@ type UserRow = {
   email: string;
   avatarUrl: string | null;
   bio: string | null;
-  passwordHash: string | null;
+  passwordHash?: string | null;
   createdAt: Date | null;
 };
 
