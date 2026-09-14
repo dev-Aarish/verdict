@@ -10,53 +10,20 @@ import { db } from "../db/index.js";
 import { users, sessions } from "../db/schema.js";
 import { config } from "../config.js";
 
-export const authRouter = Router();
+import {
+  COOKIE_NAME,
+  SESSION_DURATION_MS,
+  setSessionCookie,
+  clearSessionCookie,
+  resolveSession,
+} from "../middleware/auth.js";
 
-const COOKIE_NAME = "auth_session";
-const SESSION_DURATION_MS = 72 * 60 * 60 * 1000; // 72 hours
+export const authRouter = Router();
 
 function sanitizeUsername(email: string): string {
   let base = email.split("@")[0].toLowerCase().replace(/[^a-z0-9]/g, "");
   if (!base) base = "user";
   return base;
-}
-
-async function resolveUserFromSession(sessionId: string) {
-  const session = await db
-    .select()
-    .from(sessions)
-    .where(and(eq(sessions.id, sessionId), gt(sessions.expiresAt, new Date())))
-    .then((res) => res[0]);
-
-  if (!session) return null;
-
-  const user = await db
-    .select()
-    .from(users)
-    .where(eq(users.id, session.userId))
-    .then((res) => res[0]);
-
-  if (!user) return null;
-
-  return {
-    id: user.id,
-    username: user.username,
-    email: user.email,
-    avatarUrl: user.avatarUrl,
-    bio: user.bio,
-    createdAt: user.createdAt,
-  };
-}
-
-function setSessionCookie(res: Response, sessionId: string) {
-  const isProd = config.nodeEnv === "production";
-  res.cookie(COOKIE_NAME, sessionId, {
-    httpOnly: true,
-    sameSite: isProd ? "none" : "lax",
-    secure: isProd ? true : config.cookieSecure,
-    maxAge: SESSION_DURATION_MS,
-    path: "/",
-  });
 }
 
 async function hashPassword(password: string): Promise<string> {
@@ -80,13 +47,7 @@ authRouter.get("/me", async (req: Request, res: Response) => {
     return;
   }
 
-  const user = await resolveUserFromSession(sessionId);
-  if (user) {
-    // Extend the session by another 72 hours on active visit
-    const expiresAt = new Date(Date.now() + SESSION_DURATION_MS);
-    await db.update(sessions).set({ expiresAt }).where(eq(sessions.id, sessionId));
-    setSessionCookie(res, sessionId);
-  }
+  const user = await resolveSession(sessionId, res);
   res.json({ user });
 });
 
@@ -293,12 +254,6 @@ authRouter.post("/logout", async (req: Request, res: Response) => {
     await db.delete(sessions).where(eq(sessions.id, sessionId));
   }
 
-  const isProd = config.nodeEnv === "production";
-  res.clearCookie(COOKIE_NAME, {
-    path: "/",
-    httpOnly: true,
-    sameSite: isProd ? "none" : "lax",
-    secure: isProd ? true : config.cookieSecure,
-  });
+  clearSessionCookie(res);
   res.json({ ok: true });
 });

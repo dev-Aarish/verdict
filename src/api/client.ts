@@ -13,7 +13,7 @@ function getBackendUrl(): string {
   if (typeof window === "undefined") {
     return process.env.API_URL || viteApiUrl || LOCAL_API_URL;
   }
-  return viteApiUrl || LOCAL_API_URL;
+  return viteApiUrl || "";
 }
 
 // Forward the incoming browser request's cookies to the backend during SSR.
