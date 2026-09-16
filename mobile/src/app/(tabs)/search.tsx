@@ -3,6 +3,7 @@ import {
   View,
   Text,
   FlatList,
+  RefreshControl,
   StyleSheet,
   ActivityIndicator,
   TouchableOpacity,
@@ -10,7 +11,7 @@ import {
 } from "react-native";
 import { useRouter } from "expo-router";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { Search, Flame, X, Film } from "lucide-react-native";
+import { Search, Flame, Calendar, X, Film } from "lucide-react-native";
 import { moviesApi } from "../../api";
 import { useAuth } from "../../context/AuthContext";
 import { Colors, Radius, Spacing } from "../../constants/theme";
@@ -26,6 +27,7 @@ export default function SearchScreen() {
 
   const [searchQuery, setSearchQuery] = useState("");
   const [debouncedQuery, setDebouncedQuery] = useState("");
+  const [activeCategory, setActiveCategory] = useState<"hits" | "upcoming">("hits");
   const [selectedMovieForLog, setSelectedMovieForLog] = useState<Movie | null>(null);
 
   useEffect(() => {
@@ -44,9 +46,24 @@ export default function SearchScreen() {
     enabled: debouncedQuery.length >= 2,
   });
 
-  const { data: trendingMovies = [], isLoading: isLoadingTrending } = useQuery({
+  const {
+    data: latestHits = [],
+    isLoading: isLoadingHits,
+    isRefetching: isRefetchingHits,
+    refetch: refetchHits,
+  } = useQuery({
     queryKey: ["trendingMovies"],
     queryFn: moviesApi.getTrending,
+  });
+
+  const {
+    data: upcomingMovies = [],
+    isLoading: isLoadingUpcoming,
+    isRefetching: isRefetchingUpcoming,
+    refetch: refetchUpcoming,
+  } = useQuery({
+    queryKey: ["upcomingMovies"],
+    queryFn: moviesApi.getUpcoming,
   });
 
   const logMovieMutation = useMutation({
@@ -72,14 +89,18 @@ export default function SearchScreen() {
   };
 
   const isQueryActive = debouncedQuery.length >= 2;
-  const displayMovies = isQueryActive ? searchResults : trendingMovies;
+  const currentCategoryMovies = activeCategory === "hits" ? latestHits : upcomingMovies;
+  const displayMovies = isQueryActive ? searchResults : currentCategoryMovies;
+  const isLoadingCategory = activeCategory === "hits" ? isLoadingHits : isLoadingUpcoming;
 
   const renderEmpty = () => {
-    if (isSearching || (isLoadingTrending && !isQueryActive)) {
+    if (isSearching || (isLoadingCategory && !isQueryActive)) {
       return (
         <View style={styles.loadingContainer}>
-          <ActivityIndicator size="large" color={Colors.primary} />
-          <Text style={styles.loadingText}>Searching cinematic archives...</Text>
+          <ActivityIndicator size="large" color={Colors.gold} />
+          <Text style={styles.loadingText}>
+            {isQueryActive ? "Searching cinematic archives..." : "Fetching movies..."}
+          </Text>
         </View>
       );
     }
@@ -97,6 +118,84 @@ export default function SearchScreen() {
     }
 
     return null;
+  };
+
+  const renderHeader = () => {
+    if (isQueryActive) {
+      return (
+        <View style={styles.sectionTitleRow}>
+          <Film size={16} color={Colors.primaryLight} />
+          <Text style={styles.sectionTitle}>
+            {searchResults.length} RESULTS FOUND
+          </Text>
+        </View>
+      );
+    }
+
+    return (
+      <View style={styles.discoveryHeader}>
+        {/* Category Filter Pills */}
+        <View style={styles.categoryPillRow}>
+          <TouchableOpacity
+            style={[
+              styles.categoryPill,
+              activeCategory === "hits" && styles.categoryPillActive,
+            ]}
+            onPress={() => setActiveCategory("hits")}
+            activeOpacity={0.8}
+          >
+            <Flame
+              size={15}
+              color={activeCategory === "hits" ? "#C9A03C" : Colors.textMuted}
+            />
+            <Text
+              style={[
+                styles.categoryPillText,
+                activeCategory === "hits" && styles.categoryPillTextActive,
+              ]}
+            >
+              Latest Hits
+            </Text>
+          </TouchableOpacity>
+
+          <TouchableOpacity
+            style={[
+              styles.categoryPill,
+              activeCategory === "upcoming" && styles.categoryPillActive,
+            ]}
+            onPress={() => setActiveCategory("upcoming")}
+            activeOpacity={0.8}
+          >
+            <Calendar
+              size={15}
+              color={activeCategory === "upcoming" ? "#C9A03C" : Colors.textMuted}
+            />
+            <Text
+              style={[
+                styles.categoryPillText,
+                activeCategory === "upcoming" && styles.categoryPillTextActive,
+              ]}
+            >
+              Upcoming Movies
+            </Text>
+          </TouchableOpacity>
+        </View>
+
+        <View style={styles.sectionTitleRow}>
+          {activeCategory === "hits" ? (
+            <>
+              <Flame size={15} color="#C9A03C" />
+              <Text style={styles.sectionTitle}>NOW PLAYING & POPULAR HITS</Text>
+            </>
+          ) : (
+            <>
+              <Calendar size={15} color="#C9A03C" />
+              <Text style={styles.sectionTitle}>ANTICIPATED & UPCOMING RELEASES</Text>
+            </>
+          )}
+        </View>
+      </View>
+    );
   };
 
   return (
@@ -135,28 +234,22 @@ export default function SearchScreen() {
             />
           </View>
         )}
-        ListHeaderComponent={
-          <View style={styles.sectionTitleRow}>
-            {isQueryActive ? (
-              <>
-                <Film size={16} color={Colors.primaryLight} />
-                <Text style={styles.sectionTitle}>
-                  {searchResults.length} RESULTS FOUND
-                </Text>
-              </>
-            ) : (
-              <>
-                <Flame size={16} color={Colors.gold} />
-                <Text style={styles.sectionTitle}>TRENDING & FEATURED</Text>
-              </>
-            )}
-          </View>
-        }
+        ListHeaderComponent={renderHeader}
         ListEmptyComponent={renderEmpty()}
         contentContainerStyle={styles.listContent}
         showsVerticalScrollIndicator={false}
         keyboardShouldPersistTaps="handled"
         keyboardDismissMode="on-drag"
+        refreshControl={
+          !isQueryActive ? (
+            <RefreshControl
+              refreshing={activeCategory === "hits" ? isRefetchingHits : isRefetchingUpcoming}
+              onRefresh={activeCategory === "hits" ? refetchHits : refetchUpcoming}
+              tintColor="#C9A03C"
+              colors={["#C9A03C"]}
+            />
+          ) : undefined
+        }
       />
 
       <LogMovieModal
@@ -186,11 +279,42 @@ const styles = StyleSheet.create({
     paddingHorizontal: Spacing.lg,
     paddingBottom: Spacing.xxxl,
   },
+  discoveryHeader: {
+    marginTop: Spacing.sm,
+  },
+  categoryPillRow: {
+    flexDirection: "row",
+    gap: Spacing.sm,
+    marginBottom: Spacing.md,
+  },
+  categoryPill: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 6,
+    paddingVertical: 8,
+    paddingHorizontal: 14,
+    borderRadius: Radius.full,
+    backgroundColor: Colors.surface,
+    borderWidth: 1,
+    borderColor: Colors.border,
+  },
+  categoryPillActive: {
+    backgroundColor: "rgba(201, 160, 60, 0.15)",
+    borderColor: "#C9A03C",
+  },
+  categoryPillText: {
+    fontSize: 13,
+    fontWeight: "600",
+    color: Colors.textMuted,
+  },
+  categoryPillTextActive: {
+    color: "#C9A03C",
+    fontWeight: "700",
+  },
   sectionTitleRow: {
     flexDirection: "row",
     alignItems: "center",
     gap: 6,
-    marginTop: Spacing.md,
     marginBottom: Spacing.sm,
   },
   sectionTitle: {
@@ -233,3 +357,4 @@ const styles = StyleSheet.create({
     textAlign: "center",
   },
 });
+

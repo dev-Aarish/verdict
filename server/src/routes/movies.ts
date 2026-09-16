@@ -8,6 +8,8 @@ import { config } from "../config.js";
 import { toSafeUser } from "../lib/safe-user.js";
 import {
   searchTmdb,
+  getTrendingTmdb,
+  getUpcomingTmdb,
   fetchEnrichedDetail,
   findOrCreateMovie,
   type MovieDetailFields,
@@ -189,6 +191,57 @@ moviesRouter.get("/search", async (req: Request, res: Response) => {
     error: null,
   });
 });
+
+// GET /trending?page=
+moviesRouter.get("/trending", async (req: Request, res: Response) => {
+  const page = parseInt(req.query.page as string, 10) || 1;
+  const result = await getTrendingTmdb(page);
+
+  if (result && result.results.length > 0) {
+    res.json({
+      results: result.results,
+      totalResults: result.totalResults,
+      totalPages: result.totalPages,
+      page,
+    });
+    return;
+  }
+
+  // Fallback: search for top critically acclaimed / popular hit films
+  const fallback = await searchTmdb("Dune", page);
+  res.json({
+    results: fallback?.results || [],
+    totalResults: fallback?.totalResults || 0,
+    totalPages: fallback?.totalPages || 1,
+    page,
+  });
+});
+
+// GET /upcoming?page=
+moviesRouter.get("/upcoming", async (req: Request, res: Response) => {
+  const page = parseInt(req.query.page as string, 10) || 1;
+  const result = await getUpcomingTmdb(page);
+
+  if (result && result.results.length > 0) {
+    res.json({
+      results: result.results,
+      totalResults: result.totalResults,
+      totalPages: result.totalPages,
+      page,
+    });
+    return;
+  }
+
+  // Fallback: search for upcoming/anticipated films
+  const fallback = await searchTmdb("Avatar", page);
+  res.json({
+    results: fallback?.results || [],
+    totalResults: fallback?.totalResults || 0,
+    totalPages: fallback?.totalPages || 1,
+    page,
+  });
+});
+
 
 // POST /watched (requireAuth)
 moviesRouter.post("/watched", requireAuth, async (req: AuthRequest, res: Response) => {

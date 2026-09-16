@@ -134,21 +134,139 @@ export const moviesApi = {
           Year?: string;
           Poster?: string;
         }>;
-      }>("/movies/search", { params: { q: "Cinema" } });
+      }>("/movies/trending");
 
-      if (res.data.results) {
-        return res.data.results.slice(0, 10).map((r) => ({
+      if (res.data.results && res.data.results.length > 0) {
+        return res.data.results.map((r) => ({
           id: r.imdbID || "",
           imdbId: r.imdbID || "",
-          title: r.Title || "Featured Film",
+          title: r.Title || "Latest Hit",
           year: r.Year || "",
           posterUrl: r.Poster && r.Poster !== "N/A" ? r.Poster : null,
         }));
       }
-      return [];
-    } catch {
-      return [];
-    }
+    } catch {}
+
+    // Fallback: search curated blockbusters and acclaimed latest hits via search endpoint
+    try {
+      const hitTitles = [
+        "Oppenheimer",
+        "Dune Part Two",
+        "Gladiator II",
+        "Wicked",
+        "Deadpool Wolverine",
+        "Inside Out 2",
+        "Civil War",
+        "Furiosa",
+        "The Substance",
+        "Challengers",
+      ];
+      const hitsMap = new Map<string, Movie>();
+
+      await Promise.all(
+        hitTitles.map(async (q) => {
+          try {
+            const res = await apiClient.get<{
+              results?: Array<{
+                imdbID?: string;
+                Title?: string;
+                Year?: string;
+                Poster?: string;
+              }>;
+            }>("/movies/search", { params: { q } });
+
+            const item = res.data?.results?.[0];
+            if (item && item.imdbID && !hitsMap.has(item.imdbID)) {
+              hitsMap.set(item.imdbID, {
+                id: item.imdbID,
+                imdbId: item.imdbID,
+                title: item.Title || "Hit Film",
+                year: item.Year || "",
+                posterUrl: item.Poster && item.Poster !== "N/A" ? item.Poster : null,
+              });
+            }
+          } catch {}
+        })
+      );
+
+      if (hitsMap.size > 0) {
+        return Array.from(hitsMap.values());
+      }
+    } catch {}
+
+    return [];
+  },
+
+  async getUpcoming(): Promise<Movie[]> {
+    try {
+      const res = await apiClient.get<{
+        results?: Array<{
+          imdbID?: string;
+          Title?: string;
+          Year?: string;
+          Poster?: string;
+        }>;
+      }>("/movies/upcoming");
+
+      if (res.data.results && res.data.results.length > 0) {
+        return res.data.results.map((r) => ({
+          id: r.imdbID || "",
+          imdbId: r.imdbID || "",
+          title: r.Title || "Upcoming Movie",
+          year: r.Year || "",
+          posterUrl: r.Poster && r.Poster !== "N/A" ? r.Poster : null,
+        }));
+      }
+    } catch {}
+
+    // Fallback: search upcoming and anticipated films via search endpoint
+    try {
+      const upcomingTitles = [
+        "Avatar Fire and Ash",
+        "Avengers Doomsday",
+        "Superman",
+        "The Batman Part II",
+        "Tron Ares",
+        "Spider-Man Beyond the Spider-Verse",
+        "Toy Story 5",
+        "Jurassic World Rebirth",
+        "Fantastic Four",
+        "Shrek 5",
+      ];
+      const upcomingMap = new Map<string, Movie>();
+
+      await Promise.all(
+        upcomingTitles.map(async (q) => {
+          try {
+            const res = await apiClient.get<{
+              results?: Array<{
+                imdbID?: string;
+                Title?: string;
+                Year?: string;
+                Poster?: string;
+              }>;
+            }>("/movies/search", { params: { q } });
+
+            const item = res.data?.results?.[0];
+            if (item && item.imdbID && !upcomingMap.has(item.imdbID)) {
+              upcomingMap.set(item.imdbID, {
+                id: item.imdbID,
+                imdbId: item.imdbID,
+                title: item.Title || "Upcoming Movie",
+                year: item.Year || "",
+                posterUrl: item.Poster && item.Poster !== "N/A" ? item.Poster : null,
+              });
+            }
+          } catch {}
+        })
+      );
+
+      if (upcomingMap.size > 0) {
+        return Array.from(upcomingMap.values());
+      }
+    } catch {}
+
+    return [];
   },
 };
 

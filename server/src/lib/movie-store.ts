@@ -126,6 +126,65 @@ export async function searchTmdb(
   };
 }
 
+export async function getTrendingTmdb(
+  page: number = 1,
+): Promise<{ results: OmdbShapedSearchResult[]; totalResults: number; totalPages: number } | null> {
+  const data = await tmdbFetch(`/trending/movie/week?page=${page}&language=en-US`);
+  if (!data?.results) return null;
+
+  const items: TmdbSearchItem[] = data.results;
+  const resolved = await Promise.all(
+    items.map(async (item) => {
+      const ext = await tmdbFetch(`/movie/${item.id}/external_ids`);
+      const imdbID = ext?.imdb_id;
+      if (!imdbID) return null;
+      return {
+        imdbID,
+        Title: item.title || item.original_title || "Unknown",
+        Year: item.release_date ? item.release_date.slice(0, 4) : "",
+        Poster: item.poster_path ? `${TMDB_IMAGE}${item.poster_path}` : "N/A",
+        Type: "movie",
+      };
+    }),
+  );
+
+  return {
+    results: resolved.filter((r): r is OmdbShapedSearchResult => r !== null),
+    totalResults: data.total_results || 0,
+    totalPages: Math.min(data.total_pages || 1, 500),
+  };
+}
+
+export async function getUpcomingTmdb(
+  page: number = 1,
+): Promise<{ results: OmdbShapedSearchResult[]; totalResults: number; totalPages: number } | null> {
+  const data = await tmdbFetch(`/movie/upcoming?page=${page}&language=en-US`);
+  if (!data?.results) return null;
+
+  const items: TmdbSearchItem[] = data.results;
+  const resolved = await Promise.all(
+    items.map(async (item) => {
+      const ext = await tmdbFetch(`/movie/${item.id}/external_ids`);
+      const imdbID = ext?.imdb_id;
+      if (!imdbID) return null;
+      return {
+        imdbID,
+        Title: item.title || item.original_title || "Unknown",
+        Year: item.release_date ? item.release_date.slice(0, 4) : "",
+        Poster: item.poster_path ? `${TMDB_IMAGE}${item.poster_path}` : "N/A",
+        Type: "movie",
+      };
+    }),
+  );
+
+  return {
+    results: resolved.filter((r): r is OmdbShapedSearchResult => r !== null),
+    totalResults: data.total_results || 0,
+    totalPages: Math.min(data.total_pages || 1, 500),
+  };
+}
+
+
 function formatReleaseDate(iso: string | undefined | null): string | null {
   if (!iso || !/^\d{4}-\d{2}-\d{2}$/.test(iso)) return null;
   const d = new Date(`${iso}T00:00:00Z`);

@@ -16,6 +16,7 @@ import { useAuth } from "../../context/AuthContext";
 import { Colors, Radius, Spacing } from "../../constants/theme";
 import { Button } from "../../components/common/Button";
 import { Input } from "../../components/common/Input";
+import { LogoMark } from "../../components/common/Logo";
 
 export default function LoginScreen() {
   const router = useRouter();
@@ -69,7 +70,7 @@ export default function LoginScreen() {
           {/* Header Brand */}
           <View style={styles.brandHeader}>
             <View style={styles.logoBadge}>
-              <Film size={28} color={Colors.primaryLight} />
+              <LogoMark size={34} color="#C9A03C" />
             </View>
             <Text style={styles.brandTitle}>VERDICT</Text>
             <Text style={styles.brandSubtitle}>

@@ -4,6 +4,7 @@ import { verdicts, users, follows, tasteScores } from "../db/schema.js";
 import { eq, and, desc, inArray } from "drizzle-orm";
 import { optionalAuth, AuthRequest } from "../middleware/auth.js";
 import { toSafeUser } from "../lib/safe-user.js";
+import { computeTasteScore } from "./taste-score.js";
 
 export const feedRouter = Router();
 
@@ -85,6 +86,20 @@ feedRouter.get("/leaderboard", async (_req: Request, res: Response) => {
 
   const nonTestUserIds = nonTestUsers.map((u) => u.id);
 
+  // Check which non-test users are missing from tasteScores
+  const existingScores = await db
+    .select({ userId: tasteScores.userId })
+    .from(tasteScores)
+    .where(inArray(tasteScores.userId, nonTestUserIds));
+
+  const existingUserIds = new Set(existingScores.map((s) => s.userId));
+  const missingUserIds = nonTestUserIds.filter((id) => !existingUserIds.has(id));
+
+  // Compute missing scores so every non-test user has a score
+  for (const userId of missingUserIds) {
+    await computeTasteScore(userId);
+  }
+
   const scores = await db
     .select()
     .from(tasteScores)
@@ -104,11 +119,25 @@ feedRouter.get("/leaderboard", async (_req: Request, res: Response) => {
     .where(and(inArray(users.id, userIds), eq(users.isTest, false)));
   const userMap = new Map(allUsers.map((u) => [u.id, u]));
 
-  const result = scores.map((s, index) => ({
-    rank: index + 1,
-    user: userMap.get(s.userId) ? toSafeUser(userMap.get(s.userId)!) : null,
-    score: s.score,
-  }));
+  const result = scores
+    .map((s, index) => {
+      const u = userMap.get(s.userId);
+      if (!u) return null;
+      let breakdown = null;
+      try {
+        if (s.breakdownJson) {
+          breakdown = JSON.parse(s.breakdownJson);
+        }
+      } catch {}
+
+      return {
+        rank: index + 1,
+        user: toSafeUser(u),
+        score: s.score,
+        breakdown,
+      };
+    })
+    .filter(Boolean);
 
   res.json(result);
 });

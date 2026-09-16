@@ -1,8 +1,9 @@
 import React from "react";
 import { Tabs } from "expo-router";
-import { Platform } from "react-native";
+import { Platform, View, StyleSheet } from "react-native";
 import { Compass, Search, Bookmark, User } from "lucide-react-native";
 import { Colors } from "../../constants/theme";
+import { Logo } from "../../components/common/Logo";
 
 export default function TabLayout() {
   return (
@@ -15,7 +16,7 @@ export default function TabLayout() {
         headerTintColor: Colors.text,
         headerTitleStyle: {
           fontWeight: "800",
-          fontSize: 18,
+          fontSize: 17,
           letterSpacing: 0.5,
         },
         headerShadowVisible: false,
@@ -27,7 +28,7 @@ export default function TabLayout() {
           paddingBottom: Platform.OS === "ios" ? 28 : 10,
           paddingTop: 8,
         },
-        tabBarActiveTintColor: Colors.primaryLight,
+        tabBarActiveTintColor: "#C9A03C",
         tabBarInactiveTintColor: Colors.textSubtle,
         tabBarLabelStyle: {
           fontSize: 11,
@@ -39,7 +40,11 @@ export default function TabLayout() {
         name="index"
         options={{
           title: "Feed",
-          headerTitle: "VERDICT FEED",
+          headerTitle: () => (
+            <View style={styles.headerLogoContainer}>
+              <Logo size="md" color="#C9A03C" />
+            </View>
+          ),
           tabBarIcon: ({ color, size }) => <Compass size={size} color={color} />,
         }}
       />
@@ -70,3 +75,12 @@ export default function TabLayout() {
     </Tabs>
   );
 }
+
+const styles = StyleSheet.create({
+  headerLogoContainer: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+  },
+});
+
