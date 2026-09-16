@@ -87,6 +87,7 @@ export interface OmdbShapedSearchResult {
   Year: string;
   Poster: string;
   Type: string;
+  releaseDate: string | null;
 }
 
 /**
@@ -115,6 +116,7 @@ export async function searchTmdb(
         Year: item.release_date ? item.release_date.slice(0, 4) : "",
         Poster: item.poster_path ? `${TMDB_IMAGE}${item.poster_path}` : "N/A",
         Type: "movie",
+        releaseDate: item.release_date || null,
       };
     }),
   );
@@ -129,12 +131,34 @@ export async function searchTmdb(
 export async function getTrendingTmdb(
   page: number = 1,
 ): Promise<{ results: OmdbShapedSearchResult[]; totalResults: number; totalPages: number } | null> {
-  const data = await tmdbFetch(`/trending/movie/week?page=${page}&language=en-US`);
-  if (!data?.results) return null;
+  const today = new Date().toISOString().slice(0, 10);
+  const [trendingData, nowPlayingData] = await Promise.all([
+    tmdbFetch(`/trending/movie/week?page=${page}&language=en-US`),
+    tmdbFetch(`/movie/now_playing?page=${page}&language=en-US`),
+  ]);
 
-  const items: TmdbSearchItem[] = data.results;
+  const rawList: TmdbSearchItem[] = [
+    ...(trendingData?.results || []),
+    ...(nowPlayingData?.results || []),
+  ];
+
+  if (rawList.length === 0) return null;
+
+  // Deduplicate and filter: ONLY released movies (release_date <= today)
+  const seenTmdbIds = new Set<number>();
+  const releasedItems: TmdbSearchItem[] = [];
+
+  for (const item of rawList) {
+    if (!item.id || seenTmdbIds.has(item.id)) continue;
+    seenTmdbIds.add(item.id);
+
+    if (item.release_date && item.release_date <= today) {
+      releasedItems.push(item);
+    }
+  }
+
   const resolved = await Promise.all(
-    items.map(async (item) => {
+    releasedItems.map(async (item) => {
       const ext = await tmdbFetch(`/movie/${item.id}/external_ids`);
       const imdbID = ext?.imdb_id;
       if (!imdbID) return null;
@@ -144,26 +168,54 @@ export async function getTrendingTmdb(
         Year: item.release_date ? item.release_date.slice(0, 4) : "",
         Poster: item.poster_path ? `${TMDB_IMAGE}${item.poster_path}` : "N/A",
         Type: "movie",
+        releaseDate: item.release_date || null,
       };
     }),
   );
 
+  const results = resolved.filter((r): r is OmdbShapedSearchResult => r !== null);
+
   return {
-    results: resolved.filter((r): r is OmdbShapedSearchResult => r !== null),
-    totalResults: data.total_results || 0,
-    totalPages: Math.min(data.total_pages || 1, 500),
+    results,
+    totalResults: results.length,
+    totalPages: Math.max(trendingData?.total_pages || 1, nowPlayingData?.total_pages || 1),
   };
 }
 
 export async function getUpcomingTmdb(
   page: number = 1,
 ): Promise<{ results: OmdbShapedSearchResult[]; totalResults: number; totalPages: number } | null> {
-  const data = await tmdbFetch(`/movie/upcoming?page=${page}&language=en-US`);
-  if (!data?.results) return null;
+  const today = new Date().toISOString().slice(0, 10);
 
-  const items: TmdbSearchItem[] = data.results;
+  const [discoverData, upcomingData] = await Promise.all([
+    tmdbFetch(
+      `/discover/movie?include_adult=false&language=en-US&sort_by=popularity.desc&primary_release_date.gte=${today}&page=${page}`,
+    ),
+    tmdbFetch(`/movie/upcoming?page=${page}&language=en-US`),
+  ]);
+
+  const rawList: TmdbSearchItem[] = [
+    ...(discoverData?.results || []),
+    ...(upcomingData?.results || []),
+  ];
+
+  if (rawList.length === 0) return null;
+
+  // Deduplicate and filter: STRICTLY unreleased movies (release_date > today)
+  const seenTmdbIds = new Set<number>();
+  const upcomingItems: TmdbSearchItem[] = [];
+
+  for (const item of rawList) {
+    if (!item.id || seenTmdbIds.has(item.id)) continue;
+    seenTmdbIds.add(item.id);
+
+    if (item.release_date && item.release_date > today) {
+      upcomingItems.push(item);
+    }
+  }
+
   const resolved = await Promise.all(
-    items.map(async (item) => {
+    upcomingItems.map(async (item) => {
       const ext = await tmdbFetch(`/movie/${item.id}/external_ids`);
       const imdbID = ext?.imdb_id;
       if (!imdbID) return null;
@@ -173,14 +225,17 @@ export async function getUpcomingTmdb(
         Year: item.release_date ? item.release_date.slice(0, 4) : "",
         Poster: item.poster_path ? `${TMDB_IMAGE}${item.poster_path}` : "N/A",
         Type: "movie",
+        releaseDate: item.release_date || null,
       };
     }),
   );
 
+  const results = resolved.filter((r): r is OmdbShapedSearchResult => r !== null);
+
   return {
-    results: resolved.filter((r): r is OmdbShapedSearchResult => r !== null),
-    totalResults: data.total_results || 0,
-    totalPages: Math.min(data.total_pages || 1, 500),
+    results,
+    totalResults: results.length,
+    totalPages: Math.max(discoverData?.total_pages || 1, upcomingData?.total_pages || 1),
   };
 }
 

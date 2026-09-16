@@ -133,6 +133,7 @@ export const moviesApi = {
           Title?: string;
           Year?: string;
           Poster?: string;
+          releaseDate?: string;
         }>;
       }>("/movies/trending");
 
@@ -143,6 +144,7 @@ export const moviesApi = {
           title: r.Title || "Latest Hit",
           year: r.Year || "",
           posterUrl: r.Poster && r.Poster !== "N/A" ? r.Poster : null,
+          released: r.releaseDate || null,
         }));
       }
     } catch {}
@@ -172,6 +174,7 @@ export const moviesApi = {
                 Title?: string;
                 Year?: string;
                 Poster?: string;
+                releaseDate?: string;
               }>;
             }>("/movies/search", { params: { q } });
 
@@ -183,6 +186,7 @@ export const moviesApi = {
                 title: item.Title || "Hit Film",
                 year: item.Year || "",
                 posterUrl: item.Poster && item.Poster !== "N/A" ? item.Poster : null,
+                released: item.releaseDate || null,
               });
             }
           } catch {}
@@ -205,6 +209,7 @@ export const moviesApi = {
           Title?: string;
           Year?: string;
           Poster?: string;
+          releaseDate?: string;
         }>;
       }>("/movies/upcoming");
 
@@ -215,6 +220,7 @@ export const moviesApi = {
           title: r.Title || "Upcoming Movie",
           year: r.Year || "",
           posterUrl: r.Poster && r.Poster !== "N/A" ? r.Poster : null,
+          released: r.releaseDate || null,
         }));
       }
     } catch {}
@@ -244,6 +250,7 @@ export const moviesApi = {
                 Title?: string;
                 Year?: string;
                 Poster?: string;
+                releaseDate?: string;
               }>;
             }>("/movies/search", { params: { q } });
 
@@ -255,6 +262,7 @@ export const moviesApi = {
                 title: item.Title || "Upcoming Movie",
                 year: item.Year || "",
                 posterUrl: item.Poster && item.Poster !== "N/A" ? item.Poster : null,
+                released: item.releaseDate || null,
               });
             }
           } catch {}

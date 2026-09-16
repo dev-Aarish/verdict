@@ -88,8 +88,31 @@ export default function SearchScreen() {
     await logMovieMutation.mutateAsync(params);
   };
 
+  const segregatedHits = React.useMemo(() => {
+    const today = new Date().toISOString().slice(0, 10);
+    return latestHits.filter((m) => {
+      if (m.released && /^\d{4}-\d{2}-\d{2}$/.test(m.released)) {
+        return m.released <= today;
+      }
+      return true;
+    });
+  }, [latestHits]);
+
+  const segregatedUpcoming = React.useMemo(() => {
+    const hitsImdbSet = new Set(segregatedHits.map((m) => m.imdbId || m.id));
+    const today = new Date().toISOString().slice(0, 10);
+    return upcomingMovies.filter((m) => {
+      const id = m.imdbId || m.id;
+      if (id && hitsImdbSet.has(id)) return false;
+      if (m.released && /^\d{4}-\d{2}-\d{2}$/.test(m.released)) {
+        return m.released > today;
+      }
+      return true;
+    });
+  }, [upcomingMovies, segregatedHits]);
+
   const isQueryActive = debouncedQuery.length >= 2;
-  const currentCategoryMovies = activeCategory === "hits" ? latestHits : upcomingMovies;
+  const currentCategoryMovies = activeCategory === "hits" ? segregatedHits : segregatedUpcoming;
   const displayMovies = isQueryActive ? searchResults : currentCategoryMovies;
   const isLoadingCategory = activeCategory === "hits" ? isLoadingHits : isLoadingUpcoming;
 
