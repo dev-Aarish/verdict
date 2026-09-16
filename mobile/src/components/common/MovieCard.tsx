@@ -25,6 +25,7 @@ interface MovieCardProps {
   onPress?: () => void;
   userRating?: number | null;
   layout?: "grid" | "list";
+  size?: "sm" | "md" | "lg" | "xl";
   style?: ViewStyle;
 }
 
@@ -33,6 +34,7 @@ export const MovieCard: React.FC<MovieCardProps> = ({
   onPress,
   userRating,
   layout = "list",
+  size = "md",
   style,
 }) => {
   const scale = useSharedValue(1);
@@ -94,36 +96,66 @@ export const MovieCard: React.FC<MovieCardProps> = ({
     );
   }
 
+  // Dimensions based on size prop (2:3 cinematic poster ratio)
+  const posterDimensions = {
+    sm: { width: 68, height: 102 },
+    md: { width: 84, height: 126 },
+    lg: { width: 98, height: 147 },
+    xl: { width: 114, height: 171 },
+  }[size];
+
   return (
     <AnimatedPressable
       onPressIn={handlePressIn}
       onPressOut={handlePressOut}
       onPress={handlePress}
-      style={[styles.listContainer, animatedStyle, style]}
+      style={[
+        styles.listContainer,
+        size === "lg" && styles.listContainerLg,
+        size === "xl" && styles.listContainerXl,
+        animatedStyle,
+        style,
+      ]}
     >
-      <View style={styles.posterWrapper}>
+      <View
+        style={[
+          styles.posterWrapper,
+          { width: posterDimensions.width, height: posterDimensions.height },
+        ]}
+      >
         <Image
           source={{ uri: posterUrl }}
-          style={styles.listPoster}
+          style={{ width: "100%", height: "100%", backgroundColor: Colors.inkDark }}
           contentFit="cover"
           transition={250}
         />
       </View>
       <View style={styles.listContent}>
         <View style={styles.listHeaderRow}>
-          <Text numberOfLines={2} style={styles.listTitle}>
+          <Text
+            numberOfLines={2}
+            style={[
+              styles.listTitle,
+              (size === "lg" || size === "xl") && styles.listTitleLg,
+            ]}
+          >
             {movie.title}
           </Text>
         </View>
 
         <View style={styles.listMetaRow}>
           {movie.year && (
-            <Text style={styles.listMetaText}>{movie.year}</Text>
+            <Text style={[styles.listMetaText, (size === "lg" || size === "xl") && styles.listMetaTextLg]}>
+              {movie.year}
+            </Text>
           )}
           {movie.director && (
             <>
               <Text style={styles.bullet}>·</Text>
-              <Text numberOfLines={1} style={styles.listMetaText}>
+              <Text
+                numberOfLines={1}
+                style={[styles.listMetaText, (size === "lg" || size === "xl") && styles.listMetaTextLg]}
+              >
                 Dir. {movie.director}
               </Text>
             </>
@@ -133,7 +165,7 @@ export const MovieCard: React.FC<MovieCardProps> = ({
         {parseGenres(movie.genres).length > 0 && (
           <View style={styles.genresRow}>
             {parseGenres(movie.genres)
-              .slice(0, 2)
+              .slice(0, size === "lg" || size === "xl" ? 3 : 2)
               .map((genre, idx) => (
                 <Badge key={idx} label={genre} variant="outline" size="sm" />
               ))}
@@ -142,6 +174,7 @@ export const MovieCard: React.FC<MovieCardProps> = ({
 
         {userRating !== undefined && userRating !== null && (
           <View style={styles.userRatingRow}>
+            <Star size={12} color={Colors.brass} fill={Colors.brass} />
             <Text style={styles.userRatingLabel}>PERSONAL RATING:</Text>
             <Text style={styles.userRatingText}>{userRating}/100</Text>
           </View>
@@ -155,27 +188,38 @@ const styles = StyleSheet.create({
   listContainer: {
     flexDirection: "row",
     backgroundColor: Colors.velvet,
-    borderRadius: Radius.none,
+    borderRadius: Radius.sm,
     padding: Spacing.md,
     borderWidth: 1,
     borderColor: Colors.border,
     gap: Spacing.md,
     alignItems: "center",
   },
-  posterWrapper: {
-    borderWidth: 1,
-    borderColor: Colors.borderBrass,
-    borderRadius: Radius.none,
-    overflow: "hidden",
+  listContainerLg: {
+    padding: 12,
+    gap: 14,
+    borderRadius: Radius.sm,
   },
-  listPoster: {
-    width: 64,
-    height: 96,
-    backgroundColor: Colors.inkDark,
+  listContainerXl: {
+    padding: 14,
+    gap: 16,
+    borderRadius: Radius.md,
+  },
+  posterWrapper: {
+    borderWidth: 1.5,
+    borderColor: Colors.borderBrass,
+    borderRadius: Radius.sm,
+    overflow: "hidden",
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.35,
+    shadowRadius: 6,
+    elevation: 4,
   },
   listContent: {
     flex: 1,
-    gap: 3,
+    gap: 4,
+    justifyContent: "center",
   },
   listHeaderRow: {
     flexDirection: "row",
@@ -189,14 +233,23 @@ const styles = StyleSheet.create({
     letterSpacing: 0.2,
     flex: 1,
   },
+  listTitleLg: {
+    fontSize: 16,
+    lineHeight: 21,
+    fontWeight: "800",
+  },
   listMetaRow: {
     flexDirection: "row",
     alignItems: "center",
-    gap: 4,
+    gap: 5,
+    flexWrap: "wrap",
   },
   listMetaText: {
     fontSize: 12,
     color: Colors.dustLight,
+  },
+  listMetaTextLg: {
+    fontSize: 13,
   },
   bullet: {
     color: Colors.dust,
@@ -206,27 +259,29 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     gap: 6,
     marginTop: 3,
+    flexWrap: "wrap",
   },
   userRatingRow: {
     flexDirection: "row",
     alignItems: "center",
-    gap: 4,
-    marginTop: 4,
+    gap: 5,
+    marginTop: 6,
     backgroundColor: Colors.brassSubtle,
-    paddingVertical: 2,
-    paddingHorizontal: 6,
+    paddingVertical: 3.5,
+    paddingHorizontal: 8,
     alignSelf: "flex-start",
     borderWidth: 1,
     borderColor: Colors.brass,
+    borderRadius: Radius.xs || 2,
   },
   userRatingLabel: {
-    fontSize: 9,
+    fontSize: 9.5,
     fontWeight: "800",
     color: Colors.brassLight,
     letterSpacing: 0.8,
   },
   userRatingText: {
-    fontSize: 11,
+    fontSize: 12,
     fontWeight: "900",
     color: Colors.brassLight,
   },
@@ -275,4 +330,3 @@ const styles = StyleSheet.create({
     marginTop: 1,
   },
 });
-

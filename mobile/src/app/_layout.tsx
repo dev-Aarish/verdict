@@ -8,7 +8,10 @@ import * as SplashScreen from "expo-splash-screen";
 import { AuthProvider } from "../context/AuthContext";
 import { Colors } from "../constants/theme";
 
-LogBox.ignoreLogs(["[Worklets]"]);
+LogBox.ignoreLogs([
+  "[Worklets]",
+  "Cannot connect to Expo CLI",
+]);
 
 // Automatically hide splash screen immediately when JS bundle mounts
 SplashScreen.hideAsync().catch(() => {});

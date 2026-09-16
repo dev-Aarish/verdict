@@ -273,6 +273,7 @@ export default function UserProfileScreen() {
                 <MovieCard
                   movie={item.movie}
                   userRating={item.rating}
+                  size="lg"
                   onPress={() =>
                     router.push(`/movie/${item.movie?.imdbId || item.movie?.id}`)
                   }
