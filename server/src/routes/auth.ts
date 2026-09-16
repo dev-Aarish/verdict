@@ -5,7 +5,7 @@ import { v4 as uuidv4 } from "uuid";
 import * as jose from "jose";
 
 const scryptAsync = promisify(scrypt);
-import { eq, and, gt } from "drizzle-orm";
+import { eq, and, gt, or } from "drizzle-orm";
 import { db } from "../db/index.js";
 import { users, sessions } from "../db/schema.js";
 import { config } from "../config.js";
@@ -139,21 +139,22 @@ authRouter.post("/signup", async (req: Request, res: Response) => {
 
 // POST /login
 authRouter.post("/login", async (req: Request, res: Response) => {
-  const { email, password } = req.body;
+  const { email, password, username, identifier } = req.body;
+  const loginInput = (identifier || email || username || "").trim();
 
-  if (!email || !password) {
-    res.status(400).json({ error: "Email and password are required" });
+  if (!loginInput || !password) {
+    res.status(400).json({ error: "Email/username and password are required" });
     return;
   }
 
   const user = await db
     .select()
     .from(users)
-    .where(eq(users.email, email))
+    .where(or(eq(users.email, loginInput), eq(users.username, loginInput)))
     .then((res) => res[0]);
 
   if (!user || !user.passwordHash) {
-    res.status(401).json({ error: "Invalid email or password" });
+    res.status(401).json({ error: "Invalid credentials" });
     return;
   }
 

@@ -73,11 +73,11 @@ function LoginPage() {
               }}
             >
               <Field
-                label="Email"
+                label="Email or Username"
                 value={email}
                 onChange={setEmail}
-                type="email"
-                placeholder="you@screening.room"
+                type="text"
+                placeholder="Email or Username"
               />
               <Field
                 label="Password"

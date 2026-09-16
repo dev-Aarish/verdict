@@ -99,12 +99,12 @@ export default function LoginScreen() {
             <View style={styles.formAccentBar} />
             
             <Input
-              label="MEMBER EMAIL"
-              placeholder="critic@screeningroom.org"
+              label="MEMBER EMAIL OR USERNAME"
+              placeholder="Email or Username"
               value={email}
               onChangeText={setEmail}
               autoCapitalize="none"
-              keyboardType="email-address"
+              keyboardType="default"
               leftIcon={<Mail size={18} color={Colors.dust} />}
             />
 
