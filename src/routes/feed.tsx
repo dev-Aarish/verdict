@@ -7,8 +7,6 @@ import { useUser } from "@/lib/user-context";
 import { useState, useEffect, useCallback } from "react";
 import { formatDistanceToNow } from "date-fns";
 import type { VerdictWithUser, LeaderboardRow } from "@/lib/types";
-import { Trophy, Film, Users, Sparkles, ArrowRight } from "lucide-react";
-import { avatarUrlFor } from "@/lib/avatar";
 
 export const Route = createFileRoute("/feed")({
   head: () => ({
@@ -81,232 +79,152 @@ function FeedPage() {
     <div className="min-h-screen">
       <TopBar />
 
-      <main className="mx-auto grid max-w-5xl gap-10 px-4 py-8 sm:px-6 md:grid-cols-[1.4fr_1fr] md:gap-14 md:py-14">
-        {/* Main Feed */}
+      <main className="mx-auto grid max-w-5xl gap-10 px-5 py-10 md:grid-cols-[1.4fr_1fr] md:gap-16 md:px-6 md:py-16">
         <section>
-          <div className="flex flex-col gap-2">
-            <div className="inline-flex items-center gap-2">
-              <Film className="h-4 w-4 text-brass" />
-              <p className="text-caption text-brass">The Reel</p>
-            </div>
-            <h1 className="text-section text-paper">Recent Verdicts</h1>
-          </div>
+          <p className="text-caption mb-3">The Reel</p>
+          <h1 className="text-section text-paper">Recent Verdicts</h1>
 
           {user && (
-            <div className="mt-6 flex rounded-lg border border-border/60 bg-velvet/50 p-1 w-fit">
+            <div className="mt-6 flex gap-1">
               <button
                 onClick={() => setFilter("following")}
-                className={`px-4 py-1.5 text-caption text-xs rounded transition-all cursor-pointer ${
+                className={`px-4 py-2 text-caption transition-colors cursor-pointer border ${
                   filter === "following"
-                    ? "bg-brass text-ink font-bold shadow-sm"
-                    : "text-dust hover:text-paper"
+                    ? "border-brass text-brass bg-brass/10"
+                    : "border-dust/30 text-dust hover:text-paper"
                 }`}
               >
                 Following
               </button>
               <button
                 onClick={() => setFilter("all")}
-                className={`px-4 py-1.5 text-caption text-xs rounded transition-all cursor-pointer ${
+                className={`px-4 py-2 text-caption transition-colors cursor-pointer border ${
                   filter === "all"
-                    ? "bg-brass text-ink font-bold shadow-sm"
-                    : "text-dust hover:text-paper"
+                    ? "border-brass text-brass bg-brass/10"
+                    : "border-dust/30 text-dust hover:text-paper"
                 }`}
               >
-                Global
+                All
               </button>
             </div>
           )}
 
           {loading ? (
-            <div className="mt-8 space-y-4">
-              {[1, 2, 3, 4].map((n) => (
-                <div key={n} className="surface-card p-5 rounded-lg">
-                  <div className="animate-shimmer h-4 w-28 rounded mb-3" />
-                  <div className="animate-shimmer h-6 w-3/4 rounded mb-3" />
-                  <div className="animate-shimmer h-3 w-40 rounded" />
-                </div>
-              ))}
-            </div>
+            <p className="text-caption text-dust mt-10">Loading...</p>
           ) : filter === "following" && verdicts.length === 0 ? (
-            <div className="surface-card mt-8 p-8 text-center rounded-xl">
-              <div className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-full bg-brass/10 text-brass">
-                <Users className="h-6 w-6" />
-              </div>
-              <p className="text-card-title text-paper">No verdicts from following yet</p>
-              <p className="text-sm text-dust mt-2 mb-6 max-w-sm mx-auto">
-                Follow fellow film enthusiasts to see their latest verdicts stamped here in real-time.
-              </p>
+            <div className="mt-10 text-center">
+              <p className="text-caption text-dust mb-4">No verdicts from people you follow yet.</p>
               <Link
                 to="/search"
-                className="inline-flex items-center gap-2 border border-brass bg-brass/10 px-5 py-2.5 text-caption text-brass hover:bg-brass hover:text-ink transition-all active:scale-95"
+                className="border border-brass px-5 py-2 text-caption text-brass hover:bg-brass hover:text-ink transition-colors"
               >
-                <span>Find people to follow</span>
-                <ArrowRight className="h-3.5 w-3.5" />
+                Find people to follow →
               </Link>
             </div>
           ) : verdicts.length === 0 ? (
-            <div className="surface-card mt-8 p-8 text-center rounded-xl">
-              <Sparkles className="mx-auto h-8 w-8 text-brass mb-3" />
-              <p className="text-card-title text-paper">No verdicts recorded yet</p>
-              <p className="text-sm text-dust mt-2">
-                Be the first patron to stamp your judgment on someone's taste!
-              </p>
-            </div>
+            <p className="text-caption text-dust mt-10">
+              No verdicts yet. Be the first to stamp your judgment.
+            </p>
           ) : (
-            <ul className="mt-6 space-y-3">
-              {verdicts.map((v, i) => {
-                const isNegative = v.score < 5;
-                return (
-                  <li
-                    key={v.id}
-                    className="surface-card surface-card-hover relative p-4 sm:p-5 rounded-lg flex flex-col gap-3"
-                  >
-                    <div className="flex items-start justify-between gap-3">
-                      <div className="flex items-center gap-2.5 min-w-0">
-                        {v.fromUser && (
-                          <Link
-                            to="/profile/$username"
-                            params={{ username: v.fromUser.username }}
-                            className="h-8 w-8 shrink-0 overflow-hidden rounded-full ring-1 ring-brass/60"
-                          >
-                            <img
-                              src={avatarUrlFor(v.fromUser.username, v.fromUser.avatarUrl)}
-                              alt={v.fromUser.username}
-                              className="h-full w-full object-cover"
-                            />
-                          </Link>
-                        )}
-                        <div className="min-w-0">
-                          <p className="text-xs text-paper/90">
-                            {v.fromUser && (
-                              <Link
-                                to="/profile/$username"
-                                params={{ username: v.fromUser.username }}
-                                className="font-bold text-brass hover:underline"
-                              >
-                                @{v.fromUser.username}
-                              </Link>
-                            )}
-                            <span className="text-dust/70 mx-1.5">judged</span>
-                            {v.toUser && (
-                              <Link
-                                to="/profile/$username"
-                                params={{ username: v.toUser.username }}
-                                className="font-bold text-paper hover:text-brass hover:underline"
-                              >
-                                @{v.toUser.username}
-                              </Link>
-                            )}
-                          </p>
-                          <span className="mono text-[0.68rem] text-dust">{timeAgo(v.createdAt)}</span>
-                        </div>
-                      </div>
-
-                      <Stamp
-                        size="sm"
-                        rotation={((i * 13) % 7) - 3}
-                        variant={isNegative ? "red" : "brass"}
+            <ul className="hairline mt-6 divide-y divide-border/40">
+              {verdicts.map((v, i) => (
+                <li
+                  key={v.id}
+                  className="active-scale flex flex-col gap-1.5 py-5 md:grid md:grid-cols-[3rem_1fr_auto_auto] md:items-center md:gap-x-4 md:gap-y-1"
+                >
+                  {/* Mobile: time left, stamp right. md:contents makes these direct grid items. */}
+                  <div className="flex items-center justify-between gap-3 md:contents">
+                    <span className="mono text-xs text-dust">{timeAgo(v.createdAt)}</span>
+                    <Stamp
+                      size="sm"
+                      rotation={((i * 13) % 7) - 3}
+                      variant={v.score < 5 ? "red" : "brass"}
+                      className="md:hidden"
+                    >
+                      {v.score}
+                    </Stamp>
+                  </div>
+                  <p className="mono text-sm text-paper md:order-2 md:col-start-2">
+                    "{v.comment}"
+                  </p>
+                  <p className="text-caption mt-0.5 md:order-3 md:col-start-2">
+                    {v.fromUser && (
+                      <Link
+                        to="/profile/$username"
+                        params={{ username: v.fromUser.username }}
+                        className="hover:text-brass transition-colors"
                       >
-                        {v.score}
-                      </Stamp>
-                    </div>
-
-                    <p className="text-sm md:text-base font-serif italic text-paper/95 pl-1 border-l-2 border-brass/40 py-0.5">
-                      "{v.comment}"
-                    </p>
-
-                    {user && v.fromUser && v.fromUser.username !== user.username && (
-                      <div className="flex justify-end pt-1">
-                        <button
-                          onClick={() => v.fromUser && handleFollowToggle(v.fromUser.username)}
-                          className={`px-3 py-1 text-caption text-[0.65rem] rounded transition-all cursor-pointer border ${
-                            followingState[v.fromUser.username]
-                              ? "border-dust/40 text-dust hover:border-marquee-red hover:text-marquee-red"
-                              : "border-brass/60 text-brass hover:bg-brass hover:text-ink active:scale-95"
-                          }`}
-                        >
-                          {followingState[v.fromUser.username] ? "Following" : "+ Follow"}
-                        </button>
-                      </div>
+                        {v.fromUser.username}
+                      </Link>
                     )}
-                  </li>
-                );
-              })}
+                    {" → "}
+                    {v.toUser && (
+                      <Link
+                        to="/profile/$username"
+                        params={{ username: v.toUser.username }}
+                        className="hover:text-brass transition-colors"
+                      >
+                        {v.toUser.username}
+                      </Link>
+                    )}
+                  </p>
+                  {user && v.fromUser && v.fromUser.username !== user.username && (
+                    <button
+                      onClick={() => v.fromUser && handleFollowToggle(v.fromUser.username)}
+                      className={`mt-1 w-full py-2.5 text-caption text-xs transition-colors cursor-pointer border md:order-4 md:col-start-3 md:mt-0 md:w-auto md:py-1 ${
+                        followingState[v.fromUser.username]
+                          ? "border-dust/40 text-dust hover:border-marquee-red hover:text-marquee-red"
+                          : "border-brass/50 text-brass hover:bg-brass hover:text-ink"
+                      }`}
+                    >
+                      {followingState[v.fromUser.username] ? "Following" : "Follow"}
+                    </button>
+                  )}
+                  <Stamp
+                    size="sm"
+                    rotation={((i * 13) % 7) - 3}
+                    variant={v.score < 5 ? "red" : "brass"}
+                    className="hidden md:block md:order-5 md:col-start-4"
+                  >
+                    {v.score}
+                  </Stamp>
+                </li>
+              ))}
             </ul>
           )}
         </section>
 
-        {/* Leaderboard Sidebar */}
         <aside>
-          <div className="flex items-center gap-2 mb-2">
-            <Trophy className="h-4 w-4 text-brass" />
-            <p className="text-caption text-brass">Standing</p>
-          </div>
+          <p className="text-caption mb-3">Standing</p>
           <h2 className="text-section text-paper">Leaderboard</h2>
 
           {loading ? (
-            <div className="mt-6 space-y-3">
-              {[1, 2, 3, 4, 5].map((n) => (
-                <div key={n} className="animate-shimmer h-12 w-full rounded-lg" />
-              ))}
-            </div>
+            <p className="text-caption text-dust mt-10">Loading...</p>
           ) : leaderboard.length === 0 ? (
-            <p className="text-caption text-dust mt-6">No scores computed yet.</p>
+            <p className="text-caption text-dust mt-10">No scores computed yet.</p>
           ) : (
-            <div className="surface-card mt-6 divide-y divide-border/30 rounded-xl overflow-hidden">
+            <ul className="hairline mt-10 divide-y divide-border/40">
               {leaderboard
                 .filter((row) => row.user)
-                .map((row) => {
-                  const isGold = row.rank === 1;
-                  const isSilver = row.rank === 2;
-                  const isBronze = row.rank === 3;
-                  return (
-                    <div
-                      key={row.rank}
-                      className={`flex items-center justify-between gap-3 px-4 py-3.5 transition-colors hover:bg-white/[0.02] ${
-                        isGold ? "bg-brass/5" : ""
-                      }`}
+                .map((row) => (
+                  <li
+                    key={row.rank}
+                    className="grid grid-cols-[2rem_1fr_auto] items-center gap-4 py-4"
+                  >
+                    <span className="mono text-sm text-dust">
+                      {String(row.rank).padStart(2, "0")}
+                    </span>
+                    <Link
+                      to="/profile/$username"
+                      params={{ username: row.user!.username }}
+                      className="text-card-title text-paper hover:text-brass transition-colors"
                     >
-                      <div className="flex items-center gap-3 min-w-0">
-                        <span
-                          className={`mono text-xs font-bold w-6 text-center ${
-                            isGold
-                              ? "text-brass font-extrabold"
-                              : isSilver
-                              ? "text-paper"
-                              : isBronze
-                              ? "text-dust"
-                              : "text-dust/60"
-                          }`}
-                        >
-                          {String(row.rank).padStart(2, "0")}
-                        </span>
-                        
-                        <div className="h-7 w-7 shrink-0 overflow-hidden rounded-full ring-1 ring-border">
-                          <img
-                            src={avatarUrlFor(row.user!.username, row.user!.avatarUrl)}
-                            alt={row.user!.username}
-                            className="h-full w-full object-cover"
-                          />
-                        </div>
-
-                        <Link
-                          to="/profile/$username"
-                          params={{ username: row.user!.username }}
-                          className="text-sm font-medium text-paper truncate hover:text-brass transition-colors"
-                        >
-                          {row.user!.username}
-                        </Link>
-                      </div>
-
-                      <div className="flex items-center gap-1.5 shrink-0">
-                        <span className="mono text-sm font-bold text-brass">{row.score}</span>
-                        <span className="text-[0.65rem] text-dust">pts</span>
-                      </div>
-                    </div>
-                  );
-                })}
-            </div>
+                      {row.user!.username}
+                    </Link>
+                    <span className="mono text-brass">{row.score}</span>
+                  </li>
+                ))}
+            </ul>
           )}
         </aside>
       </main>

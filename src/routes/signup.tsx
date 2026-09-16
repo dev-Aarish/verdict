@@ -56,9 +56,9 @@ function SignupPage() {
 
         <section className="flex flex-col items-center justify-center px-5 py-10 pb-20 md:px-14 md:py-16">
           <div className="mx-auto w-full max-w-sm">
-            <p className="text-caption text-brass uppercase tracking-widest text-xs">New patron</p>
+            <p className="text-caption">New patron</p>
             <h1 className="text-section text-paper mt-1">Get on the list</h1>
-            <p className="mt-2 text-sm text-dust">Three fields. Then the judging begins.</p>
+            <p className="mt-3 text-sm text-dust">Three fields. Then the judging begins.</p>
 
             <form
               className="mt-8 space-y-5"
@@ -104,7 +104,7 @@ function SignupPage() {
                   <button
                     type="button"
                     onClick={() => setShowPassword((p) => !p)}
-                    className="text-dust hover:text-brass p-1 transition-colors cursor-pointer"
+                    className="text-dust hover:text-brass"
                     aria-label={showPassword ? "Hide password" : "Show password"}
                   >
                     {showPassword ? EyeOffIcon : EyeIcon}
@@ -115,25 +115,23 @@ function SignupPage() {
               <button
                 type="submit"
                 disabled={isSubmitting}
-                className="w-full min-h-[46px] border-2 border-brass bg-brass px-6 py-3 text-caption text-ink font-semibold transition-all hover:bg-transparent hover:text-brass active:scale-[0.98] disabled:opacity-50 cursor-pointer shadow-lg mt-2"
+                className="w-full border-2 border-brass bg-brass px-6 py-3 text-caption text-ink transition-colors hover:bg-transparent hover:text-brass disabled:opacity-50"
               >
-                {isSubmitting ? "Entering the Room..." : "Enter the Room"}
+                {isSubmitting ? "Entering..." : "Enter the room"}
               </button>
             </form>
 
             <div className="mt-6 flex items-center gap-3">
               <div className="hairline flex-1" />
-              <span className="text-caption text-dust text-xs uppercase tracking-widest">or</span>
+              <span className="text-caption">or</span>
               <div className="hairline flex-1" />
             </div>
 
-            <div className="mt-6">
-              <GoogleSignInButton />
-            </div>
+            <GoogleSignInButton />
 
-            <p className="mt-8 text-center text-caption text-dust text-xs">
+            <p className="mt-8 text-caption">
               Already a member?{" "}
-              <Link to="/login" className="text-brass hover:underline font-medium">
+              <Link to="/login" className="text-brass hover:underline">
                 Sign in
               </Link>
             </p>
@@ -191,7 +189,7 @@ function Field({
   return (
     <label className="block">
       <div className="flex items-center justify-between">
-        <span className="text-caption text-xs text-dust uppercase tracking-wider">{label}</span>
+        <span className="text-caption">{label}</span>
         {trailing}
       </div>
       <div className="relative mt-2">
@@ -200,9 +198,9 @@ function Field({
           value={value}
           onChange={(e) => onChange(e.target.value)}
           placeholder={placeholder}
-          className="w-full border-b border-dust/30 bg-transparent px-1 py-2.5 pr-8 font-mono text-sm text-paper placeholder:text-dust/40 focus:border-brass focus:outline-none transition-colors"
+          className="w-full border-b border-border bg-transparent px-0 py-2 pr-6 font-mono text-paper placeholder:text-dust/60 focus:border-brass focus:outline-none"
         />
-        {suffix && <div className="absolute inset-y-0 right-0 flex items-center pr-1">{suffix}</div>}
+        {suffix && <div className="absolute inset-y-0 right-0 flex items-center">{suffix}</div>}
       </div>
     </label>
   );

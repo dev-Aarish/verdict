@@ -10,14 +10,15 @@ import {
 } from "react-native";
 import { useRouter } from "expo-router";
 import { useQuery } from "@tanstack/react-query";
-import { Film, Trophy, Compass, Plus, Sparkles } from "lucide-react-native";
-import { feedApi, usersApi } from "../../api";
+import { Film, Trophy, Compass, Plus, Sparkles, Flame, Calendar } from "lucide-react-native";
+import { feedApi, usersApi, moviesApi } from "../../api";
 import { useAuth } from "../../context/AuthContext";
 import { Colors, Radius, Spacing } from "../../constants/theme";
 import { VerdictCard } from "../../components/common/VerdictCard";
 import { Button } from "../../components/common/Button";
 import { Avatar } from "../../components/common/Avatar";
 import { Stamp } from "../../components/common/Stamp";
+import { MovieCarouselSection } from "../../components/common/MovieCarousel";
 import { FeedItem } from "../../types";
 
 export default function FeedScreen() {
@@ -38,6 +39,17 @@ export default function FeedScreen() {
     queryKey: ["leaderboard"],
     queryFn: usersApi.getLeaderboard,
   });
+
+  const { data: latestHits = [] } = useQuery({
+    queryKey: ["trendingMovies"],
+    queryFn: moviesApi.getTrending,
+  });
+
+  const { data: upcomingMovies = [] } = useQuery({
+    queryKey: ["upcomingMovies"],
+    queryFn: moviesApi.getUpcoming,
+  });
+
 
   const handlePressUser = (username: string) => {
     router.push(`/user/${username}`);
@@ -152,6 +164,27 @@ export default function FeedScreen() {
     );
   };
 
+  const renderFooter = () => (
+    <View style={styles.footerContainer}>
+      <MovieCarouselSection
+        title="Latest Hits"
+        subtitle="Now Playing & Popular Canon"
+        icon={<Flame size={14} color={Colors.brassLight} />}
+        movies={latestHits}
+        badgeLabel="HIT"
+        direction="left"
+      />
+      <MovieCarouselSection
+        title="Upcoming Releases"
+        subtitle="Anticipated & Forthcoming Releases"
+        icon={<Calendar size={14} color={Colors.brassLight} />}
+        movies={upcomingMovies}
+        badgeLabel="UPCOMING"
+        direction="right"
+      />
+    </View>
+  );
+
   return (
     <View style={styles.container}>
       <FlatList
@@ -165,6 +198,7 @@ export default function FeedScreen() {
           />
         )}
         ListHeaderComponent={renderHeader}
+        ListFooterComponent={renderFooter}
         ListEmptyComponent={renderEmpty}
         contentContainerStyle={styles.listContent}
         showsVerticalScrollIndicator={false}
@@ -186,6 +220,13 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: Colors.ink,
   },
+  footerContainer: {
+    marginTop: Spacing.xl,
+    paddingTop: Spacing.md,
+    borderTopWidth: 1,
+    borderTopColor: Colors.border,
+  },
+
   listContent: {
     padding: Spacing.lg,
     paddingBottom: Spacing.xxxl,

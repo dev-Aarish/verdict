@@ -3,7 +3,6 @@ import {
   View,
   Text,
   FlatList,
-  RefreshControl,
   StyleSheet,
   ActivityIndicator,
   TouchableOpacity,
@@ -11,7 +10,7 @@ import {
 } from "react-native";
 import { useRouter } from "expo-router";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { Search, Flame, Calendar, X, Film } from "lucide-react-native";
+import { Search, Film, X } from "lucide-react-native";
 import { moviesApi } from "../../api";
 import { useAuth } from "../../context/AuthContext";
 import { Colors, Radius, Spacing } from "../../constants/theme";
@@ -27,7 +26,6 @@ export default function SearchScreen() {
 
   const [searchQuery, setSearchQuery] = useState("");
   const [debouncedQuery, setDebouncedQuery] = useState("");
-  const [activeCategory, setActiveCategory] = useState<"hits" | "upcoming">("hits");
   const [selectedMovieForLog, setSelectedMovieForLog] = useState<Movie | null>(null);
 
   useEffect(() => {
@@ -44,26 +42,6 @@ export default function SearchScreen() {
     queryKey: ["movieSearch", debouncedQuery],
     queryFn: () => moviesApi.search(debouncedQuery),
     enabled: debouncedQuery.length >= 2,
-  });
-
-  const {
-    data: latestHits = [],
-    isLoading: isLoadingHits,
-    isRefetching: isRefetchingHits,
-    refetch: refetchHits,
-  } = useQuery({
-    queryKey: ["trendingMovies"],
-    queryFn: moviesApi.getTrending,
-  });
-
-  const {
-    data: upcomingMovies = [],
-    isLoading: isLoadingUpcoming,
-    isRefetching: isRefetchingUpcoming,
-    refetch: refetchUpcoming,
-  } = useQuery({
-    queryKey: ["upcomingMovies"],
-    queryFn: moviesApi.getUpcoming,
   });
 
   const logMovieMutation = useMutation({
@@ -88,42 +66,14 @@ export default function SearchScreen() {
     await logMovieMutation.mutateAsync(params);
   };
 
-  const segregatedHits = React.useMemo(() => {
-    const today = new Date().toISOString().slice(0, 10);
-    return latestHits.filter((m) => {
-      if (m.released && /^\d{4}-\d{2}-\d{2}$/.test(m.released)) {
-        return m.released <= today;
-      }
-      return true;
-    });
-  }, [latestHits]);
-
-  const segregatedUpcoming = React.useMemo(() => {
-    const hitsImdbSet = new Set(segregatedHits.map((m) => m.imdbId || m.id));
-    const today = new Date().toISOString().slice(0, 10);
-    return upcomingMovies.filter((m) => {
-      const id = m.imdbId || m.id;
-      if (id && hitsImdbSet.has(id)) return false;
-      if (m.released && /^\d{4}-\d{2}-\d{2}$/.test(m.released)) {
-        return m.released > today;
-      }
-      return true;
-    });
-  }, [upcomingMovies, segregatedHits]);
-
   const isQueryActive = debouncedQuery.length >= 2;
-  const currentCategoryMovies = activeCategory === "hits" ? segregatedHits : segregatedUpcoming;
-  const displayMovies = isQueryActive ? searchResults : currentCategoryMovies;
-  const isLoadingCategory = activeCategory === "hits" ? isLoadingHits : isLoadingUpcoming;
 
   const renderEmpty = () => {
-    if (isSearching || (isLoadingCategory && !isQueryActive)) {
+    if (isSearching) {
       return (
         <View style={styles.loadingContainer}>
           <ActivityIndicator size="large" color={Colors.brass} />
-          <Text style={styles.loadingText}>
-            {isQueryActive ? "Searching the vaults..." : "Fetching reels..."}
-          </Text>
+          <Text style={styles.loadingText}>Searching the vaults...</Text>
         </View>
       );
     }
@@ -140,83 +90,30 @@ export default function SearchScreen() {
       );
     }
 
-    return null;
-  };
-
-  const renderHeader = () => {
-    if (isQueryActive) {
+    if (!isQueryActive) {
       return (
-        <View style={styles.sectionTitleRow}>
-          <Film size={14} color={Colors.brassLight} />
-          <Text style={styles.sectionTitle}>
-            {searchResults.length} VAULT ARCHIVES FOUND
+        <View style={styles.emptyContainer}>
+          <Film size={44} color={Colors.brass} style={{ opacity: 0.6 }} />
+          <Text style={styles.emptyTitle}>The Film Vault</Text>
+          <Text style={styles.emptySubtitle}>
+            Type at least 2 characters to search through cinema history and log your experience.
           </Text>
         </View>
       );
     }
 
+    return null;
+  };
+
+  const renderHeader = () => {
+    if (!isQueryActive || searchResults.length === 0) return null;
+
     return (
-      <View style={styles.discoveryHeader}>
-        {/* Category Filter Pills */}
-        <View style={styles.categoryPillRow}>
-          <TouchableOpacity
-            style={[
-              styles.categoryPill,
-              activeCategory === "hits" && styles.categoryPillActive,
-            ]}
-            onPress={() => setActiveCategory("hits")}
-            activeOpacity={0.8}
-          >
-            <Flame
-              size={14}
-              color={activeCategory === "hits" ? Colors.inkDark : Colors.dustLight}
-            />
-            <Text
-              style={[
-                styles.categoryPillText,
-                activeCategory === "hits" && styles.categoryPillTextActive,
-              ]}
-            >
-              Latest Hits
-            </Text>
-          </TouchableOpacity>
-
-          <TouchableOpacity
-            style={[
-              styles.categoryPill,
-              activeCategory === "upcoming" && styles.categoryPillActive,
-            ]}
-            onPress={() => setActiveCategory("upcoming")}
-            activeOpacity={0.8}
-          >
-            <Calendar
-              size={14}
-              color={activeCategory === "upcoming" ? Colors.inkDark : Colors.dustLight}
-            />
-            <Text
-              style={[
-                styles.categoryPillText,
-                activeCategory === "upcoming" && styles.categoryPillTextActive,
-              ]}
-            >
-              Upcoming Releases
-            </Text>
-          </TouchableOpacity>
-        </View>
-
-        <View style={styles.sectionTitleRow}>
-          {activeCategory === "hits" ? (
-            <>
-              <Flame size={14} color={Colors.brassLight} />
-              <Text style={styles.sectionTitle}>NOW PLAYING & POPULAR CANON</Text>
-            </>
-          ) : (
-            <>
-              <Calendar size={14} color={Colors.brassLight} />
-              <Text style={styles.sectionTitle}>ANTICIPATED & FORTHCOMING RELEASES</Text>
-            </>
-          )}
-        </View>
+      <View style={styles.sectionTitleRow}>
+        <Film size={14} color={Colors.brassLight} />
+        <Text style={styles.sectionTitle}>
+          {searchResults.length} VAULT ARCHIVES FOUND
+        </Text>
       </View>
     );
   };
@@ -247,7 +144,7 @@ export default function SearchScreen() {
       </View>
 
       <FlatList
-        data={displayMovies}
+        data={isQueryActive ? searchResults : []}
         keyExtractor={(item) => item.imdbId || item.id}
         renderItem={({ item }) => (
           <View style={styles.cardWrapper}>
@@ -263,16 +160,6 @@ export default function SearchScreen() {
         showsVerticalScrollIndicator={false}
         keyboardShouldPersistTaps="handled"
         keyboardDismissMode="on-drag"
-        refreshControl={
-          !isQueryActive ? (
-            <RefreshControl
-              refreshing={activeCategory === "hits" ? isRefetchingHits : isRefetchingUpcoming}
-              onRefresh={activeCategory === "hits" ? refetchHits : refetchUpcoming}
-              tintColor={Colors.brass}
-              colors={[Colors.brass]}
-            />
-          ) : undefined
-        }
       />
 
       <LogMovieModal
@@ -301,40 +188,7 @@ const styles = StyleSheet.create({
   listContent: {
     paddingHorizontal: Spacing.lg,
     paddingBottom: Spacing.xxxl,
-  },
-  discoveryHeader: {
-    marginTop: Spacing.sm,
-  },
-  categoryPillRow: {
-    flexDirection: "row",
-    gap: Spacing.sm,
-    marginBottom: Spacing.md,
-  },
-  categoryPill: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 6,
-    paddingVertical: 7,
-    paddingHorizontal: 12,
-    borderRadius: Radius.none,
-    backgroundColor: Colors.velvet,
-    borderWidth: 1,
-    borderColor: Colors.border,
-  },
-  categoryPillActive: {
-    backgroundColor: Colors.brass,
-    borderColor: Colors.brassLight,
-  },
-  categoryPillText: {
-    fontSize: 11,
-    fontWeight: "800",
-    color: Colors.dustLight,
-    textTransform: "uppercase",
-    letterSpacing: 0.8,
-  },
-  categoryPillTextActive: {
-    color: Colors.inkDark,
-    fontWeight: "900",
+    paddingTop: Spacing.md,
   },
   sectionTitleRow: {
     flexDirection: "row",
@@ -380,7 +234,7 @@ const styles = StyleSheet.create({
     color: Colors.dust,
     fontSize: 12,
     textAlign: "center",
+    lineHeight: 18,
+    maxWidth: 280,
   },
 });
-
-

@@ -11,10 +11,11 @@ import { Colors } from "../constants/theme";
 LogBox.ignoreLogs([
   "[Worklets]",
   "Cannot connect to Expo CLI",
+  "Can't perform a React state update on a component that hasn't mounted yet",
 ]);
 
-// Automatically hide splash screen immediately when JS bundle mounts
-SplashScreen.hideAsync().catch(() => {});
+// Prevent auto-hiding until RootNavigator has mounted
+SplashScreen.preventAutoHideAsync().catch(() => {});
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -29,7 +30,11 @@ const queryClient = new QueryClient({
 
 function RootNavigator() {
   useEffect(() => {
-    SplashScreen.hideAsync().catch(() => {});
+    // Safely hide splash screen once root component is mounted
+    const timer = setTimeout(() => {
+      SplashScreen.hideAsync().catch(() => {});
+    }, 50);
+    return () => clearTimeout(timer);
   }, []);
 
   return (
@@ -97,4 +102,3 @@ export default function RootLayout() {
     </SafeAreaProvider>
   );
 }
-

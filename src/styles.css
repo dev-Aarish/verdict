@@ -160,38 +160,38 @@
 /* Type scale — deliberate, not default */
 @utility text-hero {
   font-family: var(--font-display);
-  font-size: clamp(2.25rem, 6vw, 4.75rem);
-  line-height: 1.05;
+  font-size: clamp(2.75rem, 7vw, 5.5rem);
+  line-height: 1.02;
   letter-spacing: -0.02em;
   font-weight: 700;
 }
 
 @utility text-section {
   font-family: var(--font-display);
-  font-size: clamp(1.5rem, 3.5vw, 2.25rem);
-  line-height: 1.15;
-  letter-spacing: -0.015em;
+  font-size: clamp(1.75rem, 3vw, 2.5rem);
+  line-height: 1.1;
+  letter-spacing: -0.01em;
   font-weight: 600;
 }
 
 @utility text-card-title {
   font-family: var(--font-display);
-  font-size: 1.15rem;
-  line-height: 1.25;
+  font-size: 1.25rem;
+  line-height: 1.2;
   font-weight: 600;
 }
 
 @utility text-caption {
   font-family: var(--font-mono);
-  font-size: 0.75rem;
-  letter-spacing: 0.12em;
+  font-size: 0.72rem;
+  letter-spacing: 0.14em;
   text-transform: uppercase;
   color: var(--dust);
 }
 
 @utility text-score {
   font-family: var(--font-display);
-  font-size: clamp(4.5rem, 12vw, 9rem);
+  font-size: clamp(6rem, 14vw, 11rem);
   line-height: 0.9;
   letter-spacing: -0.04em;
   font-weight: 700;
@@ -204,27 +204,13 @@
 @utility wordmark {
   font-family: var(--font-display);
   font-weight: 700;
-  letter-spacing: 0.3em;
+  letter-spacing: 0.32em;
   text-transform: uppercase;
 }
 
 /* Hairline divider — the ticket-stub seam */
 @utility hairline {
-  border-top: 1px solid color-mix(in oklab, var(--dust) 25%, transparent);
-}
-
-/* Card background with subtle border glow */
-@utility surface-card {
-  background-color: var(--velvet);
-  border: 1px solid color-mix(in oklab, var(--dust) 22%, transparent);
-  transition: border-color 200ms cubic-bezier(0.2, 0, 0, 1), transform 150ms cubic-bezier(0.2, 0, 0, 1), box-shadow 200ms ease;
-}
-
-@utility surface-card-hover {
-  &:hover {
-    border-color: color-mix(in oklab, var(--brass) 45%, transparent);
-    box-shadow: 0 8px 24px -6px rgba(0, 0, 0, 0.45);
-  }
+  border-top: 1px solid color-mix(in oklab, var(--dust) 40%, transparent);
 }
 
 /* Stamp — the signature motif */
@@ -239,12 +225,11 @@
     inset 0 0 0 3px var(--brass);
   color: var(--brass);
   background: transparent;
-  padding: 1rem;
+  padding: 1.25rem;
   font-family: var(--font-display);
   font-weight: 700;
   text-transform: uppercase;
-  letter-spacing: 0.16em;
-  user-select: none;
+  letter-spacing: 0.18em;
 }
 
 @utility stamp-red {
@@ -257,17 +242,13 @@
 
 @keyframes stamp-slam {
   0% {
-    transform: scale(2) rotate(0deg);
+    transform: scale(1.8) rotate(0deg);
     opacity: 0;
   }
 
-  55% {
+  60% {
     transform: scale(0.92) rotate(var(--stamp-rot, -3deg));
     opacity: 1;
-  }
-
-  78% {
-    transform: scale(1.05) rotate(var(--stamp-rot, -3deg));
   }
 
   100% {
@@ -278,7 +259,7 @@
 
 @keyframes stamp-settle {
   0% {
-    transform: scale(1.18) rotate(0deg);
+    transform: scale(1.15) rotate(0deg);
     opacity: 0;
   }
 
@@ -289,7 +270,7 @@
 }
 
 @utility animate-stamp-slam {
-  animation: stamp-slam 300ms cubic-bezier(0.18, 0.89, 0.32, 1.28) both;
+  animation: stamp-slam 260ms cubic-bezier(0.2, 0.9, 0.3, 1.2) both;
 }
 
 @utility animate-stamp-settle {
@@ -316,45 +297,6 @@
 
 @utility animate-credits {
   animation: credits-roll 40s linear infinite;
-  
-  &:hover {
-    animation-play-state: paused;
-  }
-}
-
-/* Shimmer animation for skeletons */
-@keyframes shimmer {
-  0% {
-    background-position: -200% 0;
-  }
-  100% {
-    background-position: 200% 0;
-  }
-}
-
-@utility animate-shimmer {
-  background: linear-gradient(90deg, var(--velvet) 0%, color-mix(in oklab, var(--dust) 25%, var(--velvet)) 50%, var(--velvet) 100%);
-  background-size: 200% 100%;
-  animation: shimmer 2s infinite ease-in-out;
-}
-
-/* Custom subtle scrollbar */
-::-webkit-scrollbar {
-  width: 6px;
-  height: 6px;
-}
-
-::-webkit-scrollbar-track {
-  background: var(--ink);
-}
-
-::-webkit-scrollbar-thumb {
-  background: color-mix(in oklab, var(--dust) 35%, transparent);
-  border-radius: 3px;
-}
-
-::-webkit-scrollbar-thumb:hover {
-  background: var(--brass);
 }
 
 /*
@@ -364,37 +306,27 @@
  * bottom nav rendered by TopBar.
  */
 @media (max-width: 767px) {
-  /* Display type: responsive and readable on phones */
+  /* Display type: much smaller on phones, still legible */
   .text-hero {
-    font-size: clamp(2rem, 8.5vw, 2.75rem);
-    line-height: 1.1;
+    font-size: clamp(1.9rem, 7.5vw, 2.75rem);
   }
 
   .text-section {
-    font-size: clamp(1.4rem, 5.5vw, 1.85rem);
-    line-height: 1.2;
+    font-size: clamp(1.35rem, 4.5vw, 1.75rem);
   }
 
   .text-card-title {
     font-size: 1.0625rem;
   }
 
-  .text-caption {
-    font-size: 0.7rem;
-    letter-spacing: 0.1em;
-  }
-
   /* Room for the fixed bottom nav (TopBar) so nothing is hidden behind it */
   body {
-    padding-bottom: calc(4.25rem + env(safe-area-inset-bottom));
+    padding-bottom: calc(3.75rem + env(safe-area-inset-bottom));
   }
 
   /* No 300ms tap delay, no grey flash on tap */
   a,
-  button,
-  input,
-  select,
-  textarea {
+  button {
     touch-action: manipulation;
     -webkit-tap-highlight-color: transparent;
   }
