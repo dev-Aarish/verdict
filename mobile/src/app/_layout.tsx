@@ -1,4 +1,5 @@
 import React, { useEffect } from "react";
+import { LogBox } from "react-native";
 import { Stack } from "expo-router";
 import { StatusBar } from "expo-status-bar";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
@@ -6,6 +7,8 @@ import { SafeAreaProvider } from "react-native-safe-area-context";
 import * as SplashScreen from "expo-splash-screen";
 import { AuthProvider } from "../context/AuthContext";
 import { Colors } from "../constants/theme";
+
+LogBox.ignoreLogs(["[Worklets]"]);
 
 // Automatically hide splash screen immediately when JS bundle mounts
 SplashScreen.hideAsync().catch(() => {});
@@ -30,15 +33,16 @@ function RootNavigator() {
     <Stack
       screenOptions={{
         headerStyle: {
-          backgroundColor: Colors.background,
+          backgroundColor: Colors.ink,
         },
-        headerTintColor: Colors.text,
+        headerTintColor: Colors.paper,
         headerTitleStyle: {
-          fontWeight: "700",
+          fontWeight: "800",
+          fontSize: 16,
         },
         headerShadowVisible: false,
         contentStyle: {
-          backgroundColor: Colors.background,
+          backgroundColor: Colors.ink,
         },
       }}
     >
@@ -63,14 +67,14 @@ function RootNavigator() {
       <Stack.Screen
         name="movie/[id]"
         options={{
-          title: "Film Details",
+          title: "THE PRINT",
           presentation: "card",
         }}
       />
       <Stack.Screen
         name="user/[username]"
         options={{
-          title: "Taste Profile",
+          title: "TASTE DOSSIER",
           presentation: "card",
         }}
       />

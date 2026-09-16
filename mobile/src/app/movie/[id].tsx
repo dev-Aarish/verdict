@@ -5,22 +5,20 @@ import {
   ScrollView,
   StyleSheet,
   ActivityIndicator,
-  TouchableOpacity,
   Alert,
 } from "react-native";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Image } from "expo-image";
 import {
-  Star,
   Bookmark,
   CheckCircle2,
   Calendar,
   Clock,
-  Award,
   Film,
   Users,
   Clapperboard,
+  Award,
 } from "lucide-react-native";
 import * as Haptics from "expo-haptics";
 import { moviesApi, watchlistApi } from "../../api";
@@ -28,6 +26,7 @@ import { useAuth } from "../../context/AuthContext";
 import { Colors, Radius, Spacing } from "../../constants/theme";
 import { Badge } from "../../components/common/Badge";
 import { Button } from "../../components/common/Button";
+import { Stamp } from "../../components/common/Stamp";
 import { LogMovieModal } from "../../components/common/LogMovieModal";
 import { Movie, parseGenres } from "../../types";
 
@@ -59,7 +58,7 @@ export default function MovieDetailScreen() {
       queryClient.invalidateQueries({ queryKey: ["tasteScore"] });
       queryClient.invalidateQueries({ queryKey: ["feed"] });
       queryClient.invalidateQueries({ queryKey: ["watchlist"] });
-      Alert.alert("Film Logged", "Movie added to your watched list!");
+      Alert.alert("Reel Archived", "Film has been logged to your watched list!");
     },
   });
 
@@ -70,7 +69,7 @@ export default function MovieDetailScreen() {
         Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
       } catch {}
       queryClient.invalidateQueries({ queryKey: ["watchlist"] });
-      Alert.alert("Watchlist Updated", "Film saved to your watchlist!");
+      Alert.alert("Queue Updated", "Film saved to your screening queue!");
     },
   });
 
@@ -89,7 +88,7 @@ export default function MovieDetailScreen() {
   if (isLoading) {
     return (
       <View style={styles.loadingContainer}>
-        <ActivityIndicator size="large" color={Colors.primary} />
+        <ActivityIndicator size="large" color={Colors.brass} />
       </View>
     );
   }
@@ -97,9 +96,9 @@ export default function MovieDetailScreen() {
   if (error || !movie) {
     return (
       <View style={styles.errorContainer}>
-        <Film size={44} color={Colors.textSubtle} />
-        <Text style={styles.errorTitle}>Movie Not Found</Text>
-        <Button title="Go Back" onPress={() => router.back()} size="sm" style={styles.backBtn} />
+        <Film size={44} color={Colors.dust} />
+        <Text style={styles.errorTitle}>Print Not Found in Archive</Text>
+        <Button title="Go Back" variant="secondary" onPress={() => router.back()} size="sm" style={styles.backBtn} />
       </View>
     );
   }
@@ -107,7 +106,7 @@ export default function MovieDetailScreen() {
   const posterUrl =
     movie.posterUrl && movie.posterUrl !== "N/A"
       ? movie.posterUrl
-      : "https://via.placeholder.com/300x450/18181b/71717a?text=No+Poster";
+      : "https://via.placeholder.com/300x450/14151D/C5A572?text=No+Poster";
 
   return (
     <View style={styles.container}>
@@ -126,13 +125,13 @@ export default function MovieDetailScreen() {
               <View style={styles.metaRow}>
                 {movie.year && (
                   <View style={styles.metaPill}>
-                    <Calendar size={12} color={Colors.textMuted} />
+                    <Calendar size={11} color={Colors.brassLight} />
                     <Text style={styles.metaPillText}>{movie.year}</Text>
                   </View>
                 )}
                 {movie.runtime && (
                   <View style={styles.metaPill}>
-                    <Clock size={12} color={Colors.textMuted} />
+                    <Clock size={11} color={Colors.brassLight} />
                     <Text style={styles.metaPillText}>{movie.runtime}</Text>
                   </View>
                 )}
@@ -143,10 +142,11 @@ export default function MovieDetailScreen() {
 
               {movie.imdbRating && (
                 <View style={styles.imdbRatingBadge}>
-                  <Star size={14} color={Colors.gold} fill={Colors.gold} />
-                  <Text style={styles.imdbRatingText}>IMDb {movie.imdbRating}/10</Text>
+                  <Stamp size="xs" rotation={-2} variant="brass">
+                    {movie.imdbRating}/10
+                  </Stamp>
                   {movie.imdbVotes && (
-                    <Text style={styles.imdbVotesText}>({movie.imdbVotes} votes)</Text>
+                    <Text style={styles.imdbVotesText}>({movie.imdbVotes} global votes)</Text>
                   )}
                 </View>
               )}
@@ -167,16 +167,16 @@ export default function MovieDetailScreen() {
               }
               setLogModalVisible(true);
             }}
-            icon={<CheckCircle2 size={16} color="#fff" />}
+            icon={<CheckCircle2 size={16} color={Colors.inkDark} />}
             style={styles.actionBtn}
           />
           <Button
-            title="Watchlist"
+            title="Add to Queue"
             variant="secondary"
             size="md"
             onPress={handleWatchlistPress}
             loading={addToWatchlistMutation.isPending}
-            icon={<Bookmark size={16} color={Colors.text} />}
+            icon={<Bookmark size={15} color={Colors.dustLight} />}
             style={styles.actionBtn}
           />
         </View>
@@ -185,7 +185,7 @@ export default function MovieDetailScreen() {
         {parseGenres(movie.genres).length > 0 && (
           <View style={styles.genresSection}>
             {parseGenres(movie.genres).map((genre, idx) => (
-              <Badge key={idx} label={genre} variant="primary" size="md" />
+              <Badge key={idx} label={genre} variant="brass" size="md" />
             ))}
           </View>
         )}
@@ -193,18 +193,18 @@ export default function MovieDetailScreen() {
         {/* Synopsis / Plot */}
         {movie.plot && (
           <View style={styles.sectionCard}>
-            <Text style={styles.sectionHeader}>SYNOPSIS</Text>
+            <Text style={styles.sectionHeader}>CANON SYNOPSIS</Text>
             <Text style={styles.plotText}>{movie.plot}</Text>
           </View>
         )}
 
         {/* Cast & Crew Info */}
         <View style={styles.sectionCard}>
-          <Text style={styles.sectionHeader}>CAST & CREW</Text>
+          <Text style={styles.sectionHeader}>TECHNICAL SPECIFICATIONS & ROLES</Text>
 
           {movie.director && (
             <View style={styles.infoRow}>
-              <Clapperboard size={16} color={Colors.primaryLight} style={styles.infoIcon} />
+              <Clapperboard size={15} color={Colors.brassLight} style={styles.infoIcon} />
               <View style={styles.infoTextWrapper}>
                 <Text style={styles.infoLabel}>Director</Text>
                 <Text style={styles.infoValue}>{movie.director}</Text>
@@ -214,9 +214,9 @@ export default function MovieDetailScreen() {
 
           {movie.writer && (
             <View style={styles.infoRow}>
-              <Film size={16} color={Colors.purple} style={styles.infoIcon} />
+              <Film size={15} color={Colors.dustLight} style={styles.infoIcon} />
               <View style={styles.infoTextWrapper}>
-                <Text style={styles.infoLabel}>Writer(s)</Text>
+                <Text style={styles.infoLabel}>Screenplay</Text>
                 <Text style={styles.infoValue}>{movie.writer}</Text>
               </View>
             </View>
@@ -224,9 +224,9 @@ export default function MovieDetailScreen() {
 
           {movie.actors && (
             <View style={styles.infoRow}>
-              <Users size={16} color={Colors.emerald} style={styles.infoIcon} />
+              <Users size={15} color={Colors.brass} style={styles.infoIcon} />
               <View style={styles.infoTextWrapper}>
-                <Text style={styles.infoLabel}>Starring</Text>
+                <Text style={styles.infoLabel}>Key Cast</Text>
                 <Text style={styles.infoValue}>{movie.actors}</Text>
               </View>
             </View>
@@ -236,10 +236,10 @@ export default function MovieDetailScreen() {
         {/* Awards & Box Office */}
         {(movie.awards || movie.boxOffice) && (
           <View style={styles.sectionCard}>
-            <Text style={styles.sectionHeader}>ACCOLADES & RELEASE</Text>
+            <Text style={styles.sectionHeader}>ACCOLADES & ARCHIVAL STATS</Text>
             {movie.awards && (
               <View style={styles.infoRow}>
-                <Award size={16} color={Colors.gold} style={styles.infoIcon} />
+                <Award size={15} color={Colors.brassLight} style={styles.infoIcon} />
                 <View style={styles.infoTextWrapper}>
                   <Text style={styles.infoLabel}>Awards</Text>
                   <Text style={styles.infoValue}>{movie.awards}</Text>
@@ -248,7 +248,7 @@ export default function MovieDetailScreen() {
             )}
             {movie.boxOffice && (
               <View style={styles.infoRow}>
-                <Text style={[styles.infoLabel, { marginLeft: 24 }]}>Box Office: </Text>
+                <Text style={[styles.infoLabel, { marginLeft: 22 }]}>Box Office: </Text>
                 <Text style={styles.infoValue}>{movie.boxOffice}</Text>
               </View>
             )}
@@ -269,7 +269,7 @@ export default function MovieDetailScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: Colors.background,
+    backgroundColor: Colors.ink,
   },
   scrollContent: {
     paddingBottom: Spacing.xxxl,
@@ -278,20 +278,20 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: "center",
     alignItems: "center",
-    backgroundColor: Colors.background,
+    backgroundColor: Colors.ink,
   },
   errorContainer: {
     flex: 1,
     justifyContent: "center",
     alignItems: "center",
-    backgroundColor: Colors.background,
+    backgroundColor: Colors.ink,
     padding: Spacing.xl,
     gap: Spacing.md,
   },
   errorTitle: {
-    fontSize: 18,
+    fontSize: 16,
     fontWeight: "700",
-    color: Colors.text,
+    color: Colors.paper,
   },
   backBtn: {
     marginTop: Spacing.sm,
@@ -304,11 +304,15 @@ const styles = StyleSheet.create({
   heroPoster: {
     width: "100%",
     height: "100%",
-    backgroundColor: Colors.surfaceElevated,
+    backgroundColor: Colors.inkDark,
   },
   heroOverlay: {
-    ...StyleSheet.absoluteFill,
-    backgroundColor: "rgba(9, 9, 11, 0.75)",
+    position: "absolute",
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    backgroundColor: "rgba(14, 15, 20, 0.78)",
     justifyContent: "flex-end",
     padding: Spacing.lg,
   },
@@ -318,8 +322,8 @@ const styles = StyleSheet.create({
   title: {
     fontSize: 24,
     fontWeight: "900",
-    color: "#ffffff",
-    letterSpacing: 0.5,
+    color: Colors.paper,
+    letterSpacing: 0.3,
   },
   metaRow: {
     flexDirection: "row",
@@ -331,36 +335,34 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     gap: 4,
-    backgroundColor: "rgba(255, 255, 255, 0.1)",
+    backgroundColor: "rgba(197, 165, 114, 0.12)",
+    borderWidth: 1,
+    borderColor: "rgba(197, 165, 114, 0.3)",
     paddingVertical: 3,
-    paddingHorizontal: 8,
-    borderRadius: Radius.full,
+    paddingHorizontal: 7,
+    borderRadius: Radius.none,
   },
   metaPillText: {
-    color: Colors.textMuted,
-    fontSize: 12,
-    fontWeight: "600",
+    color: Colors.brassLight,
+    fontSize: 11,
+    fontWeight: "800",
+    fontFamily: "monospace",
   },
   imdbRatingBadge: {
     flexDirection: "row",
     alignItems: "center",
-    gap: 4,
+    gap: 8,
     marginTop: 4,
   },
-  imdbRatingText: {
-    color: Colors.gold,
-    fontSize: 13,
-    fontWeight: "800",
-  },
   imdbVotesText: {
-    color: Colors.textSubtle,
+    color: Colors.dust,
     fontSize: 11,
   },
   actionBar: {
     flexDirection: "row",
     padding: Spacing.lg,
     gap: Spacing.md,
-    backgroundColor: Colors.surface,
+    backgroundColor: Colors.velvet,
     borderBottomWidth: 1,
     borderBottomColor: Colors.border,
   },
@@ -377,21 +379,22 @@ const styles = StyleSheet.create({
   sectionCard: {
     marginHorizontal: Spacing.lg,
     marginTop: Spacing.lg,
-    backgroundColor: Colors.surface,
-    borderRadius: Radius.lg,
+    backgroundColor: Colors.velvet,
+    borderRadius: Radius.none,
     padding: Spacing.lg,
     borderWidth: 1,
     borderColor: Colors.border,
     gap: Spacing.md,
   },
   sectionHeader: {
-    fontSize: 11,
-    fontWeight: "800",
-    color: Colors.textMuted,
+    fontSize: 10,
+    fontWeight: "900",
+    color: Colors.dust,
     letterSpacing: 1.2,
+    textTransform: "uppercase",
   },
   plotText: {
-    color: Colors.text,
+    color: Colors.paper,
     fontSize: 14,
     lineHeight: 22,
   },
@@ -408,13 +411,16 @@ const styles = StyleSheet.create({
     gap: 2,
   },
   infoLabel: {
-    fontSize: 11,
-    color: Colors.textSubtle,
-    fontWeight: "600",
+    fontSize: 10,
+    color: Colors.dust,
+    fontWeight: "700",
+    textTransform: "uppercase",
+    letterSpacing: 0.8,
   },
   infoValue: {
-    fontSize: 14,
-    color: Colors.text,
-    fontWeight: "500",
+    fontSize: 13,
+    color: Colors.paper,
+    fontWeight: "600",
   },
 });
+

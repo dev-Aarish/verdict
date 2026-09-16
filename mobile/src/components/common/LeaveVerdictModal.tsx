@@ -82,7 +82,7 @@ export const LeaveVerdictModal: React.FC<LeaveVerdictModalProps> = ({
               <Avatar
                 uri={targetUser.avatarUrl}
                 username={targetUser.username}
-                size={40}
+                size={42}
               />
               <View style={styles.headerTitles}>
                 <Text style={styles.headerSubtitle}>DELIVER VERDICT</Text>
@@ -90,7 +90,7 @@ export const LeaveVerdictModal: React.FC<LeaveVerdictModalProps> = ({
               </View>
             </View>
             <TouchableOpacity onPress={onClose} style={styles.closeBtn}>
-              <X size={20} color={Colors.textMuted} />
+              <X size={18} color={Colors.dustLight} />
             </TouchableOpacity>
           </View>
 
@@ -107,9 +107,9 @@ export const LeaveVerdictModal: React.FC<LeaveVerdictModalProps> = ({
                     style={styles.starBtn}
                   >
                     <Star
-                      size={36}
-                      color={star <= rating ? Colors.gold : Colors.surfaceElevated}
-                      fill={star <= rating ? Colors.gold : "transparent"}
+                      size={32}
+                      color={star <= rating ? Colors.brass : Colors.velvetElevated}
+                      fill={star <= rating ? Colors.brass : "transparent"}
                     />
                   </TouchableOpacity>
                 ))}
@@ -118,11 +118,11 @@ export const LeaveVerdictModal: React.FC<LeaveVerdictModalProps> = ({
                 {rating === 5
                   ? "Flawless & exquisite taste"
                   : rating === 4
-                  ? "Great selection of films"
+                  ? "Great cinematic curation"
                   : rating === 3
                   ? "Decent, but mainstream"
                   : rating === 2
-                  ? "Needs more range"
+                  ? "Needs more range & depth"
                   : "Questionable choices"}
               </Text>
             </View>
@@ -130,7 +130,7 @@ export const LeaveVerdictModal: React.FC<LeaveVerdictModalProps> = ({
             {/* Verdict Comment */}
             <View style={styles.commentSection}>
               <Input
-                label="VERDICT COMMENT (OPTIONAL)"
+                label="VERDICT CRITIQUE (OPTIONAL)"
                 placeholder="What is your analysis of their taste profile?"
                 value={comment}
                 onChangeText={setComment}
@@ -141,11 +141,11 @@ export const LeaveVerdictModal: React.FC<LeaveVerdictModalProps> = ({
             </View>
 
             <Button
-              title="Deliver Verdict"
+              title="Deliver Official Verdict"
               onPress={handleSubmit}
               loading={isSubmitting}
               size="lg"
-              icon={<Gavel size={18} color="#fff" />}
+              icon={<Gavel size={16} color={Colors.inkDark} />}
             />
           </ScrollView>
         </View>
@@ -158,25 +158,22 @@ const styles = StyleSheet.create({
   overlay: {
     flex: 1,
     justifyContent: "flex-end",
-    backgroundColor: "rgba(0,0,0,0.65)",
+    backgroundColor: "rgba(14, 15, 20, 0.8)",
   },
   backdrop: {
     ...StyleSheet.absoluteFill,
   },
   sheetContainer: {
-    backgroundColor: Colors.surface,
-    borderTopLeftRadius: Radius.xl,
-    borderTopRightRadius: Radius.xl,
-    borderTopWidth: 1,
-    borderColor: Colors.border,
+    backgroundColor: Colors.velvet,
+    borderTopWidth: 2,
+    borderColor: Colors.borderBrass,
     padding: Spacing.xl,
     paddingBottom: Platform.OS === "ios" ? 40 : Spacing.xl,
     maxHeight: "85%",
   },
   dragIndicator: {
     width: 36,
-    height: 4,
-    borderRadius: 2,
+    height: 3,
     backgroundColor: Colors.border,
     alignSelf: "center",
     marginBottom: Spacing.md,
@@ -196,24 +193,23 @@ const styles = StyleSheet.create({
     gap: 2,
   },
   headerSubtitle: {
-    fontSize: 11,
-    fontWeight: "700",
-    color: Colors.textMuted,
+    fontSize: 10,
+    fontWeight: "800",
+    color: Colors.brassLight,
     letterSpacing: 1.2,
   },
   headerUsername: {
-    fontSize: 17,
-    fontWeight: "800",
-    color: Colors.text,
+    fontSize: 18,
+    fontWeight: "900",
+    color: Colors.paper,
   },
   closeBtn: {
     padding: 6,
-    backgroundColor: Colors.surfaceElevated,
-    borderRadius: Radius.full,
+    backgroundColor: Colors.velvetElevated,
   },
   starsSection: {
-    backgroundColor: Colors.surfaceElevated,
-    borderRadius: Radius.lg,
+    backgroundColor: Colors.velvetElevated,
+    borderRadius: Radius.none,
     padding: Spacing.lg,
     alignItems: "center",
     marginBottom: Spacing.lg,
@@ -221,10 +217,10 @@ const styles = StyleSheet.create({
     borderColor: Colors.borderSubtle,
   },
   sectionLabel: {
-    fontSize: 11,
-    fontWeight: "700",
-    color: Colors.textMuted,
-    letterSpacing: 1,
+    fontSize: 10,
+    fontWeight: "800",
+    color: Colors.dustLight,
+    letterSpacing: 1.2,
     marginBottom: Spacing.md,
   },
   starsRow: {
@@ -236,10 +232,11 @@ const styles = StyleSheet.create({
     padding: 4,
   },
   starHelperText: {
-    color: Colors.gold,
-    fontSize: 13,
-    fontWeight: "600",
+    color: Colors.brassLight,
+    fontSize: 12,
+    fontWeight: "700",
     marginTop: 4,
+    fontStyle: "italic",
   },
   commentSection: {
     marginBottom: Spacing.lg,
@@ -250,3 +247,4 @@ const styles = StyleSheet.create({
     paddingTop: 10,
   },
 });
+

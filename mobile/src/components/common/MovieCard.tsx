@@ -2,15 +2,23 @@ import React from "react";
 import {
   View,
   Text,
-  TouchableOpacity,
   StyleSheet,
   ViewStyle,
+  Pressable,
 } from "react-native";
 import { Image } from "expo-image";
 import { Star } from "lucide-react-native";
+import Animated, {
+  useSharedValue,
+  useAnimatedStyle,
+  withSpring,
+} from "react-native-reanimated";
+import * as Haptics from "expo-haptics";
 import { Colors, Radius, Spacing } from "../../constants/theme";
 import { Movie, parseGenres } from "../../types";
 import { Badge } from "./Badge";
+
+const AnimatedPressable = Animated.createAnimatedComponent(Pressable);
 
 interface MovieCardProps {
   movie: Movie;
@@ -27,17 +35,41 @@ export const MovieCard: React.FC<MovieCardProps> = ({
   layout = "list",
   style,
 }) => {
+  const scale = useSharedValue(1);
+
+  const handlePressIn = () => {
+    if (!onPress) return;
+    scale.value = withSpring(0.98, { damping: 15, stiffness: 350 });
+  };
+
+  const handlePressOut = () => {
+    scale.value = withSpring(1, { damping: 15, stiffness: 350 });
+  };
+
+  const handlePress = () => {
+    if (!onPress) return;
+    try {
+      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    } catch {}
+    onPress();
+  };
+
+  const animatedStyle = useAnimatedStyle(() => ({
+    transform: [{ scale: scale.value }],
+  }));
+
   const posterUrl =
     movie.posterUrl && movie.posterUrl !== "N/A"
       ? movie.posterUrl
-      : "https://via.placeholder.com/300x450/18181b/71717a?text=No+Poster";
+      : "https://via.placeholder.com/300x450/14151D/C5A572?text=The+Print";
 
   if (layout === "grid") {
     return (
-      <TouchableOpacity
-        activeOpacity={0.75}
-        onPress={onPress}
-        style={[styles.gridContainer, style]}
+      <AnimatedPressable
+        onPressIn={handlePressIn}
+        onPressOut={handlePressOut}
+        onPress={handlePress}
+        style={[styles.gridContainer, animatedStyle, style]}
       >
         <Image
           source={{ uri: posterUrl }}
@@ -47,8 +79,7 @@ export const MovieCard: React.FC<MovieCardProps> = ({
         />
         {userRating !== undefined && userRating !== null && (
           <View style={styles.gridRatingBadge}>
-            <Star size={12} color={Colors.gold} fill={Colors.gold} />
-            <Text style={styles.gridRatingText}>{userRating}</Text>
+            <Text style={styles.gridRatingText}>{userRating}★</Text>
           </View>
         )}
         <View style={styles.gridContent}>
@@ -59,22 +90,25 @@ export const MovieCard: React.FC<MovieCardProps> = ({
             <Text style={styles.gridYear}>{movie.year}</Text>
           )}
         </View>
-      </TouchableOpacity>
+      </AnimatedPressable>
     );
   }
 
   return (
-    <TouchableOpacity
-      activeOpacity={0.75}
-      onPress={onPress}
-      style={[styles.listContainer, style]}
+    <AnimatedPressable
+      onPressIn={handlePressIn}
+      onPressOut={handlePressOut}
+      onPress={handlePress}
+      style={[styles.listContainer, animatedStyle, style]}
     >
-      <Image
-        source={{ uri: posterUrl }}
-        style={styles.listPoster}
-        contentFit="cover"
-        transition={250}
-      />
+      <View style={styles.posterWrapper}>
+        <Image
+          source={{ uri: posterUrl }}
+          style={styles.listPoster}
+          contentFit="cover"
+          transition={250}
+        />
+      </View>
       <View style={styles.listContent}>
         <View style={styles.listHeaderRow}>
           <Text numberOfLines={2} style={styles.listTitle}>
@@ -88,9 +122,9 @@ export const MovieCard: React.FC<MovieCardProps> = ({
           )}
           {movie.director && (
             <>
-              <Text style={styles.bullet}>•</Text>
+              <Text style={styles.bullet}>·</Text>
               <Text numberOfLines={1} style={styles.listMetaText}>
-                {movie.director}
+                Dir. {movie.director}
               </Text>
             </>
           )}
@@ -108,35 +142,40 @@ export const MovieCard: React.FC<MovieCardProps> = ({
 
         {userRating !== undefined && userRating !== null && (
           <View style={styles.userRatingRow}>
-            <Star size={14} color={Colors.gold} fill={Colors.gold} />
-            <Text style={styles.userRatingText}>Your Rating: {userRating}/100</Text>
+            <Text style={styles.userRatingLabel}>PERSONAL RATING:</Text>
+            <Text style={styles.userRatingText}>{userRating}/100</Text>
           </View>
         )}
       </View>
-    </TouchableOpacity>
+    </AnimatedPressable>
   );
 };
 
 const styles = StyleSheet.create({
   listContainer: {
     flexDirection: "row",
-    backgroundColor: Colors.surface,
-    borderRadius: Radius.lg,
+    backgroundColor: Colors.velvet,
+    borderRadius: Radius.none,
     padding: Spacing.md,
     borderWidth: 1,
     borderColor: Colors.border,
     gap: Spacing.md,
     alignItems: "center",
   },
+  posterWrapper: {
+    borderWidth: 1,
+    borderColor: Colors.borderBrass,
+    borderRadius: Radius.none,
+    overflow: "hidden",
+  },
   listPoster: {
-    width: 68,
-    height: 100,
-    borderRadius: Radius.md,
-    backgroundColor: Colors.surfaceElevated,
+    width: 64,
+    height: 96,
+    backgroundColor: Colors.inkDark,
   },
   listContent: {
     flex: 1,
-    gap: 4,
+    gap: 3,
   },
   listHeaderRow: {
     flexDirection: "row",
@@ -144,9 +183,10 @@ const styles = StyleSheet.create({
     alignItems: "flex-start",
   },
   listTitle: {
-    fontSize: 16,
-    fontWeight: "700",
-    color: Colors.text,
+    fontSize: 15,
+    fontWeight: "800",
+    color: Colors.paper,
+    letterSpacing: 0.2,
     flex: 1,
   },
   listMetaRow: {
@@ -155,35 +195,47 @@ const styles = StyleSheet.create({
     gap: 4,
   },
   listMetaText: {
-    fontSize: 13,
-    color: Colors.textMuted,
+    fontSize: 12,
+    color: Colors.dustLight,
   },
   bullet: {
-    color: Colors.textSubtle,
+    color: Colors.dust,
     fontSize: 12,
   },
   genresRow: {
     flexDirection: "row",
     gap: 6,
-    marginTop: 2,
+    marginTop: 3,
   },
   userRatingRow: {
     flexDirection: "row",
     alignItems: "center",
     gap: 4,
     marginTop: 4,
+    backgroundColor: Colors.brassSubtle,
+    paddingVertical: 2,
+    paddingHorizontal: 6,
+    alignSelf: "flex-start",
+    borderWidth: 1,
+    borderColor: Colors.brass,
+  },
+  userRatingLabel: {
+    fontSize: 9,
+    fontWeight: "800",
+    color: Colors.brassLight,
+    letterSpacing: 0.8,
   },
   userRatingText: {
-    fontSize: 12,
-    fontWeight: "700",
-    color: Colors.gold,
+    fontSize: 11,
+    fontWeight: "900",
+    color: Colors.brassLight,
   },
 
   // Grid
   gridContainer: {
     width: "48%",
-    backgroundColor: Colors.surface,
-    borderRadius: Radius.lg,
+    backgroundColor: Colors.velvet,
+    borderRadius: Radius.none,
     overflow: "hidden",
     borderWidth: 1,
     borderColor: Colors.border,
@@ -192,36 +244,35 @@ const styles = StyleSheet.create({
   gridPoster: {
     width: "100%",
     aspectRatio: 2 / 3,
-    backgroundColor: Colors.surfaceElevated,
+    backgroundColor: Colors.inkDark,
   },
   gridRatingBadge: {
     position: "absolute",
-    top: 8,
-    right: 8,
-    backgroundColor: "rgba(0,0,0,0.75)",
-    paddingVertical: 3,
+    top: 6,
+    right: 6,
+    backgroundColor: Colors.inkDark,
+    paddingVertical: 2,
     paddingHorizontal: 6,
-    borderRadius: Radius.full,
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 3,
+    borderWidth: 1,
+    borderColor: Colors.brass,
   },
   gridRatingText: {
-    color: Colors.text,
-    fontSize: 11,
-    fontWeight: "800",
+    color: Colors.brassLight,
+    fontSize: 10,
+    fontWeight: "900",
   },
   gridContent: {
     padding: Spacing.sm,
   },
   gridTitle: {
-    color: Colors.text,
-    fontSize: 14,
-    fontWeight: "600",
+    color: Colors.paper,
+    fontSize: 13,
+    fontWeight: "700",
   },
   gridYear: {
-    color: Colors.textSubtle,
-    fontSize: 12,
-    marginTop: 2,
+    color: Colors.dust,
+    fontSize: 11,
+    marginTop: 1,
   },
 });
+

@@ -136,20 +136,21 @@ function SharePage() {
     <div className="min-h-screen">
       <TopBar />
 
-      <main className="mx-auto max-w-3xl px-5 py-8 md:px-6 md:py-12">
-        <div className="mb-8">
+      <main className="mx-auto max-w-3xl px-5 py-8 md:px-6 md:py-12 pb-24">
+        <div className="mb-8 flex flex-col items-center sm:items-start">
           <Link
             to="/profile/$username"
             params={{ username }}
-            className="text-caption text-dust hover:text-paper transition-colors"
+            className="group inline-flex items-center gap-2 text-caption text-dust hover:text-paper transition-colors py-1 cursor-pointer"
           >
-            ← Back to profile
+            <span className="transition-transform group-hover:-translate-x-1">←</span>
+            <span>Return to Profile</span>
           </Link>
-          <div className="mt-3">
-            <p className="text-caption">Shareable</p>
-            <h1 className="text-section text-paper">Verdict card</h1>
+          <div className="mt-4 text-center sm:text-left">
+            <p className="text-caption text-brass uppercase tracking-widest text-xs">Official Print</p>
+            <h1 className="text-section text-paper mt-1">Verdict Ticket</h1>
             <p className="mt-2 max-w-md text-sm text-dust">
-              Tear along the perforation. Keep the stub.
+              Tear along the perforation. Keep the stub as testimony.
             </p>
           </div>
         </div>
@@ -158,7 +159,7 @@ function SharePage() {
         <div className="mx-auto w-full max-w-sm">
           <div
             ref={cardRef}
-            className="ticket-stub relative aspect-[9/16] overflow-hidden border-2 border-brass/40 bg-ink text-left"
+            className="ticket-stub relative aspect-[9/16] overflow-hidden border-2 border-brass/40 bg-ink text-left shadow-2xl transition-all"
             style={{
               backgroundImage:
                 "radial-gradient(ellipse at 50% -10%, oklch(0.30 0.005 85) 0%, transparent 55%), radial-gradient(ellipse at 50% 110%, oklch(0.22 0.005 85) 0%, transparent 60%)",
@@ -166,74 +167,74 @@ function SharePage() {
           >
             {/* Perforation seam — split into two panels (top ~72% / stub ~28%) */}
             <div className="absolute inset-x-0 top-[72%] z-20 pointer-events-none">
-              {/* left/right notches */}
-              <div className="absolute -left-3 -top-3 h-6 w-6 rounded-full bg-background" />
-              <div className="absolute -right-3 -top-3 h-6 w-6 rounded-full bg-background" />
-              {/* dashed perforation */}
+              {/* left/right circular notches */}
+              <div className="absolute -left-3.5 -top-3.5 h-7 w-7 rounded-full bg-background border-r border-brass/40" />
+              <div className="absolute -right-3.5 -top-3.5 h-7 w-7 rounded-full bg-background border-l border-brass/40" />
+              {/* dashed perforation line */}
               <div className="mx-6 h-0 border-t border-dashed border-brass/50" />
             </div>
 
             {/* TOP panel — the verdict */}
-            <div className="flex h-[72%] flex-col justify-between p-7">
+            <div className="flex h-[72%] flex-col justify-between p-6 sm:p-7">
               <div className="flex items-start justify-between">
                 <div>
                   <Logo variant="brass" size="sm" />
-                  <p className="text-caption mt-1">Est. 2026</p>
+                  <p className="text-caption mt-1 text-[10px] tracking-widest text-dust">Screening Room</p>
                 </div>
                 <div className="text-right">
-                  <p className="text-caption">Reel</p>
-                  <p className="mono text-sm text-paper">#{String(tasteScore).padStart(3, "0")}</p>
+                  <p className="text-caption text-[10px] text-brass">Reel ID</p>
+                  <p className="mono text-xs text-paper font-semibold">#{String(tasteScore).padStart(3, "0")}</p>
                 </div>
               </div>
 
-              <div className="flex flex-col items-center text-center">
-                <p className="text-caption mb-3">The taste of</p>
-                <p className="text-card-title text-paper">@{username}</p>
-                <div className="mt-5 flex items-center justify-center gap-4">
+              <div className="flex flex-col items-center text-center my-auto">
+                <p className="text-caption text-xs text-dust tracking-wider">The taste of</p>
+                <p className="text-card-title text-paper mt-1 font-serif text-2xl tracking-tight">@{username}</p>
+                <div className="mt-4 flex items-center justify-center gap-4">
                   <Stamp size="lg" rotation={-4} label="Taste Score" animate="settle">
                     {tasteScore}
                   </Stamp>
-                  {dna && <GenreRadar dna={dna} size={118} />}
+                  {dna && <GenreRadar dna={dna} size={110} />}
                 </div>
                 {firstVerdict && (
-                  <>
-                    <p className="mono mt-6 max-w-[240px] text-sm italic text-paper/90">
+                  <div className="mt-5 px-2">
+                    <p className="font-serif italic text-xs leading-relaxed text-paper/90 max-w-[240px]">
                       "{firstVerdict.comment}"
                     </p>
-                    <p className="text-caption mt-2">— {firstVerdict.fromUser?.username}</p>
-                  </>
+                    <p className="text-caption mt-1 text-[10px] text-brass/80">— {firstVerdict.fromUser?.username}</p>
+                  </div>
                 )}
               </div>
 
-              <div className="hairline flex items-center justify-between pt-3">
-                <span className="text-caption">Aud. A</span>
-                <span className="text-caption">{filmCount} films</span>
-                <span className="text-caption">20:00</span>
+              <div className="hairline flex items-center justify-between pt-3 text-[11px] text-dust mono">
+                <span>Aud. A</span>
+                <span className="text-paper/80 font-medium">{filmCount} logged</span>
+                <span>20:00</span>
               </div>
             </div>
 
             {/* BOTTOM stub — now showing list */}
             <div
-              className="relative h-[28%] p-6"
+              className="relative h-[28%] p-5 sm:p-6 flex flex-col justify-between"
               style={{
-                background: "linear-gradient(180deg, transparent 0%, oklch(0.22 0.005 85) 100%)",
+                background: "linear-gradient(180deg, transparent 0%, oklch(0.20 0.005 85) 100%)",
               }}
             >
               <div className="flex items-center justify-between">
-                <p className="text-caption">Now Showing</p>
-                <p className="text-caption">verdict-critique.vercel.app/@{username}</p>
+                <p className="text-caption text-[10px] text-brass uppercase tracking-wider">Now Showing</p>
+                <p className="mono text-[10px] text-dust">verdict.app</p>
               </div>
-              <ul className="mt-3 space-y-1">
-                {topFilms.map((f) => (
+              <ul className="mt-2 space-y-1">
+                {topFilms.slice(0, 4).map((f) => (
                   <li
                     key={f.id}
-                    className="flex items-baseline justify-between gap-2 border-b border-border/40 pb-1 mono text-[11px] text-paper/85"
+                    className="flex items-baseline justify-between gap-2 border-b border-white/5 pb-0.5 mono text-[10px] text-paper/85"
                   >
                     <span className="truncate">
                       {f.title}
-                      <span className="text-dust"> · {f.year}</span>
+                      <span className="text-dust text-[9px]"> ({f.year})</span>
                     </span>
-                    <span className="text-brass">{f.rating}</span>
+                    <span className="text-brass font-semibold">{f.rating}★</span>
                   </li>
                 ))}
               </ul>
@@ -245,16 +246,25 @@ function SharePage() {
               type="button"
               onClick={handleDownload}
               disabled={downloading}
-              className="border-2 border-brass bg-brass px-6 py-3 text-caption text-ink hover:bg-transparent hover:text-brass transition-colors disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
+              className="min-h-[44px] flex items-center justify-center gap-2 border-2 border-brass bg-brass px-4 py-3 text-caption text-ink font-semibold hover:bg-transparent hover:text-brass active:scale-[0.98] transition-all disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer shadow-lg"
             >
-              {downloading ? "Saving…" : "Download"}
+              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+                <polyline points="7 10 12 15 17 10"/>
+                <line x1="12" y1="15" x2="12" y2="3"/>
+              </svg>
+              <span>{downloading ? "Saving…" : "Save Stub"}</span>
             </button>
             <button
               type="button"
               onClick={handleCopyLink}
-              className="border-2 border-border px-6 py-3 text-caption text-paper hover:border-brass hover:text-brass transition-colors cursor-pointer"
+              className="min-h-[44px] flex items-center justify-center gap-2 border border-dust/40 bg-velvet/60 px-4 py-3 text-caption text-paper hover:border-brass hover:text-brass active:scale-[0.98] transition-all cursor-pointer shadow-sm"
             >
-              {copied ? "Copied!" : "Copy link"}
+              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <rect width="14" height="14" x="8" y="8" rx="2" ry="2"/>
+                <path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2"/>
+              </svg>
+              <span>{copied ? "Copied!" : "Copy Link"}</span>
             </button>
           </div>
         </div>

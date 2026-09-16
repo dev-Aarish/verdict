@@ -5,18 +5,19 @@ import {
   Modal,
   StyleSheet,
   TouchableOpacity,
-  ActivityIndicator,
   Platform,
   Alert,
 } from "react-native";
 import { captureRef } from "react-native-view-shot";
 import * as Sharing from "expo-sharing";
 import * as Haptics from "expo-haptics";
-import { X, Share2, Film, Sparkles } from "lucide-react-native";
+import { X, Share2, Sparkles } from "lucide-react-native";
 import { Colors, Radius, Spacing } from "../../constants/theme";
 import { User, TasteScoreBreakdown } from "../../types";
 import { Button } from "./Button";
 import { Avatar } from "./Avatar";
+import { Logo } from "./Logo";
+import { Stamp } from "./Stamp";
 
 interface ShareCardModalProps {
   visible: boolean;
@@ -40,13 +41,6 @@ export const ShareCardModal: React.FC<ShareCardModalProps> = ({
   const diversity = score?.diversity ?? 0;
   const obscurity = score?.obscurity ?? 0;
   const consistency = score?.consistency ?? 0;
-
-  const getTier = (s: number) => {
-    if (s >= 80) return "CINEPHILE TASTE";
-    if (s >= 65) return "DEEP CUT CURATOR";
-    if (s >= 50) return "ECLECTIC VIEWER";
-    return "MAINSTREAM CRITIC";
-  };
 
   const handleShare = async () => {
     if (!cardRef.current) return;
@@ -92,81 +86,77 @@ export const ShareCardModal: React.FC<ShareCardModalProps> = ({
 
         <View style={styles.content}>
           <View style={styles.topActions}>
-            <Text style={styles.modalTitle}>Share Taste Card</Text>
+            <Text style={styles.modalTitle}>OFFICIAL VERDICT TICKET</Text>
             <TouchableOpacity onPress={onClose} style={styles.closeBtn}>
-              <X size={20} color={Colors.textMuted} />
+              <X size={18} color={Colors.dustLight} />
             </TouchableOpacity>
           </View>
 
-          {/* Captured Card Container */}
+          {/* Captured Ticket Stub Container */}
           <View style={styles.cardWrapper}>
-            <View ref={cardRef} collapsable={false} style={styles.captureCard}>
-              {/* Card Header */}
-              <View style={styles.cardHeader}>
-                <View style={styles.brandRow}>
-                  <Film size={18} color={Colors.primaryLight} />
-                  <Text style={styles.brandName}>VERDICT</Text>
+            <View ref={cardRef} collapsable={false} style={styles.ticketStub}>
+              {/* TOP PANEL - 72% */}
+              <View style={styles.topPanel}>
+                <View style={styles.cardHeader}>
+                  <Logo size="sm" color={Colors.brass} />
+                  <View style={styles.reelMeta}>
+                    <Text style={styles.reelLabel}>REEL ID</Text>
+                    <Text style={styles.reelNumber}>#{String(totalScore).padStart(3, "0")}</Text>
+                  </View>
                 </View>
-                <Text style={styles.cardDate}>
-                  {new Date().toLocaleDateString(undefined, {
-                    month: "short",
-                    year: "numeric",
-                  })}
-                </Text>
-              </View>
 
-              {/* User Profile */}
-              <View style={styles.userSection}>
-                <Avatar
-                  uri={user.avatarUrl}
-                  username={user.username}
-                  size={52}
-                />
-                <View style={styles.userMeta}>
-                  <Text style={styles.username}>@{user.username}</Text>
-                  <Text style={styles.tierText}>{getTier(totalScore)}</Text>
+                <View style={styles.centerTaste}>
+                  <Text style={styles.tasteOfText}>THE TASTE OF</Text>
+                  <Text style={styles.usernameText}>@{user.username}</Text>
+                  <View style={styles.stampHolder}>
+                    <Stamp size="lg" rotation={-3} label="Taste Score" variant="brass">
+                      {totalScore}
+                    </Stamp>
+                  </View>
                 </View>
-              </View>
 
-              {/* Main Score Hero */}
-              <View style={styles.heroScoreContainer}>
-                <View style={styles.heroScoreRow}>
-                  <Text style={styles.heroScoreNumber}>{totalScore}</Text>
-                  <Text style={styles.heroScoreMax}>/100</Text>
-                </View>
-                <Text style={styles.heroScoreLabel}>CINEMATIC TASTE INDEX</Text>
-              </View>
-
-              {/* Metrics Grid */}
-              <View style={styles.metricsGrid}>
-                <View style={styles.metricBox}>
-                  <Text style={styles.metricVal}>{diversity}%</Text>
-                  <Text style={styles.metricName}>Diversity</Text>
-                </View>
-                <View style={styles.metricBox}>
-                  <Text style={[styles.metricVal, { color: Colors.gold }]}>{obscurity}%</Text>
-                  <Text style={styles.metricName}>Obscurity</Text>
-                </View>
-                <View style={styles.metricBox}>
-                  <Text style={[styles.metricVal, { color: Colors.emerald }]}>{consistency}%</Text>
-                  <Text style={styles.metricName}>Consistency</Text>
+                {/* Metrics Breakdown */}
+                <View style={styles.metricsGrid}>
+                  <View style={styles.metricBox}>
+                    <Text style={styles.metricVal}>{diversity}%</Text>
+                    <Text style={styles.metricName}>Diversity</Text>
+                  </View>
+                  <View style={styles.metricBox}>
+                    <Text style={[styles.metricVal, { color: Colors.brassLight }]}>{obscurity}%</Text>
+                    <Text style={styles.metricName}>Obscurity</Text>
+                  </View>
+                  <View style={styles.metricBox}>
+                    <Text style={[styles.metricVal, { color: "#81C784" }]}>{consistency}%</Text>
+                    <Text style={styles.metricName}>Consistency</Text>
+                  </View>
                 </View>
               </View>
 
-              {/* Card Footer */}
-              <View style={styles.cardFooter}>
-                <Sparkles size={14} color={Colors.primaryLight} />
-                <Text style={styles.cardFooterText}>verdict.app/@{user.username}</Text>
+              {/* PERFORATION SEAM WITH NOTCHES */}
+              <View style={styles.perforationSeam}>
+                <View style={styles.leftNotch} />
+                <View style={styles.dashedLine} />
+                <View style={styles.rightNotch} />
+              </View>
+
+              {/* BOTTOM STUB - 28% */}
+              <View style={styles.bottomStub}>
+                <View style={styles.stubMeta}>
+                  <Text style={styles.stubLabel}>AUD. A · 20:00</Text>
+                  <Text style={styles.stubUrl}>verdict.app/@{user.username}</Text>
+                </View>
+                <Text style={styles.stubQuote}>"A room. A projector. A verdict about to be read."</Text>
               </View>
             </View>
           </View>
 
           {/* Share Button */}
           <Button
-            title="Share to Instagram / Stories"
+            title="Export Ticket Stub"
             onPress={handleShare}
             loading={isSharing}
-            icon={<Share2 size={18} color="#fff" />}
+            variant="primary"
+            icon={<Share2 size={16} color={Colors.inkDark} />}
             size="lg"
             style={styles.shareBtn}
           />
@@ -181,7 +171,7 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: "center",
     alignItems: "center",
-    backgroundColor: "rgba(0,0,0,0.8)",
+    backgroundColor: "rgba(14, 15, 20, 0.9)",
     padding: Spacing.lg,
   },
   backdrop: {
@@ -189,12 +179,12 @@ const styles = StyleSheet.create({
   },
   content: {
     width: "100%",
-    maxWidth: 380,
-    backgroundColor: Colors.surface,
-    borderRadius: Radius.xl,
+    maxWidth: 360,
+    backgroundColor: Colors.velvet,
+    borderRadius: Radius.none,
     padding: Spacing.lg,
     borderWidth: 1,
-    borderColor: Colors.border,
+    borderColor: Colors.borderBrass,
   },
   topActions: {
     flexDirection: "row",
@@ -203,140 +193,157 @@ const styles = StyleSheet.create({
     marginBottom: Spacing.md,
   },
   modalTitle: {
-    fontSize: 16,
-    fontWeight: "700",
-    color: Colors.text,
+    fontSize: 12,
+    fontWeight: "800",
+    letterSpacing: 1.2,
+    color: Colors.brassLight,
   },
   closeBtn: {
     padding: 6,
-    backgroundColor: Colors.surfaceElevated,
-    borderRadius: Radius.full,
+    backgroundColor: Colors.velvetElevated,
   },
   cardWrapper: {
     alignItems: "center",
     marginBottom: Spacing.lg,
   },
-  captureCard: {
+  ticketStub: {
     width: "100%",
-    backgroundColor: "#0d0e15",
-    borderRadius: Radius.xl,
-    padding: Spacing.xl,
-    borderWidth: 1.5,
-    borderColor: "rgba(99, 102, 241, 0.4)",
-    gap: Spacing.lg,
+    backgroundColor: Colors.inkDark,
+    borderRadius: Radius.none,
+    borderWidth: 2,
+    borderColor: Colors.brass,
+    overflow: "hidden",
+  },
+  topPanel: {
+    padding: Spacing.lg,
+    gap: Spacing.md,
   },
   cardHeader: {
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "center",
   },
-  brandRow: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 6,
+  reelMeta: {
+    alignItems: "flex-end",
   },
-  brandName: {
-    fontSize: 14,
-    fontWeight: "900",
-    color: Colors.text,
-    letterSpacing: 2,
+  reelLabel: {
+    fontSize: 9,
+    fontWeight: "800",
+    color: Colors.dust,
+    letterSpacing: 1,
   },
-  cardDate: {
+  reelNumber: {
     fontSize: 12,
-    color: Colors.textSubtle,
-    fontWeight: "600",
-  },
-  userSection: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: Spacing.md,
-    backgroundColor: "rgba(255,255,255,0.03)",
-    padding: Spacing.md,
-    borderRadius: Radius.lg,
-    borderWidth: 1,
-    borderColor: "rgba(255,255,255,0.06)",
-  },
-  userMeta: {
-    gap: 2,
-  },
-  username: {
-    fontSize: 17,
     fontWeight: "800",
-    color: Colors.text,
+    color: Colors.paper,
+    fontFamily: "monospace",
   },
-  tierText: {
-    fontSize: 11,
-    fontWeight: "700",
-    color: Colors.primaryLight,
-    letterSpacing: 0.8,
-  },
-  heroScoreContainer: {
+  centerTaste: {
     alignItems: "center",
-    paddingVertical: Spacing.sm,
+    paddingVertical: Spacing.xs,
   },
-  heroScoreRow: {
-    flexDirection: "row",
-    alignItems: "baseline",
-    gap: 4,
-  },
-  heroScoreNumber: {
-    fontSize: 56,
-    fontWeight: "900",
-    color: "#ffffff",
-  },
-  heroScoreMax: {
-    fontSize: 20,
-    fontWeight: "700",
-    color: Colors.textSubtle,
-  },
-  heroScoreLabel: {
-    fontSize: 11,
+  tasteOfText: {
+    fontSize: 10,
     fontWeight: "800",
-    color: Colors.textMuted,
+    color: Colors.dustLight,
     letterSpacing: 1.5,
-    marginTop: 4,
+  },
+  usernameText: {
+    fontSize: 20,
+    fontWeight: "900",
+    color: Colors.paper,
+    marginTop: 2,
+    marginBottom: Spacing.sm,
+  },
+  stampHolder: {
+    marginVertical: 4,
   },
   metricsGrid: {
     flexDirection: "row",
     justifyContent: "space-between",
-    gap: Spacing.sm,
+    gap: Spacing.xs,
+    borderTopWidth: 1,
+    borderTopColor: Colors.borderSubtle,
+    paddingTop: Spacing.md,
   },
   metricBox: {
     flex: 1,
-    backgroundColor: "rgba(255,255,255,0.04)",
-    borderRadius: Radius.md,
-    paddingVertical: Spacing.md,
+    backgroundColor: Colors.velvetElevated,
+    paddingVertical: Spacing.sm,
     alignItems: "center",
     borderWidth: 1,
-    borderColor: "rgba(255,255,255,0.06)",
-    gap: 2,
+    borderColor: Colors.borderSubtle,
   },
   metricVal: {
-    fontSize: 16,
+    fontSize: 13,
     fontWeight: "800",
-    color: Colors.primaryLight,
+    color: Colors.paper,
+    fontFamily: "monospace",
   },
   metricName: {
-    fontSize: 11,
-    color: Colors.textSubtle,
-    fontWeight: "600",
-  },
-  cardFooter: {
-    flexDirection: "row",
-    justifyContent: "center",
-    alignItems: "center",
-    gap: 6,
-    borderTopWidth: 1,
-    borderTopColor: "rgba(255,255,255,0.08)",
-    paddingTop: Spacing.md,
-  },
-  cardFooterText: {
-    fontSize: 12,
+    fontSize: 9,
+    color: Colors.dust,
     fontWeight: "700",
-    color: Colors.textSubtle,
-    letterSpacing: 0.5,
+    textTransform: "uppercase",
+  },
+  perforationSeam: {
+    flexDirection: "row",
+    alignItems: "center",
+    position: "relative",
+    height: 16,
+    backgroundColor: Colors.inkDark,
+  },
+  leftNotch: {
+    width: 14,
+    height: 14,
+    borderRadius: 7,
+    backgroundColor: Colors.velvet,
+    marginLeft: -7,
+  },
+  rightNotch: {
+    width: 14,
+    height: 14,
+    borderRadius: 7,
+    backgroundColor: Colors.velvet,
+    marginRight: -7,
+  },
+  dashedLine: {
+    flex: 1,
+    height: 1,
+    borderWidth: 1,
+    borderColor: Colors.brass,
+    borderStyle: "dashed",
+    marginHorizontal: 4,
+  },
+  bottomStub: {
+    backgroundColor: Colors.velvet,
+    padding: Spacing.md,
+    gap: 4,
+  },
+  stubMeta: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+  },
+  stubLabel: {
+    fontSize: 10,
+    fontWeight: "800",
+    color: Colors.brassLight,
+    letterSpacing: 1,
+  },
+  stubUrl: {
+    fontSize: 10,
+    color: Colors.dust,
+    fontFamily: "monospace",
+  },
+  stubQuote: {
+    fontSize: 10,
+    fontStyle: "italic",
+    color: Colors.dustLight,
+    marginTop: 2,
   },
   shareBtn: {
     width: "100%",
   },
 });
+

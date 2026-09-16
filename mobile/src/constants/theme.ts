@@ -13,41 +13,72 @@ function getApiBaseUrl(): string {
 export const API_BASE_URL = getApiBaseUrl();
 
 export const Colors = {
-  // Backgrounds
-  background: "#09090b", // zinc-950
-  surface: "#18181b", // zinc-900
-  surfaceElevated: "#27272a", // zinc-800
-  surfaceSubtle: "#121215",
-  border: "#27272a",
-  borderSubtle: "#1f1f23",
+  // Screening Room at Dusk Palette
+  ink: "#14151D",
+  inkDark: "#0E0F14",
+  inkElevated: "#1A1C27",
+  velvet: "#1C1D26",
+  velvetElevated: "#252733",
+  velvetSubtle: "#161720",
 
-  // Text
-  text: "#fafafa", // zinc-50
-  textMuted: "#a1a1aa", // zinc-400
-  textSubtle: "#71717a", // zinc-500
+  // Backgrounds & Surfaces mapped
+  background: "#14151D",
+  surface: "#1C1D26",
+  surfaceElevated: "#252733",
+  surfaceSubtle: "#161720",
 
-  // Brand / Accents
-  primary: "#6366f1", // Indigo 500
-  primaryHover: "#4f46e5",
-  primaryLight: "#818cf8",
-  accent: "#ec4899", // Pink 500
-  
-  // Taste Score & Status Colors
-  gold: "#eab308", // Amber 500
-  goldSubtle: "rgba(234, 179, 8, 0.15)",
-  emerald: "#10b981", // Emerald 500
-  emeraldSubtle: "rgba(16, 185, 129, 0.15)",
-  cyan: "#06b6d4",
-  rose: "#f43f5e",
-  roseSubtle: "rgba(244, 63, 94, 0.15)",
-  purple: "#a855f7",
-  purpleSubtle: "rgba(168, 85, 247, 0.15)",
+  // Borders & Accents
+  hairline: "rgba(197, 165, 114, 0.2)",
+  border: "rgba(197, 165, 114, 0.2)",
+  borderSubtle: "rgba(255, 255, 255, 0.08)",
+  borderBrass: "#C5A572",
+  borderLight: "rgba(255, 255, 255, 0.15)",
+
+  // Typography
+  paper: "#ECEBE6",
+  paperDim: "#D5D4CE",
+  dust: "#7A7875",
+  dustLight: "#9E9C96",
+  dustDark: "#4A4947",
+
+  // Text aliases
+  text: "#ECEBE6",
+  textMuted: "#9E9C96",
+  textSubtle: "#7A7875",
+
+  // Brand Accents
+  brass: "#C5A572",
+  brassLight: "#D9BE8E",
+  brassDark: "#9E7F4C",
+  brassSubtle: "rgba(197, 165, 114, 0.15)",
+  brassGlow: "rgba(197, 165, 114, 0.3)",
+
+  marqueeRed: "#A93226",
+  marqueeRedLight: "#C0392B",
+  marqueeRedSubtle: "rgba(169, 50, 38, 0.2)",
+
+  // Aliases for compatibility
+  primary: "#C5A572",
+  primaryHover: "#D9BE8E",
+  primaryLight: "#D9BE8E",
+  accent: "#A93226",
+
+  // Status & Score Colors
+  gold: "#C5A572",
+  goldSubtle: "rgba(197, 165, 114, 0.15)",
+  emerald: "#2E7D32",
+  emeraldSubtle: "rgba(46, 125, 50, 0.2)",
+  cyan: "#4A90E2",
+  rose: "#A93226",
+  roseSubtle: "rgba(169, 50, 38, 0.2)",
+  purple: "#8E44AD",
+  purpleSubtle: "rgba(142, 68, 173, 0.2)",
 
   // UI state
-  danger: "#ef4444",
-  success: "#22c55e",
-  warning: "#f59e0b",
-  info: "#3b82f6",
+  danger: "#A93226",
+  success: "#2E7D32",
+  warning: "#D4AC0D",
+  info: "#3498DB",
 };
 
 export const Spacing = {
@@ -61,9 +92,20 @@ export const Spacing = {
 };
 
 export const Radius = {
-  sm: 6,
-  md: 10,
-  lg: 14,
-  xl: 18,
+  none: 0,
+  sm: 4,
+  md: 8,
+  lg: 12,
+  xl: 16,
   full: 9999,
+};
+
+export const Typography = {
+  titleHero: { fontSize: 28, fontWeight: "900" as const, letterSpacing: -0.5 },
+  titleSection: { fontSize: 18, fontWeight: "800" as const, letterSpacing: 0.5 },
+  titleCard: { fontSize: 15, fontWeight: "700" as const },
+  body: { fontSize: 14, color: Colors.paper, lineHeight: 20 },
+  bodySubtle: { fontSize: 13, color: Colors.dust, lineHeight: 18 },
+  caption: { fontSize: 11, fontWeight: "700" as const, letterSpacing: 1 },
+  mono: { fontFamily: Platform.OS === "ios" ? "Courier" : "monospace" },
 };

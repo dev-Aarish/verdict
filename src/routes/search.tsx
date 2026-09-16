@@ -7,6 +7,7 @@ import { searchUsersFn } from "@/api/users";
 import { WatchedEntryDialog } from "@/components/WatchedEntryDialog";
 import { useUser } from "@/lib/user-context";
 import { dicebearAvatar } from "@/lib/avatar";
+import { Search as SearchIcon, Film, Users, X, Bookmark, Plus, Check } from "lucide-react";
 
 export const Route = createFileRoute("/search")({
   head: () => ({
@@ -147,11 +148,19 @@ function SearchPage() {
     [doSearch, tab],
   );
 
+  const clearSearch = () => {
+    setQuery("");
+    setResults([]);
+    setUserResults([]);
+    setError(null);
+  };
+
   const goToPage = useCallback(
     (page: number) => {
       const q = lastQueryRef.current;
       if (q.length < 3) return;
       doSearch(q, page);
+      window.scrollTo({ top: 120, behavior: "smooth" });
     },
     [doSearch],
   );
@@ -213,75 +222,109 @@ function SearchPage() {
   return (
     <div className="min-h-screen">
       <TopBar />
-      <main className="mx-auto max-w-6xl px-5 py-8 md:px-6 md:py-12">
-        <p className="text-caption mb-3">The Vault</p>
-        <h1 className="text-section text-paper">Search</h1>
+      <main className="mx-auto max-w-6xl px-4 py-8 sm:px-6 md:py-12">
+        <div className="flex items-center gap-2 mb-2">
+          <SearchIcon className="h-4 w-4 text-brass" />
+          <p className="text-caption text-brass">The Vault</p>
+        </div>
+        <h1 className="text-section text-paper">Search & Discover</h1>
 
-        <div className="mt-8 flex gap-6 border-b border-dust/20 pb-0">
+        {/* Tab switcher: Segmented pill style */}
+        <div className="mt-6 flex rounded-lg border border-border/60 bg-velvet/50 p-1 w-fit">
           <button
             onClick={() => {
               setTab("films");
-              setQuery("");
-              setResults([]);
-              setUserResults([]);
-              setError(null);
+              clearSearch();
             }}
-            className={`pb-3 text-sm tracking-widest uppercase font-mono transition-colors cursor-pointer ${
+            className={`inline-flex items-center gap-2 px-4 py-2 text-caption text-xs rounded transition-all cursor-pointer ${
               tab === "films"
-                ? "text-brass border-b-2 border-brass"
-                : "text-dust hover:text-paper border-b-2 border-transparent"
+                ? "bg-brass text-ink font-bold shadow-sm"
+                : "text-dust hover:text-paper"
             }`}
           >
-            Films
+            <Film className="h-3.5 w-3.5" />
+            <span>Films</span>
           </button>
           <button
             onClick={() => {
               setTab("people");
-              setQuery("");
-              setResults([]);
-              setUserResults([]);
-              setError(null);
+              clearSearch();
             }}
-            className={`pb-3 text-sm tracking-widest uppercase font-mono transition-colors cursor-pointer ${
+            className={`inline-flex items-center gap-2 px-4 py-2 text-caption text-xs rounded transition-all cursor-pointer ${
               tab === "people"
-                ? "text-brass border-b-2 border-brass"
-                : "text-dust hover:text-paper border-b-2 border-transparent"
+                ? "bg-brass text-ink font-bold shadow-sm"
+                : "text-dust hover:text-paper"
             }`}
           >
-            People
+            <Users className="h-3.5 w-3.5" />
+            <span>People</span>
           </button>
         </div>
 
-        <div className="hairline mt-6 pb-6">
+        {/* Search Input Box */}
+        <div className="relative mt-6">
           <input
             type="text"
-            placeholder={tab === "films" ? "Search by title..." : "Search by username..."}
+            placeholder={
+              tab === "films"
+                ? "Search by title (e.g. Blade Runner, Parasite)..."
+                : "Search by username (e.g. alice, bob)..."
+            }
             value={query}
             onChange={(e) => handleSearch(e.target.value)}
-            className="w-full border-0 border-b border-dust/30 bg-transparent py-3 text-lg text-paper placeholder-dust/50 outline-none transition-colors focus:border-brass font-display md:py-4 md:text-2xl"
+            className="w-full border-b-2 border-dust/30 bg-transparent py-3 pr-10 text-lg sm:text-xl md:text-2xl text-paper placeholder:text-dust/40 outline-none transition-colors focus:border-brass font-display"
             autoFocus
           />
+          {query.length > 0 && (
+            <button
+              onClick={clearSearch}
+              aria-label="Clear search"
+              className="absolute right-0 top-1/2 -translate-y-1/2 p-2 text-dust hover:text-paper transition-colors"
+            >
+              <X className="h-5 w-5" />
+            </button>
+          )}
         </div>
 
         {!user && tab === "films" && (
-          <div className="mt-12 text-center">
-            <p className="text-dust mb-4">Sign in to log films to your watched list.</p>
+          <div className="mt-8 rounded-lg border border-brass/20 bg-velvet/30 p-4 text-center">
+            <p className="text-sm text-dust">
+              Sign in to log films to your watched history and receive your Taste Score.
+            </p>
             <Link
               to="/login"
-              className="border border-brass px-4 py-2 text-caption text-brass hover:bg-brass hover:text-ink transition-colors"
+              className="mt-3 inline-block border border-brass px-4 py-1.5 text-caption text-brass hover:bg-brass hover:text-ink transition-colors text-xs"
             >
-              Sign in
+              Sign in →
             </Link>
           </div>
         )}
 
-        <div className="mt-8 min-h-[200px]">
-          {loading && <p className="text-caption text-dust text-center py-12">Searching...</p>}
+        <div className="mt-8 min-h-[260px]">
+          {loading && (
+            <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 sm:gap-4 md:grid-cols-4 lg:grid-cols-5">
+              {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map((n) => (
+                <div key={n} className="surface-card rounded-lg overflow-hidden p-2">
+                  <div className="animate-shimmer aspect-2/3 w-full rounded" />
+                  <div className="animate-shimmer h-4 w-3/4 rounded mt-2.5 mb-1.5" />
+                  <div className="animate-shimmer h-3 w-1/3 rounded" />
+                </div>
+              ))}
+            </div>
+          )}
 
-          {error && <p className="text-caption text-marquee-red text-center py-12">{error}</p>}
+          {error && (
+            <div className="surface-card p-8 rounded-xl text-center">
+              <p className="text-caption text-marquee-red">{error}</p>
+            </div>
+          )}
 
           {!loading && !error && tab === "films" && query.length >= 3 && results.length === 0 && (
-            <p className="text-caption text-dust text-center py-12">No films found.</p>
+            <div className="surface-card p-10 rounded-xl text-center">
+              <Film className="mx-auto h-8 w-8 text-dust/60 mb-2" />
+              <p className="text-card-title text-paper">No films found</p>
+              <p className="text-sm text-dust mt-1">Try checking for typos or searching for a different title.</p>
+            </div>
           )}
 
           {!loading &&
@@ -289,78 +332,98 @@ function SearchPage() {
             tab === "people" &&
             query.length >= 1 &&
             userResults.length === 0 && (
-              <p className="text-caption text-dust text-center py-12">No users found.</p>
+              <div className="surface-card p-10 rounded-xl text-center">
+                <Users className="mx-auto h-8 w-8 text-dust/60 mb-2" />
+                <p className="text-card-title text-paper">No users found</p>
+                <p className="text-sm text-dust mt-1">Try searching for a different handle.</p>
+              </div>
             )}
 
           {!loading && tab === "films" && query.length < 3 && (
-            <p className="text-caption text-dust text-center py-12">
-              Type at least three characters to search.
-            </p>
+            <div className="surface-card p-10 rounded-xl text-center">
+              <Film className="mx-auto h-8 w-8 text-brass/40 mb-2" />
+              <p className="text-caption text-dust">Type at least 3 characters to search the film vault.</p>
+            </div>
           )}
 
           {!loading && tab === "people" && query.length < 1 && (
-            <p className="text-caption text-dust text-center py-12">Type a username to search.</p>
+            <div className="surface-card p-10 rounded-xl text-center">
+              <Users className="mx-auto h-8 w-8 text-brass/40 mb-2" />
+              <p className="text-caption text-dust">Type a username to discover other critics.</p>
+            </div>
           )}
 
+          {/* Films Result Grid */}
           {tab === "films" && results.length > 0 && (
             <>
-              <p className="text-caption text-dust mb-4 text-xs">
-                {totalResults > 0 && `${totalResults} film${totalResults > 1 ? "s" : ""} found`}
-                {totalPages > 1 && ` · Page ${currentPage} of ${totalPages}`}
-              </p>
+              <div className="flex items-center justify-between mb-4">
+                <p className="text-caption text-dust text-xs">
+                  {totalResults > 0 && `${totalResults} film${totalResults > 1 ? "s" : ""} found`}
+                  {totalPages > 1 && ` · Page ${currentPage} of ${totalPages}`}
+                </p>
+              </div>
 
               <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 sm:gap-4 md:grid-cols-4 lg:grid-cols-5">
                 {results.map((movie) => {
                   const isAdded = addedIds.has(movie.imdbID) || movie.imdbID in watchedMap;
                   const existingRating = watchedMap[movie.imdbID];
+                  const isInWatchlist = movie.imdbID in watchlistMap;
+
                   return (
                     <div
                       key={movie.imdbID}
-                      className="active-scale group flex flex-col"
+                      className="surface-card surface-card-hover group flex flex-col p-2 rounded-lg"
                       data-testid="search-result"
                     >
                       <Link
                         to="/film/$imdbId"
                         params={{ imdbId: movie.imdbID }}
-                        className="aspect-2/3 overflow-hidden bg-velvet ring-1 ring-white/5 block"
+                        className="relative aspect-2/3 overflow-hidden rounded bg-ink ring-1 ring-white/5 block"
                       >
                         <img
                           src={posterSrc(movie.Poster)}
                           alt={movie.Title}
-                          className="h-full w-full object-cover transition-opacity group-hover:opacity-70"
+                          className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-105"
                           loading="lazy"
                           onError={(e) => {
                             e.currentTarget.src = "/film-placeholder.svg";
                           }}
                         />
+                        {isAdded && (
+                          <div className="absolute top-1.5 right-1.5 bg-velvet/90 border border-brass/60 rounded px-1.5 py-0.5 shadow-md">
+                            <span className="mono text-[0.65rem] font-bold text-brass">
+                              {existingRating}/10
+                            </span>
+                          </div>
+                        )}
                       </Link>
-                      <div className="mt-2 flex-1">
+
+                      <div className="mt-2.5 flex-1 px-1">
                         <Link
                           to="/film/$imdbId"
                           params={{ imdbId: movie.imdbID }}
-                          className="text-sm font-medium text-paper leading-tight hover:text-brass hover:underline transition-colors"
+                          className="text-sm font-medium text-paper leading-snug line-clamp-2 hover:text-brass transition-colors"
                         >
                           {movie.Title}
                         </Link>
-                        <p className="text-caption text-dust text-xs">{movie.Year}</p>
+                        <p className="text-caption text-dust text-[0.68rem] mt-1">{movie.Year}</p>
                       </div>
+
                       {user && (
-                        <div className="mt-2 flex gap-2">
+                        <div className="mt-2.5 flex gap-1.5 pt-1">
                           <button
                             onClick={() => toggleWatchlist(movie)}
-                            title={
-                              movie.imdbID in watchlistMap
-                                ? "Remove from watchlist"
-                                : "Add to watchlist"
-                            }
-                            className={`flex-1 py-1.5 text-[0.6rem] tracking-widest uppercase font-mono transition-colors max-md:py-2.5 ${
-                              movie.imdbID in watchlistMap
-                                ? "bg-brass/15 text-brass border border-brass/40"
-                                : "border border-dust/40 text-dust hover:border-brass/60 hover:text-brass cursor-pointer"
+                            title={isInWatchlist ? "Remove from watchlist" : "Add to watchlist"}
+                            className={`flex-1 min-h-[38px] flex items-center justify-center gap-1 rounded py-1 text-[0.65rem] font-mono uppercase tracking-wider transition-all active:scale-95 cursor-pointer ${
+                              isInWatchlist
+                                ? "bg-brass/20 text-brass border border-brass/50 font-bold"
+                                : "border border-dust/30 text-dust hover:border-brass/60 hover:text-brass"
                             }`}
                           >
-                            {movie.imdbID in watchlistMap ? "Saved" : "Watch"}
+                            <Bookmark className="h-3 w-3" />
+                            <span>{isInWatchlist ? "Saved" : "Watch"}</span>
                           </button>
+                          
                           <button
                             onClick={() => {
                               setSelectedMovie(movie);
@@ -369,13 +432,23 @@ function SearchPage() {
                               setAddError(null);
                             }}
                             disabled={isAdded}
-                            className={`flex-1 py-1.5 text-[0.6rem] tracking-widest uppercase font-mono transition-colors max-md:py-2.5 ${
+                            className={`flex-1 min-h-[38px] flex items-center justify-center gap-1 rounded py-1 text-[0.65rem] font-mono uppercase tracking-wider transition-all active:scale-95 ${
                               isAdded
-                                ? "bg-brass/20 text-brass/60 cursor-default"
-                                : "border border-brass/50 text-brass hover:bg-brass hover:text-ink cursor-pointer"
+                                ? "bg-brass/10 text-brass/50 border border-brass/20 cursor-default"
+                                : "border border-brass bg-brass text-ink font-bold hover:bg-transparent hover:text-brass cursor-pointer"
                             }`}
                           >
-                            {isAdded ? `${existingRating}/10` : "Log it"}
+                            {isAdded ? (
+                              <>
+                                <Check className="h-3 w-3" />
+                                <span>Logged</span>
+                              </>
+                            ) : (
+                              <>
+                                <Plus className="h-3 w-3" />
+                                <span>Log it</span>
+                              </>
+                            )}
                           </button>
                         </div>
                       )}
@@ -389,7 +462,7 @@ function SearchPage() {
                   <button
                     onClick={() => goToPage(currentPage - 1)}
                     disabled={currentPage <= 1}
-                    className="border border-dust/30 px-4 py-2 text-caption text-dust text-xs hover:text-paper transition-colors disabled:opacity-30 disabled:cursor-not-allowed cursor-pointer"
+                    className="border border-dust/30 px-4 py-2 text-caption text-dust text-xs hover:text-paper transition-colors disabled:opacity-30 disabled:cursor-not-allowed cursor-pointer active:scale-95"
                   >
                     Previous
                   </button>
@@ -399,7 +472,7 @@ function SearchPage() {
                   <button
                     onClick={() => goToPage(currentPage + 1)}
                     disabled={currentPage >= totalPages}
-                    className="border border-dust/30 px-4 py-2 text-caption text-dust text-xs hover:text-paper transition-colors disabled:opacity-30 disabled:cursor-not-allowed cursor-pointer"
+                    className="border border-dust/30 px-4 py-2 text-caption text-dust text-xs hover:text-paper transition-colors disabled:opacity-30 disabled:cursor-not-allowed cursor-pointer active:scale-95"
                   >
                     Next
                   </button>
@@ -408,16 +481,17 @@ function SearchPage() {
             </>
           )}
 
+          {/* People Results */}
           {tab === "people" && userResults.length > 0 && (
-            <div className="space-y-3 max-md:space-y-0">
+            <div className="space-y-3">
               {userResults.map((u) => (
                 <Link
                   key={u.id}
                   to="/profile/$username"
                   params={{ username: u.username }}
-                  className="flex items-center gap-4 border border-dust/20 p-4 hover:border-brass/50 transition-colors group max-md:border-x-0 max-md:border-t-0 max-md:border-b max-md:border-dust/10 max-md:px-0 max-md:py-3"
+                  className="surface-card surface-card-hover flex items-center gap-4 p-4 rounded-xl group transition-all"
                 >
-                  <div className="h-12 w-12 shrink-0 overflow-hidden rounded-full bg-velvet ring-1 ring-white/10">
+                  <div className="h-12 w-12 shrink-0 overflow-hidden rounded-full ring-2 ring-brass/60">
                     <img
                       src={u.avatarUrl || dicebearAvatar(u.username)}
                       alt={u.username}
@@ -425,14 +499,16 @@ function SearchPage() {
                     />
                   </div>
                   <div className="flex-1 min-w-0">
-                    <p className="text-sm font-medium text-paper group-hover:text-brass transition-colors">
-                      {u.username}
+                    <p className="text-base font-bold text-paper group-hover:text-brass transition-colors">
+                      @{u.username}
                     </p>
-                    {u.bio && (
-                      <p className="text-caption text-dust text-xs truncate mt-0.5">{u.bio}</p>
+                    {u.bio ? (
+                      <p className="text-sm text-dust truncate mt-0.5">{u.bio}</p>
+                    ) : (
+                      <p className="text-caption text-dust/60 text-xs mt-0.5">Film patron</p>
                     )}
                   </div>
-                  <div className="text-caption text-dust text-xs shrink-0">
+                  <div className="rounded-full border border-brass/30 bg-brass/10 px-3 py-1 text-caption text-brass text-xs shrink-0">
                     {u.filmCount} film{u.filmCount !== 1 ? "s" : ""}
                   </div>
                 </Link>

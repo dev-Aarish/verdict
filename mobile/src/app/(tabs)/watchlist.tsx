@@ -58,8 +58,8 @@ export default function WatchlistScreen() {
 
   const handleRemove = (entry: WatchlistEntry) => {
     Alert.alert(
-      "Remove from Watchlist",
-      `Are you sure you want to remove "${entry.movie?.title || "this film"}"?`,
+      "Remove Reel",
+      `Remove "${entry.movie?.title || "this film"}" from queue?`,
       [
         { text: "Cancel", style: "cancel" },
         {
@@ -86,13 +86,14 @@ export default function WatchlistScreen() {
   if (!isAuthenticated) {
     return (
       <View style={styles.authGateContainer}>
-        <Bookmark size={54} color={Colors.textSubtle} />
-        <Text style={styles.authGateTitle}>Your Watchlist</Text>
+        <Bookmark size={48} color={Colors.dust} />
+        <Text style={styles.authGateTitle}>Screening Queue</Text>
         <Text style={styles.authGateSubtitle}>
-          Sign in to curate your cinematic queue and track films you want to see.
+          Sign in to curate your cinematic queue and save upcoming screenings.
         </Text>
         <Button
           title="Sign In"
+          variant="primary"
           onPress={() => router.push("/(auth)/login")}
           size="lg"
           style={styles.authGateBtn}
@@ -105,22 +106,23 @@ export default function WatchlistScreen() {
     if (isLoading) {
       return (
         <View style={styles.loadingContainer}>
-          <ActivityIndicator size="large" color={Colors.primary} />
+          <ActivityIndicator size="large" color={Colors.brass} />
         </View>
       );
     }
 
     return (
       <View style={styles.emptyContainer}>
-        <Bookmark size={48} color={Colors.textSubtle} />
-        <Text style={styles.emptyTitle}>Watchlist is Empty</Text>
+        <Bookmark size={44} color={Colors.dust} />
+        <Text style={styles.emptyTitle}>Queue Is Clear</Text>
         <Text style={styles.emptySubtitle}>
-          Browse films and tap "Add to Watchlist" to save them for later.
+          Browse the vault and tap "Save to Queue" to track your pending watches.
         </Text>
         <Button
-          title="Discover Films"
+          title="Browse The Vault"
+          variant="primary"
           onPress={() => router.push("/(tabs)/search")}
-          icon={<Plus size={16} color="#fff" />}
+          icon={<Plus size={14} color={Colors.inkDark} />}
           style={styles.emptyBtn}
         />
       </View>
@@ -145,17 +147,19 @@ export default function WatchlistScreen() {
               <View style={styles.actionsBar}>
                 <TouchableOpacity
                   style={[styles.actionBtn, styles.logBtn]}
+                  activeOpacity={0.75}
                   onPress={() => setSelectedMovieForLog(item.movie!)}
                 >
-                  <Check size={14} color="#fff" />
-                  <Text style={styles.logBtnText}>Log Film</Text>
+                  <Check size={13} color={Colors.inkDark} />
+                  <Text style={styles.logBtnText}>Log to Vault</Text>
                 </TouchableOpacity>
 
                 <TouchableOpacity
                   style={[styles.actionBtn, styles.deleteBtn]}
+                  activeOpacity={0.75}
                   onPress={() => handleRemove(item)}
                 >
-                  <Trash2 size={14} color={Colors.danger} />
+                  <Trash2 size={13} color={Colors.marqueeRedLight} />
                 </TouchableOpacity>
               </View>
             </View>
@@ -168,8 +172,8 @@ export default function WatchlistScreen() {
           <RefreshControl
             refreshing={isRefetching}
             onRefresh={refetch}
-            tintColor={Colors.primaryLight}
-            colors={[Colors.primary]}
+            tintColor={Colors.brass}
+            colors={[Colors.brass]}
           />
         }
       />
@@ -187,7 +191,7 @@ export default function WatchlistScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: Colors.background,
+    backgroundColor: Colors.ink,
   },
   listContent: {
     padding: Spacing.lg,
@@ -195,7 +199,7 @@ const styles = StyleSheet.create({
   },
   authGateContainer: {
     flex: 1,
-    backgroundColor: Colors.background,
+    backgroundColor: Colors.ink,
     justifyContent: "center",
     alignItems: "center",
     padding: Spacing.xl,
@@ -203,15 +207,16 @@ const styles = StyleSheet.create({
   },
   authGateTitle: {
     fontSize: 22,
-    fontWeight: "800",
-    color: Colors.text,
+    fontWeight: "900",
+    color: Colors.paper,
+    letterSpacing: 0.5,
   },
   authGateSubtitle: {
-    fontSize: 14,
-    color: Colors.textMuted,
+    fontSize: 13,
+    color: Colors.dust,
     textAlign: "center",
     maxWidth: 280,
-    lineHeight: 20,
+    lineHeight: 18,
   },
   authGateBtn: {
     width: 200,
@@ -234,19 +239,21 @@ const styles = StyleSheet.create({
     alignItems: "center",
     paddingVertical: 6,
     paddingHorizontal: 12,
-    borderRadius: Radius.md,
+    borderRadius: Radius.none,
     gap: 4,
   },
   logBtn: {
-    backgroundColor: Colors.primary,
+    backgroundColor: Colors.brass,
   },
   logBtnText: {
-    color: "#fff",
-    fontSize: 12,
-    fontWeight: "700",
+    color: Colors.inkDark,
+    fontSize: 11,
+    fontWeight: "800",
+    textTransform: "uppercase",
+    letterSpacing: 0.8,
   },
   deleteBtn: {
-    backgroundColor: Colors.surfaceElevated,
+    backgroundColor: Colors.velvetElevated,
     borderWidth: 1,
     borderColor: Colors.border,
   },
@@ -257,26 +264,29 @@ const styles = StyleSheet.create({
   emptyContainer: {
     alignItems: "center",
     padding: Spacing.xxxl,
-    backgroundColor: Colors.surface,
-    borderRadius: Radius.xl,
+    backgroundColor: Colors.velvet,
+    borderRadius: Radius.none,
     borderWidth: 1,
     borderColor: Colors.border,
     marginTop: Spacing.xl,
     gap: 6,
   },
   emptyTitle: {
-    color: Colors.text,
+    color: Colors.paper,
     fontSize: 18,
-    fontWeight: "800",
+    fontWeight: "900",
     marginTop: 6,
+    letterSpacing: 0.5,
   },
   emptySubtitle: {
-    color: Colors.textMuted,
-    fontSize: 13,
+    color: Colors.dust,
+    fontSize: 12,
     textAlign: "center",
     marginBottom: Spacing.md,
+    maxWidth: 260,
   },
   emptyBtn: {
     paddingHorizontal: Spacing.xl,
   },
 });
+

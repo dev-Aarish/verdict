@@ -1,12 +1,13 @@
 import React from "react";
 import { View, Text, StyleSheet, StyleProp, ViewStyle } from "react-native";
-import { Image, ImageStyle } from "expo-image";
+import { Image } from "expo-image";
 import { Colors, Radius } from "../../constants/theme";
 
 interface AvatarProps {
   uri?: string | null;
   username?: string;
   size?: number;
+  ring?: boolean;
   style?: StyleProp<ViewStyle>;
 }
 
@@ -14,72 +15,68 @@ export const Avatar: React.FC<AvatarProps> = ({
   uri,
   username = "User",
   size = 40,
+  ring = true,
   style,
 }) => {
   const initial = username ? username.charAt(0).toUpperCase() : "U";
 
-  // Generate deterministic pastel background hue based on username
-  const getBackgroundColor = (name: string) => {
-    let hash = 0;
-    for (let i = 0; i < name.length; i++) {
-      hash = name.charCodeAt(i) + ((hash << 5) - hash);
-    }
-    const colors = [
-      Colors.primary,
-      Colors.accent,
-      Colors.purple,
-      Colors.emerald,
-      Colors.cyan,
-      "#f97316", // orange
-    ];
-    return colors[Math.abs(hash) % colors.length];
-  };
-
   const containerStyle = {
     width: size,
     height: size,
-    borderRadius: size / 2,
+    borderRadius: Radius.none, // sharp square film ticket look or slight radius
   };
 
-  if (uri) {
-    return (
-      <Image
-        source={{ uri }}
-        style={[containerStyle, styles.image, style as any]}
-        contentFit="cover"
-        transition={200}
-      />
-    );
-  }
+  const imageUri =
+    uri && uri !== ""
+      ? uri
+      : `https://api.dicebear.com/7.x/bottts/png?seed=${encodeURIComponent(username || "verdict")}`;
 
   return (
     <View
       style={[
         containerStyle,
-        styles.fallback,
-        { backgroundColor: getBackgroundColor(username) },
+        styles.avatarWrapper,
+        ring && styles.ringBorder,
         style,
       ]}
     >
-      <Text style={[styles.initial, { fontSize: size * 0.42 }]}>{initial}</Text>
+      {uri ? (
+        <Image
+          source={{ uri: imageUri }}
+          style={[containerStyle, styles.image]}
+          contentFit="cover"
+          transition={200}
+        />
+      ) : (
+        <View style={[containerStyle, styles.fallback]}>
+          <Text style={[styles.initial, { fontSize: size * 0.44 }]}>{initial}</Text>
+        </View>
+      )}
     </View>
   );
 };
 
 const styles = StyleSheet.create({
+  avatarWrapper: {
+    overflow: "hidden",
+    backgroundColor: Colors.velvetElevated,
+  },
+  ringBorder: {
+    borderWidth: 1.5,
+    borderColor: Colors.borderBrass,
+  },
   image: {
-    backgroundColor: Colors.surfaceElevated,
-    borderWidth: 1,
-    borderColor: Colors.border,
+    backgroundColor: Colors.velvetElevated,
   },
   fallback: {
     alignItems: "center",
     justifyContent: "center",
-    borderWidth: 1,
-    borderColor: "rgba(255,255,255,0.1)",
+    backgroundColor: Colors.velvetElevated,
   },
   initial: {
-    color: "#ffffff",
-    fontWeight: "700",
+    color: Colors.brassLight,
+    fontWeight: "900",
+    letterSpacing: 1,
   },
 });
+

@@ -1,12 +1,20 @@
 import React from "react";
-import { View, TouchableOpacity, StyleSheet, ViewStyle } from "react-native";
+import { View, StyleSheet, ViewStyle, Pressable } from "react-native";
+import Animated, {
+  useSharedValue,
+  useAnimatedStyle,
+  withSpring,
+} from "react-native-reanimated";
+import * as Haptics from "expo-haptics";
 import { Colors, Radius, Spacing } from "../../constants/theme";
+
+const AnimatedPressable = Animated.createAnimatedComponent(Pressable);
 
 interface CardProps {
   children: React.ReactNode;
   onPress?: () => void;
   style?: ViewStyle;
-  variant?: "default" | "elevated" | "glass" | "subtle";
+  variant?: "default" | "elevated" | "glass" | "subtle" | "brass";
 }
 
 export const Card: React.FC<CardProps> = ({
@@ -15,29 +23,59 @@ export const Card: React.FC<CardProps> = ({
   style,
   variant = "default",
 }) => {
+  const scale = useSharedValue(1);
+
+  const handlePressIn = () => {
+    if (!onPress) return;
+    scale.value = withSpring(0.98, { damping: 15, stiffness: 350 });
+  };
+
+  const handlePressOut = () => {
+    scale.value = withSpring(1, { damping: 15, stiffness: 350 });
+  };
+
+  const handlePress = () => {
+    if (!onPress) return;
+    try {
+      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    } catch {}
+    onPress();
+  };
+
+  const animatedStyle = useAnimatedStyle(() => ({
+    transform: [{ scale: scale.value }],
+  }));
+
   const getContainerStyle = (): ViewStyle => {
     let base: ViewStyle = {
-      borderRadius: Radius.lg,
+      borderRadius: Radius.none,
       padding: Spacing.lg,
       borderWidth: 1,
       borderColor: Colors.border,
+      backgroundColor: Colors.velvet,
     };
 
     switch (variant) {
       case "elevated":
-        base.backgroundColor = Colors.surfaceElevated;
-        base.borderColor = "#3f3f46";
+        base.backgroundColor = Colors.velvetElevated;
+        base.borderColor = "rgba(197, 165, 114, 0.3)";
+        break;
+      case "brass":
+        base.backgroundColor = Colors.velvetElevated;
+        base.borderColor = Colors.brass;
+        base.borderWidth = 1.5;
         break;
       case "glass":
-        base.backgroundColor = "rgba(24, 24, 27, 0.75)";
-        base.borderColor = "rgba(255, 255, 255, 0.08)";
+        base.backgroundColor = "rgba(28, 29, 38, 0.85)";
+        base.borderColor = "rgba(197, 165, 114, 0.25)";
         break;
       case "subtle":
-        base.backgroundColor = Colors.surfaceSubtle;
+        base.backgroundColor = Colors.velvetSubtle;
         base.borderColor = Colors.borderSubtle;
         break;
       default:
-        base.backgroundColor = Colors.surface;
+        base.backgroundColor = Colors.velvet;
+        base.borderColor = Colors.border;
         break;
     }
 
@@ -46,13 +84,14 @@ export const Card: React.FC<CardProps> = ({
 
   if (onPress) {
     return (
-      <TouchableOpacity
-        activeOpacity={0.7}
-        onPress={onPress}
-        style={[getContainerStyle(), style]}
+      <AnimatedPressable
+        onPressIn={handlePressIn}
+        onPressOut={handlePressOut}
+        onPress={handlePress}
+        style={[getContainerStyle(), animatedStyle, style]}
       >
         {children}
-      </TouchableOpacity>
+      </AnimatedPressable>
     );
   }
 

@@ -1,11 +1,11 @@
 import React from "react";
-import { View, Text, TouchableOpacity, StyleSheet } from "react-native";
+import { View, Text, TouchableOpacity, StyleSheet, Pressable } from "react-native";
 import { Image } from "expo-image";
-import { Star, MessageSquareQuote } from "lucide-react-native";
+import { MessageSquareQuote } from "lucide-react-native";
 import { Colors, Radius, Spacing } from "../../constants/theme";
 import { FeedItem } from "../../types";
 import { Avatar } from "./Avatar";
-import { Badge } from "./Badge";
+import { Stamp } from "./Stamp";
 
 interface VerdictCardProps {
   item: FeedItem;
@@ -26,14 +26,15 @@ export const VerdictCard: React.FC<VerdictCardProps> = ({
       <View style={styles.header}>
         <TouchableOpacity
           style={styles.authorRow}
+          activeOpacity={0.75}
           onPress={() => onPressUser?.(item.user.username)}
         >
           <Avatar
             uri={item.user.avatarUrl}
             username={item.user.username}
-            size={36}
+            size={38}
           />
-          <View>
+          <View style={styles.authorMeta}>
             <View style={styles.authorNameRow}>
               <Text style={styles.username}>@{item.user.username}</Text>
               {isVerdictOnUser ? (
@@ -61,20 +62,16 @@ export const VerdictCard: React.FC<VerdictCardProps> = ({
 
         {/* Rating or Score */}
         {item.rating !== undefined && (
-          <View style={styles.ratingPill}>
-            <Star size={13} color={Colors.gold} fill={Colors.gold} />
-            <Text style={styles.ratingText}>
-              {item.rating > 10 ? item.rating : `${item.rating}/5`}
-            </Text>
-          </View>
+          <Stamp size="xs" rotation={-2} variant="brass">
+            {item.rating > 10 ? `${item.rating}` : `${item.rating}/5★`}
+          </Stamp>
         )}
       </View>
 
       {/* Comment / Review */}
       {item.comment && (
         <View style={styles.commentContainer}>
-          <MessageSquareQuote size={16} color={Colors.textSubtle} style={styles.quoteIcon} />
-          <Text style={styles.commentText}>{item.comment}</Text>
+          <Text style={styles.commentText}>"{item.comment}"</Text>
         </View>
       )}
 
@@ -90,7 +87,7 @@ export const VerdictCard: React.FC<VerdictCardProps> = ({
               uri:
                 item.movie.posterUrl && item.movie.posterUrl !== "N/A"
                   ? item.movie.posterUrl
-                  : "https://via.placeholder.com/150x225/18181b/71717a?text=Poster",
+                  : "https://via.placeholder.com/150x225/14151D/C5A572?text=Poster",
             }}
             style={styles.moviePoster}
             contentFit="cover"
@@ -105,7 +102,7 @@ export const VerdictCard: React.FC<VerdictCardProps> = ({
             )}
             {item.movie.director && (
               <Text numberOfLines={1} style={styles.movieDirector}>
-                Dir: {item.movie.director}
+                Dir. {item.movie.director}
               </Text>
             )}
           </View>
@@ -117,8 +114,8 @@ export const VerdictCard: React.FC<VerdictCardProps> = ({
 
 const styles = StyleSheet.create({
   card: {
-    backgroundColor: Colors.surface,
-    borderRadius: Radius.lg,
+    backgroundColor: Colors.velvet,
+    borderRadius: Radius.none,
     padding: Spacing.lg,
     borderWidth: 1,
     borderColor: Colors.border,
@@ -136,66 +133,51 @@ const styles = StyleSheet.create({
     gap: Spacing.sm,
     flex: 1,
   },
+  authorMeta: {
+    flex: 1,
+  },
   authorNameRow: {
     flexDirection: "row",
     alignItems: "center",
     flexWrap: "wrap",
   },
   username: {
-    color: Colors.text,
-    fontWeight: "700",
+    color: Colors.paper,
+    fontWeight: "800",
     fontSize: 14,
   },
   actionText: {
-    color: Colors.textMuted,
-    fontSize: 13,
+    color: Colors.dust,
+    fontSize: 12,
   },
   targetUsername: {
-    color: Colors.primaryLight,
+    color: Colors.brassLight,
     fontWeight: "700",
   },
   timeText: {
-    color: Colors.textSubtle,
-    fontSize: 11,
+    color: Colors.dust,
+    fontSize: 10,
+    textTransform: "uppercase",
+    letterSpacing: 0.8,
     marginTop: 2,
-  },
-  ratingPill: {
-    flexDirection: "row",
-    alignItems: "center",
-    backgroundColor: Colors.goldSubtle,
-    borderColor: "rgba(234, 179, 8, 0.4)",
-    borderWidth: 1,
-    paddingVertical: 4,
-    paddingHorizontal: 8,
-    borderRadius: Radius.full,
-    gap: 4,
-  },
-  ratingText: {
-    color: Colors.gold,
-    fontWeight: "800",
-    fontSize: 12,
   },
   commentContainer: {
-    backgroundColor: Colors.surfaceElevated,
-    borderRadius: Radius.md,
+    backgroundColor: Colors.velvetElevated,
+    borderRadius: Radius.none,
     padding: Spacing.md,
-    flexDirection: "row",
-    gap: Spacing.sm,
-  },
-  quoteIcon: {
-    marginTop: 2,
+    borderLeftWidth: 2,
+    borderLeftColor: Colors.brass,
   },
   commentText: {
-    color: Colors.text,
+    color: Colors.paper,
     fontSize: 14,
     lineHeight: 20,
-    flex: 1,
     fontStyle: "italic",
   },
   movieAttachment: {
     flexDirection: "row",
-    backgroundColor: Colors.surfaceElevated,
-    borderRadius: Radius.md,
+    backgroundColor: Colors.velvetElevated,
+    borderRadius: Radius.none,
     padding: Spacing.sm,
     alignItems: "center",
     gap: Spacing.md,
@@ -205,24 +187,26 @@ const styles = StyleSheet.create({
   moviePoster: {
     width: 44,
     height: 64,
-    borderRadius: Radius.sm,
-    backgroundColor: Colors.surface,
+    backgroundColor: Colors.inkDark,
+    borderWidth: 1,
+    borderColor: Colors.borderBrass,
   },
   movieInfo: {
     flex: 1,
     gap: 2,
   },
   movieTitle: {
-    color: Colors.text,
+    color: Colors.paper,
     fontSize: 14,
-    fontWeight: "700",
+    fontWeight: "800",
   },
   movieYear: {
-    color: Colors.textSubtle,
-    fontSize: 12,
+    color: Colors.dustLight,
+    fontSize: 11,
   },
   movieDirector: {
-    color: Colors.textMuted,
-    fontSize: 12,
+    color: Colors.dust,
+    fontSize: 11,
   },
 });
+

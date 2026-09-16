@@ -33,7 +33,7 @@ export default function SearchScreen() {
   useEffect(() => {
     const handler = setTimeout(() => {
       setDebouncedQuery(searchQuery.trim());
-    }, 400);
+    }, 350);
     return () => clearTimeout(handler);
   }, [searchQuery]);
 
@@ -120,9 +120,9 @@ export default function SearchScreen() {
     if (isSearching || (isLoadingCategory && !isQueryActive)) {
       return (
         <View style={styles.loadingContainer}>
-          <ActivityIndicator size="large" color={Colors.gold} />
+          <ActivityIndicator size="large" color={Colors.brass} />
           <Text style={styles.loadingText}>
-            {isQueryActive ? "Searching cinematic archives..." : "Fetching movies..."}
+            {isQueryActive ? "Searching the vaults..." : "Fetching reels..."}
           </Text>
         </View>
       );
@@ -131,10 +131,10 @@ export default function SearchScreen() {
     if (isQueryActive && searchResults.length === 0) {
       return (
         <View style={styles.emptyContainer}>
-          <Film size={44} color={Colors.textSubtle} />
-          <Text style={styles.emptyTitle}>No Movies Found</Text>
+          <Film size={44} color={Colors.dust} />
+          <Text style={styles.emptyTitle}>Reel Not Found</Text>
           <Text style={styles.emptySubtitle}>
-            Try searching for a different title or keyword.
+            Try searching for a different title, director, or keyword.
           </Text>
         </View>
       );
@@ -147,9 +147,9 @@ export default function SearchScreen() {
     if (isQueryActive) {
       return (
         <View style={styles.sectionTitleRow}>
-          <Film size={16} color={Colors.primaryLight} />
+          <Film size={14} color={Colors.brassLight} />
           <Text style={styles.sectionTitle}>
-            {searchResults.length} RESULTS FOUND
+            {searchResults.length} VAULT ARCHIVES FOUND
           </Text>
         </View>
       );
@@ -168,8 +168,8 @@ export default function SearchScreen() {
             activeOpacity={0.8}
           >
             <Flame
-              size={15}
-              color={activeCategory === "hits" ? "#C9A03C" : Colors.textMuted}
+              size={14}
+              color={activeCategory === "hits" ? Colors.inkDark : Colors.dustLight}
             />
             <Text
               style={[
@@ -190,8 +190,8 @@ export default function SearchScreen() {
             activeOpacity={0.8}
           >
             <Calendar
-              size={15}
-              color={activeCategory === "upcoming" ? "#C9A03C" : Colors.textMuted}
+              size={14}
+              color={activeCategory === "upcoming" ? Colors.inkDark : Colors.dustLight}
             />
             <Text
               style={[
@@ -199,7 +199,7 @@ export default function SearchScreen() {
                 activeCategory === "upcoming" && styles.categoryPillTextActive,
               ]}
             >
-              Upcoming Movies
+              Upcoming Releases
             </Text>
           </TouchableOpacity>
         </View>
@@ -207,13 +207,13 @@ export default function SearchScreen() {
         <View style={styles.sectionTitleRow}>
           {activeCategory === "hits" ? (
             <>
-              <Flame size={15} color="#C9A03C" />
-              <Text style={styles.sectionTitle}>NOW PLAYING & POPULAR HITS</Text>
+              <Flame size={14} color={Colors.brassLight} />
+              <Text style={styles.sectionTitle}>NOW PLAYING & POPULAR CANON</Text>
             </>
           ) : (
             <>
-              <Calendar size={15} color="#C9A03C" />
-              <Text style={styles.sectionTitle}>ANTICIPATED & UPCOMING RELEASES</Text>
+              <Calendar size={14} color={Colors.brassLight} />
+              <Text style={styles.sectionTitle}>ANTICIPATED & FORTHCOMING RELEASES</Text>
             </>
           )}
         </View>
@@ -226,20 +226,20 @@ export default function SearchScreen() {
       {/* Fixed Search Header */}
       <View style={styles.searchBarContainer}>
         <Input
-          placeholder="Search titles, directors, genres..."
+          placeholder="Search titles, directors, cinematic canon..."
           value={searchQuery}
           onChangeText={setSearchQuery}
           autoCapitalize="none"
           returnKeyType="search"
           wrapperStyle={styles.inputWrapper}
-          leftIcon={<Search size={18} color={Colors.textSubtle} />}
+          leftIcon={<Search size={16} color={Colors.dust} />}
           rightIcon={
             searchQuery ? (
               <TouchableOpacity
                 onPress={() => setSearchQuery("")}
                 hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
               >
-                <X size={18} color={Colors.textMuted} />
+                <X size={16} color={Colors.dustLight} />
               </TouchableOpacity>
             ) : undefined
           }
@@ -268,8 +268,8 @@ export default function SearchScreen() {
             <RefreshControl
               refreshing={activeCategory === "hits" ? isRefetchingHits : isRefetchingUpcoming}
               onRefresh={activeCategory === "hits" ? refetchHits : refetchUpcoming}
-              tintColor="#C9A03C"
-              colors={["#C9A03C"]}
+              tintColor={Colors.brass}
+              colors={[Colors.brass]}
             />
           ) : undefined
         }
@@ -288,12 +288,12 @@ export default function SearchScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: Colors.background,
+    backgroundColor: Colors.ink,
   },
   searchBarContainer: {
     paddingHorizontal: Spacing.lg,
     paddingTop: Spacing.md,
-    backgroundColor: Colors.background,
+    backgroundColor: Colors.ink,
   },
   inputWrapper: {
     marginBottom: 0,
@@ -314,25 +314,27 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     gap: 6,
-    paddingVertical: 8,
-    paddingHorizontal: 14,
-    borderRadius: Radius.full,
-    backgroundColor: Colors.surface,
+    paddingVertical: 7,
+    paddingHorizontal: 12,
+    borderRadius: Radius.none,
+    backgroundColor: Colors.velvet,
     borderWidth: 1,
     borderColor: Colors.border,
   },
   categoryPillActive: {
-    backgroundColor: "rgba(201, 160, 60, 0.15)",
-    borderColor: "#C9A03C",
+    backgroundColor: Colors.brass,
+    borderColor: Colors.brassLight,
   },
   categoryPillText: {
-    fontSize: 13,
-    fontWeight: "600",
-    color: Colors.textMuted,
+    fontSize: 11,
+    fontWeight: "800",
+    color: Colors.dustLight,
+    textTransform: "uppercase",
+    letterSpacing: 0.8,
   },
   categoryPillTextActive: {
-    color: "#C9A03C",
-    fontWeight: "700",
+    color: Colors.inkDark,
+    fontWeight: "900",
   },
   sectionTitleRow: {
     flexDirection: "row",
@@ -341,9 +343,9 @@ const styles = StyleSheet.create({
     marginBottom: Spacing.sm,
   },
   sectionTitle: {
-    fontSize: 11,
-    fontWeight: "800",
-    color: Colors.textMuted,
+    fontSize: 10,
+    fontWeight: "900",
+    color: Colors.dust,
     letterSpacing: 1.2,
   },
   cardWrapper: {
@@ -355,29 +357,30 @@ const styles = StyleSheet.create({
     gap: Spacing.md,
   },
   loadingText: {
-    color: Colors.textMuted,
-    fontSize: 13,
+    color: Colors.dustLight,
+    fontSize: 12,
   },
   emptyContainer: {
     alignItems: "center",
     padding: Spacing.xxxl,
-    backgroundColor: Colors.surface,
-    borderRadius: Radius.xl,
+    backgroundColor: Colors.velvet,
+    borderRadius: Radius.none,
     borderWidth: 1,
     borderColor: Colors.border,
     marginTop: Spacing.lg,
     gap: 6,
   },
   emptyTitle: {
-    color: Colors.text,
+    color: Colors.paper,
     fontSize: 17,
-    fontWeight: "700",
+    fontWeight: "800",
     marginTop: 6,
   },
   emptySubtitle: {
-    color: Colors.textMuted,
-    fontSize: 13,
+    color: Colors.dust,
+    fontSize: 12,
     textAlign: "center",
   },
 });
+
 

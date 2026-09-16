@@ -4,7 +4,7 @@ import { Colors, Radius, Spacing } from "../../constants/theme";
 
 interface BadgeProps {
   label: string;
-  variant?: "default" | "gold" | "emerald" | "rose" | "purple" | "primary" | "outline";
+  variant?: "default" | "gold" | "brass" | "emerald" | "rose" | "purple" | "primary" | "outline" | "red";
   size?: "sm" | "md";
   icon?: React.ReactNode;
   style?: ViewStyle;
@@ -22,51 +22,50 @@ export const Badge: React.FC<BadgeProps> = ({
       flexDirection: "row",
       alignItems: "center",
       alignSelf: "flex-start",
-      borderRadius: Radius.full,
+      borderRadius: Radius.none,
       gap: 4,
     };
 
     if (size === "sm") {
       base.paddingVertical = 2;
-      base.paddingHorizontal = 8;
+      base.paddingHorizontal = 6;
+      base.borderWidth = 1;
     } else {
       base.paddingVertical = 4;
-      base.paddingHorizontal = 10;
+      base.paddingHorizontal = 9;
+      base.borderWidth = 1;
     }
 
     switch (variant) {
+      case "brass":
       case "gold":
-        base.backgroundColor = Colors.goldSubtle;
-        base.borderColor = "rgba(234, 179, 8, 0.4)";
-        base.borderWidth = 1;
+        base.backgroundColor = Colors.brassSubtle;
+        base.borderColor = Colors.brass;
+        break;
+      case "red":
+      case "rose":
+        base.backgroundColor = Colors.marqueeRedSubtle;
+        base.borderColor = Colors.marqueeRed;
         break;
       case "emerald":
         base.backgroundColor = Colors.emeraldSubtle;
-        base.borderColor = "rgba(16, 185, 129, 0.4)";
-        base.borderWidth = 1;
-        break;
-      case "rose":
-        base.backgroundColor = Colors.roseSubtle;
-        base.borderColor = "rgba(244, 63, 94, 0.4)";
-        base.borderWidth = 1;
+        base.borderColor = Colors.emerald;
         break;
       case "purple":
         base.backgroundColor = Colors.purpleSubtle;
-        base.borderColor = "rgba(168, 85, 247, 0.4)";
-        base.borderWidth = 1;
+        base.borderColor = Colors.purple;
         break;
       case "primary":
-        base.backgroundColor = "rgba(99, 102, 241, 0.15)";
-        base.borderColor = "rgba(99, 102, 241, 0.4)";
-        base.borderWidth = 1;
+        base.backgroundColor = Colors.brassSubtle;
+        base.borderColor = Colors.brass;
         break;
       case "outline":
         base.backgroundColor = "transparent";
         base.borderColor = Colors.border;
-        base.borderWidth = 1;
         break;
       default:
-        base.backgroundColor = Colors.surfaceElevated;
+        base.backgroundColor = Colors.velvetElevated;
+        base.borderColor = Colors.borderSubtle;
         break;
     }
 
@@ -74,35 +73,37 @@ export const Badge: React.FC<BadgeProps> = ({
   };
 
   const getTextStyle = (): TextStyle => {
-    let color = Colors.textMuted;
+    let color = Colors.dustLight;
     switch (variant) {
+      case "brass":
       case "gold":
-        color = Colors.gold;
+      case "primary":
+        color = Colors.brassLight;
+        break;
+      case "red":
+      case "rose":
+        color = Colors.marqueeRedLight;
         break;
       case "emerald":
-        color = Colors.emerald;
-        break;
-      case "rose":
-        color = Colors.rose;
+        color = "#81C784";
         break;
       case "purple":
-        color = Colors.purple;
-        break;
-      case "primary":
-        color = Colors.primaryLight;
+        color = "#BA68C8";
         break;
       case "outline":
-        color = Colors.textSubtle;
+        color = Colors.dust;
         break;
       default:
-        color = Colors.text;
+        color = Colors.paper;
         break;
     }
 
     return {
       color,
-      fontSize: size === "sm" ? 11 : 12,
-      fontWeight: "600",
+      fontSize: size === "sm" ? 10 : 11,
+      fontWeight: "700",
+      letterSpacing: 0.8,
+      textTransform: "uppercase",
     };
   };
 

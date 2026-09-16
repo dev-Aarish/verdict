@@ -4,6 +4,7 @@ import { Stamp } from "@/components/Stamp";
 import { TopBar } from "@/components/TopBar";
 import { globalFeed } from "@/lib/mock";
 import { absoluteUrl } from "@/lib/site-url";
+import { Film, Sparkles, MessageSquareQuote, ArrowRight } from "lucide-react";
 
 export const Route = createFileRoute("/")({
   head: () => ({
@@ -36,48 +37,55 @@ function Landing() {
     <div className="min-h-screen">
       <TopBar />
 
-      <main className="mx-auto max-w-6xl px-5 md:px-6">
-        {/* Hero */}
-        <section className="grid gap-10 pb-16 pt-10 md:grid-cols-[1.15fr_1fr] md:items-center md:gap-12 md:pb-32 md:pt-24">
+      <main className="mx-auto max-w-6xl px-4 sm:px-6">
+        {/* Hero Section */}
+        <section className="grid gap-10 pb-16 pt-8 sm:pt-12 md:grid-cols-[1.15fr_1fr] md:items-center md:gap-12 md:pb-28 md:pt-20">
           <div>
-            <p className="text-caption mb-4 md:mb-6">Est. 2026 · Screening Room</p>
+            <div className="inline-flex items-center gap-2 rounded-full border border-brass/30 bg-velvet/50 px-3 py-1 mb-5">
+              <span className="h-1.5 w-1.5 rounded-full bg-brass animate-pulse" />
+              <span className="text-caption text-brass text-[0.65rem] md:text-xs">Est. 2026 · Screening Room</span>
+            </div>
+            
             <h1 className="text-hero text-paper">
               Everyone's a critic.
               <br />
               <span className="text-brass">Now they can prove it.</span>
             </h1>
-            <p className="mt-6 max-w-md text-paper/80">
-              Verdict reads your movie history and renders a score. Then your friends stamp their
+            
+            <p className="mt-5 max-w-md text-sm md:text-base leading-relaxed text-paper/80">
+              Verdict reads your movie history and renders an unsparing Taste Score. Then your friends stamp their
               judgment onto your taste — one line, no hedging.
             </p>
-            <div className="mt-8 flex flex-wrap items-center gap-4 md:mt-10 md:gap-6">
+            
+            <div className="mt-8 flex flex-wrap items-center gap-3 sm:gap-4 md:mt-10">
               <Link
                 to="/signup"
-                className="border-2 border-brass bg-brass px-5 py-2.5 text-caption text-ink hover:bg-transparent hover:text-brass transition-colors md:px-6 md:py-3"
+                className="inline-flex items-center gap-2 border-2 border-brass bg-brass px-5 py-3 text-caption font-bold text-ink hover:bg-transparent hover:text-brass transition-all duration-200 active:scale-95 shadow-[0_0_20px_rgba(197,165,114,0.25)]"
               >
-                Get your Verdict →
+                <span>Get your Verdict</span>
+                <ArrowRight className="h-4 w-4" />
               </Link>
               <Link
                 to="/profile/$username"
                 params={{ username: "testuser" }}
-                className="text-caption text-dust hover:text-paper transition-colors"
+                className="border border-dust/30 bg-velvet/30 px-4 py-3 text-caption text-dust hover:text-paper hover:border-dust/60 transition-all active:scale-95"
               >
-                See an example profile
+                Explore demo profile
               </Link>
             </div>
           </div>
 
-          <div className="flex justify-center md:justify-end">
+          <div className="flex justify-center md:justify-end py-6 md:py-0">
             <div className="relative">
               <Stamp size="xl" rotation={-4} animate="settle" label="Taste Score">
                 87
               </Stamp>
-              <div className="absolute -bottom-8 -left-10 rotate-[6deg]">
+              <div className="absolute -bottom-6 -left-6 sm:-bottom-8 sm:-left-8 rotate-[6deg]">
                 <Stamp size="sm" rotation={6} variant="red">
                   4
                 </Stamp>
               </div>
-              <div className="absolute -right-6 -top-6 rotate-[8deg]">
+              <div className="absolute -right-4 -top-5 sm:-right-6 sm:-top-6 rotate-[8deg]">
                 <Stamp size="sm" rotation={8}>
                   9
                 </Stamp>
@@ -86,18 +94,22 @@ function Landing() {
           </div>
         </section>
 
-        {/* Credits roll */}
-        <section className="hairline py-10 md:py-14">
-          <p className="text-caption mb-6 text-center md:mb-8">Recent Verdicts</p>
-          <div className="relative mx-auto h-64 max-w-2xl overflow-hidden [mask-image:linear-gradient(to_bottom,transparent,black_20%,black_80%,transparent)]">
-            <ul className="animate-credits absolute inset-x-0 top-0 space-y-6 text-center">
+        {/* Credits roll / Ticker marquee */}
+        <section className="hairline py-10 md:py-16">
+          <div className="flex items-center justify-center gap-2 mb-6 md:mb-8">
+            <MessageSquareQuote className="h-4 w-4 text-brass" />
+            <p className="text-caption text-brass text-center">Recent Verdicts Reel</p>
+          </div>
+          
+          <div className="relative mx-auto h-64 max-w-2xl overflow-hidden rounded-lg border border-dust/15 bg-velvet/20 [mask-image:linear-gradient(to_bottom,transparent,black_15%,black_85%,transparent)]">
+            <ul className="animate-credits absolute inset-x-0 top-0 space-y-6 p-4 text-center">
               {rollList.map((v, i) => (
-                <li key={`${v.id}-${i}`} className="mono text-sm text-paper/85">
+                <li key={`${v.id}-${i}`} className="mono text-sm text-paper/85 transition-colors hover:text-brass">
                   <span className="text-caption mr-3 text-dust">{v.when}</span>
-                  <span className="text-brass">{v.score}</span>
+                  <span className="font-bold text-brass">[{v.score}/10]</span>
                   <span className="mx-3 text-dust">·</span>
-                  <span className="text-paper">"{v.quote}"</span>
-                  <div className="text-caption mt-1 text-dust">{v.from}</div>
+                  <span className="text-paper italic">"{v.quote}"</span>
+                  <div className="text-caption mt-1 text-dust/80">— {v.from}</div>
                 </li>
               ))}
             </ul>
@@ -105,44 +117,71 @@ function Landing() {
         </section>
 
         {/* How it works — three acts */}
-        <section className="hairline grid gap-8 py-14 md:grid-cols-3 md:gap-10 md:py-20">
-          {[
-            {
-              n: "I.",
-              t: "Log the films",
-              b: "Import a list or add as you go. Your history is the record.",
-            },
-            {
-              n: "II.",
-              t: "Receive the score",
-              b: "A Taste Score is calculated from diversity, obscurity, and consistency.",
-            },
-            {
-              n: "III.",
-              t: "Collect Verdicts",
-              b: "Share the link. Friends leave a one-line judgment, stamped.",
-            },
-          ].map((step) => (
-            <div key={step.n}>
-              <p className="text-brass mono text-lg">{step.n}</p>
-              <h3 className="text-card-title mt-3 text-paper">{step.t}</h3>
-              <p className="mt-2 text-sm text-dust">{step.b}</p>
-            </div>
-          ))}
+        <section className="hairline py-14 md:py-20">
+          <div className="text-center mb-10 md:mb-14">
+            <p className="text-caption mb-2 text-brass">The Protocol</p>
+            <h2 className="text-section text-paper">Three Acts of Film Judgment</h2>
+          </div>
+
+          <div className="grid gap-6 sm:grid-cols-2 md:grid-cols-3 md:gap-8">
+            {[
+              {
+                n: "I.",
+                icon: Film,
+                t: "Log the films",
+                b: "Import your watch history or add title-by-title with personal ratings and notes.",
+              },
+              {
+                n: "II.",
+                icon: Sparkles,
+                t: "Receive the score",
+                b: "Your Taste Score engine weighs Genre Diversity, Obscurity, and Rating Consistency.",
+              },
+              {
+                n: "III.",
+                icon: MessageSquareQuote,
+                t: "Collect Verdicts",
+                b: "Share your ticket. Friends leave stamped one-line critiques on your cinematic taste.",
+              },
+            ].map((step) => {
+              const Icon = step.icon;
+              return (
+                <div
+                  key={step.n}
+                  className="surface-card surface-card-hover relative p-6 md:p-8 flex flex-col justify-between"
+                >
+                  <div>
+                    <div className="flex items-center justify-between">
+                      <span className="text-brass mono text-xl font-bold">{step.n}</span>
+                      <Icon className="h-5 w-5 text-dust/60" />
+                    </div>
+                    <h3 className="text-card-title mt-4 text-paper">{step.t}</h3>
+                    <p className="mt-2 text-sm leading-relaxed text-dust">{step.b}</p>
+                  </div>
+                  <div className="mt-6 h-0.5 w-10 bg-brass/30" />
+                </div>
+              );
+            })}
+          </div>
         </section>
 
-        {/* Closing */}
-        <section className="hairline flex flex-col items-center gap-6 py-16 text-center md:gap-8 md:py-24">
-          <p className="text-caption">Now Showing</p>
-          <h2 className="text-section max-w-2xl text-paper">
-            A quiet, formal room where your taste is read out loud.
-          </h2>
-          <Link
-            to="/signup"
-            className="border-2 border-brass bg-brass px-5 py-2.5 text-caption text-ink hover:bg-transparent hover:text-brass transition-colors md:px-6 md:py-3"
-          >
-            Get your Verdict →
-          </Link>
+        {/* Closing Callout */}
+        <section className="hairline relative my-8 overflow-hidden rounded-xl border border-brass/30 bg-velvet/40 p-8 text-center sm:p-12 md:my-16 md:p-16">
+          <div className="absolute -right-16 -top-16 h-48 w-48 rounded-full bg-brass/5 blur-3xl" />
+          <div className="absolute -left-16 -bottom-16 h-48 w-48 rounded-full bg-brass/5 blur-3xl" />
+          
+          <div className="relative mx-auto flex max-w-2xl flex-col items-center gap-6">
+            <p className="text-caption text-brass">Admit One</p>
+            <h2 className="text-section text-paper">
+              A quiet, formal room where your taste is read out loud.
+            </h2>
+            <Link
+              to="/signup"
+              className="inline-flex items-center gap-2 border-2 border-brass bg-brass px-6 py-3.5 text-caption font-bold text-ink hover:bg-transparent hover:text-brass transition-all duration-200 active:scale-95 shadow-[0_0_24px_rgba(197,165,114,0.3)]"
+            >
+              <span>Get your Verdict →</span>
+            </Link>
+          </div>
         </section>
       </main>
 

@@ -5,7 +5,6 @@ import {
   Text,
   StyleSheet,
   TextInputProps,
-  TouchableOpacity,
   StyleProp,
   ViewStyle,
 } from "react-native";
@@ -47,7 +46,7 @@ export const Input: React.FC<InputProps> = ({
       >
         {leftIcon && <View style={styles.leftIcon}>{leftIcon}</View>}
         <TextInput
-          placeholderTextColor={Colors.textSubtle}
+          placeholderTextColor={Colors.dust}
           style={[styles.input, style]}
           onFocus={(e) => {
             setIsFocused(true);
@@ -71,32 +70,34 @@ const styles = StyleSheet.create({
     marginBottom: Spacing.md,
   },
   label: {
-    fontSize: 13,
-    fontWeight: "500",
-    color: Colors.textMuted,
+    fontSize: 10,
+    fontWeight: "800",
+    color: Colors.dustLight,
+    textTransform: "uppercase",
+    letterSpacing: 1.2,
     marginBottom: 6,
   },
   container: {
     flexDirection: "row",
     alignItems: "center",
-    backgroundColor: Colors.surface,
+    backgroundColor: Colors.velvetElevated,
     borderWidth: 1,
     borderColor: Colors.border,
-    borderRadius: Radius.md,
+    borderRadius: Radius.none,
     paddingHorizontal: Spacing.md,
     height: 48,
   },
   containerFocused: {
-    borderColor: Colors.primary,
-    backgroundColor: Colors.surfaceElevated,
+    borderColor: Colors.brass,
+    backgroundColor: "rgba(37, 39, 51, 0.9)",
   },
   containerError: {
-    borderColor: Colors.danger,
+    borderColor: Colors.marqueeRed,
   },
   input: {
     flex: 1,
-    color: Colors.text,
-    fontSize: 15,
+    color: Colors.paper,
+    fontSize: 14,
     height: "100%",
   },
   leftIcon: {
@@ -106,8 +107,10 @@ const styles = StyleSheet.create({
     marginLeft: Spacing.sm,
   },
   errorText: {
-    color: Colors.danger,
-    fontSize: 12,
+    color: Colors.marqueeRed,
+    fontSize: 11,
+    fontWeight: "600",
     marginTop: 4,
   },
 });
+

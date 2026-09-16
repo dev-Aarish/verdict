@@ -11,38 +11,41 @@ export default function TabLayout() {
       screenOptions={{
         headerShown: true,
         headerStyle: {
-          backgroundColor: Colors.background,
+          backgroundColor: Colors.ink,
+          borderBottomWidth: 1,
+          borderBottomColor: Colors.border,
         },
-        headerTintColor: Colors.text,
+        headerTintColor: Colors.paper,
         headerTitleStyle: {
-          fontWeight: "800",
-          fontSize: 17,
-          letterSpacing: 0.5,
+          fontWeight: "900",
+          fontSize: 15,
         },
         headerShadowVisible: false,
         tabBarStyle: {
-          backgroundColor: Colors.background,
+          backgroundColor: Colors.inkDark,
           borderTopColor: Colors.border,
           borderTopWidth: 1,
           height: Platform.OS === "ios" ? 84 : 64,
           paddingBottom: Platform.OS === "ios" ? 28 : 10,
           paddingTop: 8,
         },
-        tabBarActiveTintColor: "#C9A03C",
-        tabBarInactiveTintColor: Colors.textSubtle,
+        tabBarActiveTintColor: Colors.brassLight,
+        tabBarInactiveTintColor: Colors.dust,
         tabBarLabelStyle: {
-          fontSize: 11,
-          fontWeight: "600",
+          fontSize: 10,
+          fontWeight: "800",
+          letterSpacing: 0.8,
+          textTransform: "uppercase",
         },
       }}
     >
       <Tabs.Screen
         name="index"
         options={{
-          title: "Feed",
+          title: "The Reel",
           headerTitle: () => (
             <View style={styles.headerLogoContainer}>
-              <Logo size="md" color="#C9A03C" />
+              <Logo size="md" color={Colors.brass} />
             </View>
           ),
           tabBarIcon: ({ color, size }) => <Compass size={size} color={color} />,
@@ -51,8 +54,8 @@ export default function TabLayout() {
       <Tabs.Screen
         name="search"
         options={{
-          title: "Search",
-          headerTitle: "DISCOVER FILMS",
+          title: "The Vault",
+          headerTitle: "THE VAULT · DISCOVERY",
           tabBarIcon: ({ color, size }) => <Search size={size} color={color} />,
         }}
       />
@@ -60,7 +63,7 @@ export default function TabLayout() {
         name="watchlist"
         options={{
           title: "Watchlist",
-          headerTitle: "YOUR WATCHLIST",
+          headerTitle: "SCREENING QUEUE",
           tabBarIcon: ({ color, size }) => <Bookmark size={size} color={color} />,
         }}
       />
@@ -83,4 +86,5 @@ const styles = StyleSheet.create({
     justifyContent: "center",
   },
 });
+
 

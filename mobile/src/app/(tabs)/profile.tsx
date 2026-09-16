@@ -16,11 +16,10 @@ import {
   LogOut,
   Film,
   Gavel,
-  SlidersHorizontal,
   Plus,
 } from "lucide-react-native";
 import * as Haptics from "expo-haptics";
-import { usersApi, moviesApi } from "../../api";
+import { usersApi } from "../../api";
 import { useAuth } from "../../context/AuthContext";
 import { Colors, Radius, Spacing } from "../../constants/theme";
 import { Avatar } from "../../components/common/Avatar";
@@ -29,7 +28,6 @@ import { MovieCard } from "../../components/common/MovieCard";
 import { VerdictCard } from "../../components/common/VerdictCard";
 import { Button } from "../../components/common/Button";
 import { ShareCardModal } from "../../components/common/ShareCardModal";
-import { WatchedEntry, Verdict, TasteScoreBreakdown } from "../../types";
 
 export default function ProfileScreen() {
   const router = useRouter();
@@ -81,13 +79,14 @@ export default function ProfileScreen() {
   if (!isAuthenticated || !user) {
     return (
       <View style={styles.authGateContainer}>
-        <Film size={54} color={Colors.textSubtle} />
+        <Film size={48} color={Colors.dust} />
         <Text style={styles.authGateTitle}>Taste Profile</Text>
         <Text style={styles.authGateSubtitle}>
           Sign in to view your Taste Score, analyze your cinematic habits, and share your card.
         </Text>
         <Button
           title="Sign In"
+          variant="primary"
           onPress={() => router.push("/(auth)/login")}
           size="lg"
           style={styles.authGateBtn}
@@ -101,13 +100,13 @@ export default function ProfileScreen() {
       {/* Profile Info Bar */}
       <View style={styles.profileCard}>
         <View style={styles.profileTopRow}>
-          <Avatar uri={user.avatarUrl} username={user.username} size={64} />
+          <Avatar uri={user.avatarUrl} username={user.username} size={60} />
           <View style={styles.profileDetails}>
             <Text style={styles.profileName}>@{user.username}</Text>
             {user.bio ? (
               <Text style={styles.profileBio}>{user.bio}</Text>
             ) : (
-              <Text style={styles.profileBioPlaceholder}>No taste bio added yet</Text>
+              <Text style={styles.profileBioPlaceholder}>No taste bio registered yet</Text>
             )}
           </View>
         </View>
@@ -115,11 +114,11 @@ export default function ProfileScreen() {
         {/* Action Buttons */}
         <View style={styles.profileActions}>
           <Button
-            title="Share Card"
+            title="Export Card"
             variant="primary"
             size="sm"
             onPress={() => setShareModalVisible(true)}
-            icon={<Share2 size={14} color="#fff" />}
+            icon={<Share2 size={13} color={Colors.inkDark} />}
             style={styles.profileActionBtn}
           />
           <Button
@@ -127,7 +126,7 @@ export default function ProfileScreen() {
             variant="secondary"
             size="sm"
             onPress={handleLogout}
-            icon={<LogOut size={14} color={Colors.textMuted} />}
+            icon={<LogOut size={13} color={Colors.dustLight} />}
           />
         </View>
       </View>
@@ -141,31 +140,33 @@ export default function ProfileScreen() {
       <View style={styles.tabsContainer}>
         <TouchableOpacity
           style={[styles.tabButton, activeTab === "watched" && styles.tabButtonActive]}
+          activeOpacity={0.75}
           onPress={() => setActiveTab("watched")}
         >
           <Film
-            size={16}
-            color={activeTab === "watched" ? Colors.primaryLight : Colors.textSubtle}
+            size={14}
+            color={activeTab === "watched" ? Colors.inkDark : Colors.dustLight}
           />
           <Text
             style={[styles.tabText, activeTab === "watched" && styles.tabTextActive]}
           >
-            Watched ({watchedList.length})
+            Vault Archive ({watchedList.length})
           </Text>
         </TouchableOpacity>
 
         <TouchableOpacity
           style={[styles.tabButton, activeTab === "verdicts" && styles.tabButtonActive]}
+          activeOpacity={0.75}
           onPress={() => setActiveTab("verdicts")}
         >
           <Gavel
-            size={16}
-            color={activeTab === "verdicts" ? Colors.primaryLight : Colors.textSubtle}
+            size={14}
+            color={activeTab === "verdicts" ? Colors.inkDark : Colors.dustLight}
           />
           <Text
             style={[styles.tabText, activeTab === "verdicts" && styles.tabTextActive]}
           >
-            Verdicts Received ({verdicts.length})
+            Verdicts ({verdicts.length})
           </Text>
         </TouchableOpacity>
       </View>
@@ -176,16 +177,17 @@ export default function ProfileScreen() {
     if (activeTab === "watched") {
       return (
         <View style={styles.emptyContainer}>
-          <Film size={40} color={Colors.textSubtle} />
-          <Text style={styles.emptyTitle}>No Movies Logged</Text>
+          <Film size={40} color={Colors.dust} />
+          <Text style={styles.emptyTitle}>Vault Is Empty</Text>
           <Text style={styles.emptySubtitle}>
-            Log at least 3 films to unlock your deep Cinematic Taste Score!
+            Log at least 3 films to compute your full Taste Index and breakdown!
           </Text>
           <Button
-            title="Search & Log Movies"
+            title="Browse & Log Films"
+            variant="primary"
             onPress={() => router.push("/(tabs)/search")}
             size="sm"
-            icon={<Plus size={14} color="#fff" />}
+            icon={<Plus size={14} color={Colors.inkDark} />}
             style={styles.emptyBtn}
           />
         </View>
@@ -194,10 +196,10 @@ export default function ProfileScreen() {
 
     return (
       <View style={styles.emptyContainer}>
-        <Gavel size={40} color={Colors.textSubtle} />
-        <Text style={styles.emptyTitle}>No Verdicts Yet</Text>
+        <Gavel size={40} color={Colors.dust} />
+        <Text style={styles.emptyTitle}>No Verdicts Received</Text>
         <Text style={styles.emptySubtitle}>
-          Share your profile link or Taste Card with friends so they can judge your taste.
+          Export your Taste Ticket to let friends analyze and rate your taste.
         </Text>
       </View>
     );
@@ -231,8 +233,8 @@ export default function ProfileScreen() {
             <RefreshControl
               refreshing={isRefetching || isLoadingProfile}
               onRefresh={handleRefresh}
-              tintColor={Colors.primaryLight}
-              colors={[Colors.primary]}
+              tintColor={Colors.brass}
+              colors={[Colors.brass]}
             />
           }
         />
@@ -262,8 +264,8 @@ export default function ProfileScreen() {
             <RefreshControl
               refreshing={isRefetching || isLoadingProfile}
               onRefresh={handleRefresh}
-              tintColor={Colors.primaryLight}
-              colors={[Colors.primary]}
+              tintColor={Colors.brass}
+              colors={[Colors.brass]}
             />
           }
         />
@@ -283,7 +285,7 @@ export default function ProfileScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: Colors.background,
+    backgroundColor: Colors.ink,
   },
   listContent: {
     padding: Spacing.lg,
@@ -291,7 +293,7 @@ const styles = StyleSheet.create({
   },
   authGateContainer: {
     flex: 1,
-    backgroundColor: Colors.background,
+    backgroundColor: Colors.ink,
     justifyContent: "center",
     alignItems: "center",
     padding: Spacing.xl,
@@ -299,15 +301,16 @@ const styles = StyleSheet.create({
   },
   authGateTitle: {
     fontSize: 22,
-    fontWeight: "800",
-    color: Colors.text,
+    fontWeight: "900",
+    color: Colors.paper,
+    letterSpacing: 0.5,
   },
   authGateSubtitle: {
-    fontSize: 14,
-    color: Colors.textMuted,
+    fontSize: 13,
+    color: Colors.dust,
     textAlign: "center",
     maxWidth: 280,
-    lineHeight: 20,
+    lineHeight: 18,
   },
   authGateBtn: {
     width: 200,
@@ -317,8 +320,8 @@ const styles = StyleSheet.create({
     marginBottom: Spacing.md,
   },
   profileCard: {
-    backgroundColor: Colors.surface,
-    borderRadius: Radius.xl,
+    backgroundColor: Colors.velvet,
+    borderRadius: Radius.none,
     padding: Spacing.lg,
     borderWidth: 1,
     borderColor: Colors.border,
@@ -332,21 +335,22 @@ const styles = StyleSheet.create({
   },
   profileDetails: {
     flex: 1,
-    gap: 4,
+    gap: 2,
   },
   profileName: {
     fontSize: 20,
     fontWeight: "900",
-    color: Colors.text,
+    color: Colors.paper,
+    letterSpacing: 0.2,
   },
   profileBio: {
-    fontSize: 13,
-    color: Colors.textMuted,
-    lineHeight: 18,
+    fontSize: 12,
+    color: Colors.dustLight,
+    lineHeight: 17,
   },
   profileBioPlaceholder: {
-    fontSize: 12,
-    color: Colors.textSubtle,
+    fontSize: 11,
+    color: Colors.dust,
     fontStyle: "italic",
   },
   profileActions: {
@@ -364,9 +368,9 @@ const styles = StyleSheet.create({
   },
   tabsContainer: {
     flexDirection: "row",
-    backgroundColor: Colors.surface,
-    borderRadius: Radius.lg,
-    padding: 4,
+    backgroundColor: Colors.velvet,
+    borderRadius: Radius.none,
+    padding: 3,
     borderWidth: 1,
     borderColor: Colors.border,
     marginBottom: Spacing.md,
@@ -376,21 +380,23 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "center",
-    paddingVertical: 10,
-    borderRadius: Radius.md,
+    paddingVertical: 9,
+    borderRadius: Radius.none,
     gap: 6,
   },
   tabButtonActive: {
-    backgroundColor: Colors.surfaceElevated,
+    backgroundColor: Colors.brass,
   },
   tabText: {
-    fontSize: 13,
-    fontWeight: "600",
-    color: Colors.textSubtle,
+    fontSize: 11,
+    fontWeight: "800",
+    color: Colors.dustLight,
+    textTransform: "uppercase",
+    letterSpacing: 0.8,
   },
   tabTextActive: {
-    color: Colors.text,
-    fontWeight: "700",
+    color: Colors.inkDark,
+    fontWeight: "900",
   },
   movieRow: {
     marginBottom: Spacing.md,
@@ -398,22 +404,22 @@ const styles = StyleSheet.create({
   emptyContainer: {
     alignItems: "center",
     padding: Spacing.xxxl,
-    backgroundColor: Colors.surface,
-    borderRadius: Radius.xl,
+    backgroundColor: Colors.velvet,
+    borderRadius: Radius.none,
     borderWidth: 1,
     borderColor: Colors.border,
     marginTop: Spacing.sm,
     gap: 6,
   },
   emptyTitle: {
-    color: Colors.text,
+    color: Colors.paper,
     fontSize: 17,
-    fontWeight: "700",
+    fontWeight: "800",
     marginTop: 6,
   },
   emptySubtitle: {
-    color: Colors.textMuted,
-    fontSize: 13,
+    color: Colors.dust,
+    fontSize: 12,
     textAlign: "center",
     maxWidth: 260,
     lineHeight: 18,
@@ -422,3 +428,4 @@ const styles = StyleSheet.create({
     marginTop: Spacing.md,
   },
 });
+

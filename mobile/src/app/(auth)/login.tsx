@@ -11,9 +11,10 @@ import {
 } from "react-native";
 import { useRouter } from "expo-router";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { Film, Mail, Lock, Sparkles, ArrowRight } from "lucide-react-native";
+import { Mail, Lock, Sparkles, Clapperboard, Award } from "lucide-react-native";
+import * as Haptics from "expo-haptics";
 import { useAuth } from "../../context/AuthContext";
-import { Colors, Radius, Spacing } from "../../constants/theme";
+import { Colors, Radius, Spacing, Typography } from "../../constants/theme";
 import { Button } from "../../components/common/Button";
 import { Input } from "../../components/common/Input";
 import { LogoMark } from "../../components/common/Logo";
@@ -28,16 +29,22 @@ export default function LoginScreen() {
 
   const handleLogin = async () => {
     if (!email.trim() || !password.trim()) {
-      Alert.alert("Required Fields", "Please enter your email and password.");
+      Alert.alert("Credentials Required", "Please provide both an email and password to enter the screening room.");
       return;
     }
 
     setLoading(true);
     try {
       await login(email.trim(), password);
+      try {
+        Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+      } catch {}
       router.replace("/(tabs)");
     } catch (err: any) {
-      Alert.alert("Login Failed", err.message || "Invalid credentials.");
+      try {
+        Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
+      } catch {}
+      Alert.alert("Access Denied", err.message || "Invalid credentials provided.");
     } finally {
       setLoading(false);
     }
@@ -49,9 +56,15 @@ export default function LoginScreen() {
     setLoading(true);
     try {
       await login(demoEmail, demoPass);
+      try {
+        Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+      } catch {}
       router.replace("/(tabs)");
     } catch (err: any) {
-      Alert.alert("Demo Login Failed", err.message || "Failed to log in with demo account.");
+      try {
+        Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
+      } catch {}
+      Alert.alert("Demo Access Failed", err.message || "Failed to log in with demo account.");
     } finally {
       setLoading(false);
     }
@@ -70,39 +83,45 @@ export default function LoginScreen() {
           {/* Header Brand */}
           <View style={styles.brandHeader}>
             <View style={styles.logoBadge}>
-              <LogoMark size={34} color="#C9A03C" />
+              <LogoMark size={36} color={Colors.brass} />
             </View>
             <Text style={styles.brandTitle}>VERDICT</Text>
             <Text style={styles.brandSubtitle}>
-              Rate films. Calculate your Taste Score. Deliver your verdict.
+              THE SCREENING ROOM FOR CINEPHILES
+            </Text>
+            <Text style={styles.brandTagline}>
+              Log films. Compute your Taste Score. Deliver your critical verdict.
             </Text>
           </View>
 
           {/* Form */}
           <View style={styles.formContainer}>
+            <View style={styles.formAccentBar} />
+            
             <Input
-              label="EMAIL ADDRESS"
-              placeholder="you@example.com"
+              label="MEMBER EMAIL"
+              placeholder="critic@screeningroom.org"
               value={email}
               onChangeText={setEmail}
               autoCapitalize="none"
               keyboardType="email-address"
-              leftIcon={<Mail size={18} color={Colors.textSubtle} />}
+              leftIcon={<Mail size={18} color={Colors.dust} />}
             />
 
             <Input
-              label="PASSWORD"
+              label="PASSKEY"
               placeholder="••••••••"
               value={password}
               onChangeText={setPassword}
               secureTextEntry
-              leftIcon={<Lock size={18} color={Colors.textSubtle} />}
+              leftIcon={<Lock size={18} color={Colors.dust} />}
             />
 
             <Button
-              title="Sign In"
+              title="Enter Screening Room"
               onPress={handleLogin}
               loading={loading}
+              variant="brass"
               size="lg"
               style={styles.submitBtn}
             />
@@ -111,26 +130,26 @@ export default function LoginScreen() {
             <View style={styles.demoSection}>
               <View style={styles.demoDivider}>
                 <View style={styles.dividerLine} />
-                <Text style={styles.dividerText}>QUICK DEMO ACCOUNTS</Text>
+                <Text style={styles.dividerText}>JURY GUEST PASSES</Text>
                 <View style={styles.dividerLine} />
               </View>
 
               <View style={styles.demoButtonsRow}>
                 <Button
-                  title="Demo (Alice)"
+                  title="Alice (Critic)"
                   variant="secondary"
                   size="sm"
                   onPress={() => handleDemoLogin("alice@example.com", "password123")}
                   style={styles.demoBtn}
-                  icon={<Sparkles size={14} color={Colors.primaryLight} />}
+                  icon={<Sparkles size={13} color={Colors.brass} />}
                 />
                 <Button
-                  title="Demo (Bob)"
+                  title="Bob (Auteur)"
                   variant="secondary"
                   size="sm"
                   onPress={() => handleDemoLogin("bob@example.com", "password123")}
                   style={styles.demoBtn}
-                  icon={<Sparkles size={14} color={Colors.gold} />}
+                  icon={<Sparkles size={13} color={Colors.brass} />}
                 />
               </View>
             </View>
@@ -138,9 +157,15 @@ export default function LoginScreen() {
 
           {/* Footer link to sign up */}
           <View style={styles.footer}>
-            <Text style={styles.footerText}>Don't have an account?</Text>
-            <TouchableOpacity onPress={() => router.push("/(auth)/signup")}>
-              <Text style={styles.footerLink}> Create one</Text>
+            <Text style={styles.footerText}>New to the screening room?</Text>
+            <TouchableOpacity 
+              activeOpacity={0.7}
+              onPress={() => {
+                try { Haptics.selectionAsync(); } catch {}
+                router.push("/(auth)/signup");
+              }}
+            >
+              <Text style={styles.footerLink}> Request Credentials</Text>
             </TouchableOpacity>
           </View>
         </ScrollView>
@@ -152,7 +177,7 @@ export default function LoginScreen() {
 const styles = StyleSheet.create({
   safeArea: {
     flex: 1,
-    backgroundColor: Colors.background,
+    backgroundColor: Colors.ink,
   },
   keyboardView: {
     flex: 1,
@@ -164,15 +189,15 @@ const styles = StyleSheet.create({
   },
   brandHeader: {
     alignItems: "center",
-    marginBottom: Spacing.xxl,
+    marginBottom: Spacing.xl,
   },
   logoBadge: {
-    width: 60,
-    height: 60,
+    width: 68,
+    height: 68,
     borderRadius: Radius.xl,
-    backgroundColor: "rgba(99, 102, 241, 0.15)",
+    backgroundColor: "rgba(197, 165, 114, 0.1)",
     borderWidth: 1.5,
-    borderColor: "rgba(99, 102, 241, 0.3)",
+    borderColor: "rgba(197, 165, 114, 0.35)",
     alignItems: "center",
     justifyContent: "center",
     marginBottom: Spacing.md,
@@ -180,23 +205,39 @@ const styles = StyleSheet.create({
   brandTitle: {
     fontSize: 28,
     fontWeight: "900",
-    color: Colors.text,
-    letterSpacing: 3,
+    color: Colors.paper,
+    letterSpacing: 4,
   },
   brandSubtitle: {
-    fontSize: 14,
-    color: Colors.textMuted,
+    fontSize: 10,
+    fontWeight: "800",
+    color: Colors.brass,
+    letterSpacing: 2,
+    marginTop: 4,
+  },
+  brandTagline: {
+    fontSize: 13,
+    color: Colors.dust,
     textAlign: "center",
-    marginTop: 6,
-    maxWidth: 280,
-    lineHeight: 20,
+    marginTop: 8,
+    maxWidth: 290,
+    lineHeight: 18,
   },
   formContainer: {
-    backgroundColor: Colors.surface,
+    backgroundColor: Colors.velvet,
     borderRadius: Radius.xl,
     padding: Spacing.xl,
     borderWidth: 1,
-    borderColor: Colors.border,
+    borderColor: Colors.hairline,
+    overflow: "hidden",
+  },
+  formAccentBar: {
+    position: "absolute",
+    top: 0,
+    left: 0,
+    right: 0,
+    height: 3,
+    backgroundColor: Colors.brass,
   },
   submitBtn: {
     marginTop: Spacing.sm,
@@ -212,13 +253,13 @@ const styles = StyleSheet.create({
   dividerLine: {
     flex: 1,
     height: 1,
-    backgroundColor: Colors.borderSubtle,
+    backgroundColor: Colors.hairline,
   },
   dividerText: {
-    fontSize: 10,
-    fontWeight: "700",
-    color: Colors.textSubtle,
-    letterSpacing: 1,
+    fontSize: 9,
+    fontWeight: "800",
+    color: Colors.dust,
+    letterSpacing: 1.5,
     marginHorizontal: Spacing.sm,
   },
   demoButtonsRow: {
@@ -232,15 +273,15 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     justifyContent: "center",
     alignItems: "center",
-    marginTop: Spacing.xxl,
+    marginTop: Spacing.xl,
   },
   footerText: {
-    color: Colors.textMuted,
-    fontSize: 14,
+    color: Colors.dust,
+    fontSize: 13,
   },
   footerLink: {
-    color: Colors.primaryLight,
+    color: Colors.brass,
     fontWeight: "700",
-    fontSize: 14,
+    fontSize: 13,
   },
 });

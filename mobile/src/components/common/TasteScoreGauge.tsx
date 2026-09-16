@@ -3,6 +3,7 @@ import { View, Text, StyleSheet, ViewStyle } from "react-native";
 import { Colors, Radius, Spacing } from "../../constants/theme";
 import { TasteScoreBreakdown } from "../../types";
 import { Badge } from "./Badge";
+import { Stamp } from "./Stamp";
 
 interface TasteScoreGaugeProps {
   score?: TasteScoreBreakdown | null;
@@ -21,10 +22,10 @@ export const TasteScoreGauge: React.FC<TasteScoreGaugeProps> = ({
   const consistency = score?.consistency ?? 0;
 
   const getTier = (s: number) => {
-    if (s >= 80) return { label: "Cinephile", variant: "purple" as const };
-    if (s >= 65) return { label: "Deep Cut", variant: "gold" as const };
-    if (s >= 50) return { label: "Curator", variant: "emerald" as const };
-    return { label: "Mainstream", variant: "primary" as const };
+    if (s >= 80) return { label: "Cinephile God", variant: "brass" as const };
+    if (s >= 65) return { label: "Deep Cut Curator", variant: "brass" as const };
+    if (s >= 50) return { label: "Commendable", variant: "default" as const };
+    return { label: "Mainstream Critic", variant: "outline" as const };
   };
 
   const tier = getTier(total);
@@ -32,9 +33,9 @@ export const TasteScoreGauge: React.FC<TasteScoreGaugeProps> = ({
   if (size === "sm") {
     return (
       <View style={[styles.smContainer, style]}>
-        <View style={styles.smScoreCircle}>
-          <Text style={styles.smScoreText}>{total}</Text>
-        </View>
+        <Stamp size="xs" rotation={-2} variant="brass">
+          {total}
+        </Stamp>
         <Badge label={tier.label} variant={tier.variant} size="sm" />
       </View>
     );
@@ -43,14 +44,13 @@ export const TasteScoreGauge: React.FC<TasteScoreGaugeProps> = ({
   return (
     <View style={[styles.card, style]}>
       <View style={styles.header}>
-        <View>
-          <Text style={styles.subheading}>CINEMATIC TASTE SCORE</Text>
-          <View style={styles.scoreRow}>
-            <Text style={styles.totalScore}>{total}</Text>
-            <Text style={styles.totalDenominator}>/100</Text>
-          </View>
+        <View style={styles.headerTitles}>
+          <Text style={styles.subheading}>CINEMATIC TASTE INDEX</Text>
+          <Text style={styles.tierTitle}>{tier.label}</Text>
         </View>
-        <Badge label={tier.label} variant={tier.variant} size="md" />
+        <Stamp size="lg" rotation={-3} label="Taste Score" variant="brass" animate="settle">
+          {total}
+        </Stamp>
       </View>
 
       <View style={styles.divider} />
@@ -59,14 +59,14 @@ export const TasteScoreGauge: React.FC<TasteScoreGaugeProps> = ({
         {/* Diversity */}
         <View style={styles.metricRow}>
           <View style={styles.metricHeader}>
-            <Text style={styles.metricLabel}>Diversity</Text>
+            <Text style={styles.metricLabel}>Genre Diversity</Text>
             <Text style={styles.metricValue}>{diversity}%</Text>
           </View>
           <View style={styles.progressBarBg}>
             <View
               style={[
                 styles.progressBarFill,
-                { width: `${Math.min(100, Math.max(0, diversity))}%`, backgroundColor: Colors.primaryLight },
+                { width: `${Math.min(100, Math.max(0, diversity))}%`, backgroundColor: Colors.brass },
               ]}
             />
           </View>
@@ -75,14 +75,14 @@ export const TasteScoreGauge: React.FC<TasteScoreGaugeProps> = ({
         {/* Obscurity */}
         <View style={styles.metricRow}>
           <View style={styles.metricHeader}>
-            <Text style={styles.metricLabel}>Obscurity (Gems)</Text>
+            <Text style={styles.metricLabel}>Obscurity & Deep Cuts</Text>
             <Text style={styles.metricValue}>{obscurity}%</Text>
           </View>
           <View style={styles.progressBarBg}>
             <View
               style={[
                 styles.progressBarFill,
-                { width: `${Math.min(100, Math.max(0, obscurity))}%`, backgroundColor: Colors.gold },
+                { width: `${Math.min(100, Math.max(0, obscurity))}%`, backgroundColor: Colors.brassLight },
               ]}
             />
           </View>
@@ -91,14 +91,14 @@ export const TasteScoreGauge: React.FC<TasteScoreGaugeProps> = ({
         {/* Consistency */}
         <View style={styles.metricRow}>
           <View style={styles.metricHeader}>
-            <Text style={styles.metricLabel}>Consistency</Text>
+            <Text style={styles.metricLabel}>Critical Consistency</Text>
             <Text style={styles.metricValue}>{consistency}%</Text>
           </View>
           <View style={styles.progressBarBg}>
             <View
               style={[
                 styles.progressBarFill,
-                { width: `${Math.min(100, Math.max(0, consistency))}%`, backgroundColor: Colors.emerald },
+                { width: `${Math.min(100, Math.max(0, consistency))}%`, backgroundColor: "#81C784" },
               ]}
             />
           </View>
@@ -110,7 +110,7 @@ export const TasteScoreGauge: React.FC<TasteScoreGaugeProps> = ({
           {score.dominantGenres.slice(0, 3).map((g, idx) => (
             <Badge
               key={idx}
-              label={`${g.genre} (${g.percentage}%)`}
+              label={`${g.genre} · ${g.percentage}%`}
               variant="outline"
               size="sm"
             />
@@ -123,8 +123,8 @@ export const TasteScoreGauge: React.FC<TasteScoreGaugeProps> = ({
 
 const styles = StyleSheet.create({
   card: {
-    backgroundColor: Colors.surface,
-    borderRadius: Radius.lg,
+    backgroundColor: Colors.velvet,
+    borderRadius: Radius.none,
     padding: Spacing.lg,
     borderWidth: 1,
     borderColor: Colors.border,
@@ -132,29 +132,24 @@ const styles = StyleSheet.create({
   header: {
     flexDirection: "row",
     justifyContent: "space-between",
-    alignItems: "flex-start",
+    alignItems: "center",
+  },
+  headerTitles: {
+    flex: 1,
+    gap: 4,
   },
   subheading: {
-    fontSize: 11,
-    letterSpacing: 1.2,
-    fontWeight: "700",
-    color: Colors.textMuted,
-    marginBottom: 4,
-  },
-  scoreRow: {
-    flexDirection: "row",
-    alignItems: "baseline",
-  },
-  totalScore: {
-    fontSize: 38,
+    fontSize: 10,
+    letterSpacing: 1.5,
     fontWeight: "800",
-    color: Colors.text,
+    color: Colors.dust,
+    textTransform: "uppercase",
   },
-  totalDenominator: {
+  tierTitle: {
     fontSize: 18,
-    fontWeight: "600",
-    color: Colors.textSubtle,
-    marginLeft: 4,
+    fontWeight: "900",
+    color: Colors.paper,
+    letterSpacing: 0.2,
   },
   divider: {
     height: 1,
@@ -173,24 +168,23 @@ const styles = StyleSheet.create({
     alignItems: "center",
   },
   metricLabel: {
-    fontSize: 13,
-    color: Colors.textMuted,
-    fontWeight: "500",
+    fontSize: 12,
+    color: Colors.dustLight,
+    fontWeight: "600",
   },
   metricValue: {
-    fontSize: 13,
-    color: Colors.text,
-    fontWeight: "700",
+    fontSize: 12,
+    color: Colors.paper,
+    fontWeight: "800",
+    fontFamily: "monospace",
   },
   progressBarBg: {
-    height: 6,
-    backgroundColor: Colors.surfaceElevated,
-    borderRadius: Radius.full,
+    height: 4,
+    backgroundColor: Colors.velvetElevated,
     overflow: "hidden",
   },
   progressBarFill: {
     height: "100%",
-    borderRadius: Radius.full,
   },
   genreTagsRow: {
     flexDirection: "row",
@@ -206,19 +200,5 @@ const styles = StyleSheet.create({
     alignItems: "center",
     gap: Spacing.sm,
   },
-  smScoreCircle: {
-    width: 32,
-    height: 32,
-    borderRadius: 16,
-    backgroundColor: Colors.surfaceElevated,
-    borderWidth: 1,
-    borderColor: Colors.border,
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  smScoreText: {
-    color: Colors.text,
-    fontSize: 13,
-    fontWeight: "800",
-  },
 });
+

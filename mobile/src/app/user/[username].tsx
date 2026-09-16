@@ -18,18 +18,21 @@ import {
   Film,
   Sparkles,
   HeartHandshake,
+  Award,
+  Clapperboard,
+  ShieldAlert,
 } from "lucide-react-native";
 import * as Haptics from "expo-haptics";
 import { usersApi, followsApi, verdictsApi } from "../../api";
 import { useAuth } from "../../context/AuthContext";
-import { Colors, Radius, Spacing } from "../../constants/theme";
+import { Colors, Radius, Spacing, Typography } from "../../constants/theme";
 import { Avatar } from "../../components/common/Avatar";
 import { TasteScoreGauge } from "../../components/common/TasteScoreGauge";
 import { MovieCard } from "../../components/common/MovieCard";
 import { VerdictCard } from "../../components/common/VerdictCard";
 import { Button } from "../../components/common/Button";
+import { Badge } from "../../components/common/Badge";
 import { LeaveVerdictModal } from "../../components/common/LeaveVerdictModal";
-import { WatchedEntry, Verdict, TasteScoreBreakdown, TasteMatch, User } from "../../types";
 
 export default function UserProfileScreen() {
   const { username } = useLocalSearchParams<{ username: string }>();
@@ -42,10 +45,12 @@ export default function UserProfileScreen() {
 
   const isSelf = currentUser?.username?.toLowerCase() === (username as string)?.toLowerCase();
 
-  // Unified Full Profile Query (1 single fast request instead of 6 redundant ones)
+  // Unified Full Profile Query
   const {
     data: profileData,
     isLoading: isLoadingProfile,
+    refetch,
+    isRefetching,
   } = useQuery({
     queryKey: ["fullProfile", username],
     queryFn: () => usersApi.getFullProfile(username as string),
@@ -82,7 +87,7 @@ export default function UserProfileScreen() {
       } catch {}
       queryClient.invalidateQueries({ queryKey: ["fullProfile", username] });
       queryClient.invalidateQueries({ queryKey: ["feed"] });
-      Alert.alert("Verdict Delivered", "Your rating and critique have been recorded!");
+      Alert.alert("Verdict Delivered", "Your rating and critique have been recorded in the register.");
     },
   });
 
@@ -97,7 +102,8 @@ export default function UserProfileScreen() {
   if (isLoadingProfile) {
     return (
       <View style={styles.loadingContainer}>
-        <ActivityIndicator size="large" color={Colors.primary} />
+        <ActivityIndicator size="large" color={Colors.brass} />
+        <Text style={styles.loadingText}>Retrieving taste dossier...</Text>
       </View>
     );
   }
@@ -105,27 +111,39 @@ export default function UserProfileScreen() {
   if (!profileUser) {
     return (
       <View style={styles.errorContainer}>
-        <Film size={40} color={Colors.textSubtle} />
-        <Text style={styles.errorTitle}>User not found</Text>
-        <Button title="Go Back" onPress={() => router.back()} size="sm" />
+        <View style={styles.errorIconBox}>
+          <ShieldAlert size={36} color={Colors.marqueeRed} />
+        </View>
+        <Text style={styles.errorTitle}>DOSSIER NOT FOUND</Text>
+        <Text style={styles.errorSubtitle}>
+          The member record for @{username} could not be located in the register.
+        </Text>
+        <Button title="Return to Screening Room" onPress={() => router.back()} size="md" variant="brass" />
       </View>
     );
   }
 
   const renderHeader = () => (
     <View style={styles.headerContainer}>
-      {/* Profile Header */}
+      {/* Profile Header Card */}
       <View style={styles.profileCard}>
+        <View style={styles.cardHeaderAccent} />
+        
         <View style={styles.profileTopRow}>
           <Avatar
             uri={profileUser.avatarUrl}
             username={profileUser.username}
-            size={64}
+            size={72}
           />
           <View style={styles.profileDetails}>
-            <Text style={styles.profileName}>@{profileUser.username}</Text>
-            {profileUser.bio && (
-              <Text style={styles.profileBio}>{profileUser.bio}</Text>
+            <View style={styles.usernameRow}>
+              <Text style={styles.profileName}>@{profileUser.username}</Text>
+              <Badge label="MEMBER" variant="brass" size="sm" />
+            </View>
+            {profileUser.bio ? (
+              <Text style={styles.profileBio} numberOfLines={3}>{profileUser.bio}</Text>
+            ) : (
+              <Text style={styles.profileBioEmpty}>No statement on record.</Text>
             )}
           </View>
         </View>
@@ -147,9 +165,9 @@ export default function UserProfileScreen() {
               loading={followMutation.isPending}
               icon={
                 isFollowing ? (
-                  <UserCheck size={14} color={Colors.emerald} />
+                  <UserCheck size={14} color={Colors.brass} />
                 ) : (
-                  <UserPlus size={14} color={Colors.text} />
+                  <UserPlus size={14} color={Colors.paper} />
                 )
               }
               style={styles.actionBtn}
@@ -157,7 +175,7 @@ export default function UserProfileScreen() {
 
             <Button
               title="Deliver Verdict"
-              variant="gold"
+              variant="brass"
               size="sm"
               onPress={() => {
                 if (!isAuthenticated) {
@@ -166,7 +184,7 @@ export default function UserProfileScreen() {
                 }
                 setVerdictModalVisible(true);
               }}
-              icon={<Gavel size={14} color="#000" />}
+              icon={<Gavel size={14} color={Colors.ink} />}
               style={styles.actionBtn}
             />
           </View>
@@ -177,8 +195,8 @@ export default function UserProfileScreen() {
       {tasteMatch && (
         <View style={styles.tasteMatchCard}>
           <View style={styles.tasteMatchHeader}>
-            <HeartHandshake size={18} color={Colors.accent} />
-            <Text style={styles.tasteMatchTitle}>TASTE COMPATIBILITY</Text>
+            <HeartHandshake size={16} color={Colors.brass} />
+            <Text style={styles.tasteMatchTitle}>TASTE COMPATIBILITY INDEX</Text>
           </View>
           <View style={styles.tasteMatchScoreRow}>
             <Text style={styles.tasteMatchScore}>{tasteMatch.score}%</Text>
@@ -195,32 +213,40 @@ export default function UserProfileScreen() {
       {/* Segmented Control Tabs */}
       <View style={styles.tabsContainer}>
         <TouchableOpacity
+          activeOpacity={0.8}
           style={[styles.tabButton, activeTab === "watched" && styles.tabButtonActive]}
-          onPress={() => setActiveTab("watched")}
+          onPress={() => {
+            try { Haptics.selectionAsync(); } catch {}
+            setActiveTab("watched");
+          }}
         >
           <Film
-            size={16}
-            color={activeTab === "watched" ? Colors.primaryLight : Colors.textSubtle}
+            size={15}
+            color={activeTab === "watched" ? Colors.brass : Colors.dust}
           />
           <Text
             style={[styles.tabText, activeTab === "watched" && styles.tabTextActive]}
           >
-            Watched ({watchedList.length})
+            Vault Archive ({watchedList.length})
           </Text>
         </TouchableOpacity>
 
         <TouchableOpacity
+          activeOpacity={0.8}
           style={[styles.tabButton, activeTab === "verdicts" && styles.tabButtonActive]}
-          onPress={() => setActiveTab("verdicts")}
+          onPress={() => {
+            try { Haptics.selectionAsync(); } catch {}
+            setActiveTab("verdicts");
+          }}
         >
           <Gavel
-            size={16}
-            color={activeTab === "verdicts" ? Colors.primaryLight : Colors.textSubtle}
+            size={15}
+            color={activeTab === "verdicts" ? Colors.brass : Colors.dust}
           />
           <Text
             style={[styles.tabText, activeTab === "verdicts" && styles.tabTextActive]}
           >
-            Verdicts ({verdicts.length})
+            Verdicts Received ({verdicts.length})
           </Text>
         </TouchableOpacity>
       </View>
@@ -233,6 +259,13 @@ export default function UserProfileScreen() {
         <FlatList
           data={watchedList}
           keyExtractor={(item) => item.id}
+          refreshControl={
+            <RefreshControl
+              refreshing={isRefetching}
+              onRefresh={refetch}
+              tintColor={Colors.brass}
+            />
+          }
           renderItem={({ item }) => {
             if (!item.movie) return null;
             return (
@@ -250,11 +283,24 @@ export default function UserProfileScreen() {
           ListHeaderComponent={renderHeader}
           contentContainerStyle={styles.listContent}
           showsVerticalScrollIndicator={false}
+          ListEmptyComponent={
+            <View style={styles.emptyList}>
+              <Clapperboard size={32} color={Colors.dust} />
+              <Text style={styles.emptyListText}>No titles registered in this vault yet.</Text>
+            </View>
+          }
         />
       ) : (
         <FlatList
           data={verdicts}
           keyExtractor={(item) => item.id}
+          refreshControl={
+            <RefreshControl
+              refreshing={isRefetching}
+              onRefresh={refetch}
+              tintColor={Colors.brass}
+            />
+          }
           renderItem={({ item }) => (
             <VerdictCard
               item={{
@@ -272,6 +318,12 @@ export default function UserProfileScreen() {
           ListHeaderComponent={renderHeader}
           contentContainerStyle={styles.listContent}
           showsVerticalScrollIndicator={false}
+          ListEmptyComponent={
+            <View style={styles.emptyList}>
+              <Gavel size={32} color={Colors.dust} />
+              <Text style={styles.emptyListText}>No verdicts delivered on this profile yet.</Text>
+            </View>
+          }
         />
       )}
 
@@ -289,7 +341,7 @@ export default function UserProfileScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: Colors.background,
+    backgroundColor: Colors.ink,
   },
   listContent: {
     padding: Spacing.lg,
@@ -299,80 +351,129 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: "center",
     alignItems: "center",
-    backgroundColor: Colors.background,
+    backgroundColor: Colors.ink,
+    gap: Spacing.md,
+  },
+  loadingText: {
+    fontSize: 13,
+    color: Colors.dust,
+    letterSpacing: 0.8,
   },
   errorContainer: {
     flex: 1,
     justifyContent: "center",
     alignItems: "center",
-    backgroundColor: Colors.background,
+    backgroundColor: Colors.ink,
+    padding: Spacing.xl,
     gap: Spacing.md,
   },
+  errorIconBox: {
+    width: 68,
+    height: 68,
+    borderRadius: Radius.full,
+    backgroundColor: "rgba(169, 50, 38, 0.15)",
+    borderWidth: 1,
+    borderColor: "rgba(169, 50, 38, 0.4)",
+    alignItems: "center",
+    justifyContent: "center",
+    marginBottom: Spacing.sm,
+  },
   errorTitle: {
-    color: Colors.text,
-    fontSize: 16,
-    fontWeight: "700",
+    color: Colors.paper,
+    fontSize: 17,
+    fontWeight: "900",
+    letterSpacing: 2,
+  },
+  errorSubtitle: {
+    color: Colors.dust,
+    fontSize: 13,
+    textAlign: "center",
+    lineHeight: 19,
+    marginBottom: Spacing.md,
   },
   headerContainer: {
     marginBottom: Spacing.md,
   },
   profileCard: {
-    backgroundColor: Colors.surface,
+    backgroundColor: Colors.velvet,
     borderRadius: Radius.xl,
     padding: Spacing.lg,
     borderWidth: 1,
-    borderColor: Colors.border,
+    borderColor: Colors.hairline,
     marginBottom: Spacing.md,
     gap: Spacing.md,
+    overflow: "hidden",
+  },
+  cardHeaderAccent: {
+    position: "absolute",
+    top: 0,
+    left: 0,
+    right: 0,
+    height: 3,
+    backgroundColor: Colors.brass,
   },
   profileTopRow: {
     flexDirection: "row",
     alignItems: "center",
     gap: Spacing.md,
+    marginTop: Spacing.xs,
   },
   profileDetails: {
     flex: 1,
     gap: 4,
   },
+  usernameRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: Spacing.sm,
+    flexWrap: "wrap",
+  },
   profileName: {
     fontSize: 20,
     fontWeight: "900",
-    color: Colors.text,
+    color: Colors.paper,
+    letterSpacing: -0.3,
   },
   profileBio: {
     fontSize: 13,
-    color: Colors.textMuted,
+    color: Colors.dust,
     lineHeight: 18,
+  },
+  profileBioEmpty: {
+    fontSize: 12,
+    fontStyle: "italic",
+    color: Colors.dust,
+    opacity: 0.6,
   },
   profileActions: {
     flexDirection: "row",
     gap: Spacing.sm,
     borderTopWidth: 1,
-    borderTopColor: Colors.borderSubtle,
+    borderTopColor: Colors.hairline,
     paddingTop: Spacing.md,
   },
   actionBtn: {
     flex: 1,
   },
   tasteMatchCard: {
-    backgroundColor: "rgba(236, 72, 153, 0.08)",
+    backgroundColor: "rgba(197, 165, 114, 0.08)",
     borderRadius: Radius.lg,
     padding: Spacing.md,
     borderWidth: 1,
-    borderColor: "rgba(236, 72, 153, 0.3)",
+    borderColor: "rgba(197, 165, 114, 0.25)",
     marginBottom: Spacing.md,
     gap: 6,
   },
   tasteMatchHeader: {
     flexDirection: "row",
     alignItems: "center",
-    gap: 6,
+    gap: 8,
   },
   tasteMatchTitle: {
     fontSize: 11,
     fontWeight: "800",
-    color: Colors.accent,
-    letterSpacing: 1,
+    color: Colors.brass,
+    letterSpacing: 1.2,
   },
   tasteMatchScoreRow: {
     flexDirection: "row",
@@ -382,12 +483,13 @@ const styles = StyleSheet.create({
   tasteMatchScore: {
     fontSize: 28,
     fontWeight: "900",
-    color: Colors.text,
+    color: Colors.paper,
+    letterSpacing: -0.5,
   },
   tasteMatchSummary: {
     flex: 1,
     fontSize: 12,
-    color: Colors.textMuted,
+    color: Colors.dust,
     lineHeight: 16,
   },
   tasteGaugeWrapper: {
@@ -395,11 +497,11 @@ const styles = StyleSheet.create({
   },
   tabsContainer: {
     flexDirection: "row",
-    backgroundColor: Colors.surface,
+    backgroundColor: Colors.velvet,
     borderRadius: Radius.lg,
     padding: 4,
     borderWidth: 1,
-    borderColor: Colors.border,
+    borderColor: Colors.hairline,
     marginBottom: Spacing.md,
   },
   tabButton: {
@@ -412,18 +514,31 @@ const styles = StyleSheet.create({
     gap: 6,
   },
   tabButtonActive: {
-    backgroundColor: Colors.surfaceElevated,
+    backgroundColor: Colors.inkElevated,
+    borderWidth: 1,
+    borderColor: Colors.hairline,
   },
   tabText: {
-    fontSize: 13,
+    fontSize: 12,
     fontWeight: "600",
-    color: Colors.textSubtle,
+    color: Colors.dust,
   },
   tabTextActive: {
-    color: Colors.text,
-    fontWeight: "700",
+    color: Colors.paper,
+    fontWeight: "800",
   },
   movieRow: {
     marginBottom: Spacing.md,
+  },
+  emptyList: {
+    alignItems: "center",
+    justifyContent: "center",
+    paddingVertical: Spacing.xxl,
+    gap: Spacing.sm,
+  },
+  emptyListText: {
+    fontSize: 13,
+    color: Colors.dust,
+    textAlign: "center",
   },
 });

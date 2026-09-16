@@ -15,6 +15,7 @@ import { Colors, Radius, Spacing } from "../../constants/theme";
 import { Movie } from "../../types";
 import { Button } from "./Button";
 import { Input } from "./Input";
+import { Stamp } from "./Stamp";
 
 interface LogMovieModalProps {
   visible: boolean;
@@ -29,7 +30,7 @@ export const LogMovieModal: React.FC<LogMovieModalProps> = ({
   onClose,
   onSubmit,
 }) => {
-  const [rating, setRating] = useState<number>(80);
+  const [rating, setRating] = useState<number>(85);
   const [review, setReview] = useState<string>("");
   const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
 
@@ -79,30 +80,31 @@ export const LogMovieModal: React.FC<LogMovieModalProps> = ({
 
           <View style={styles.header}>
             <View style={styles.titleContainer}>
-              <Text style={styles.headerSubtitle}>LOG FILM</Text>
+              <Text style={styles.headerSubtitle}>ARCHIVE TO VAULT</Text>
               <Text numberOfLines={1} style={styles.movieTitle}>
                 {movie.title} {movie.year ? `(${movie.year})` : ""}
               </Text>
             </View>
             <TouchableOpacity onPress={onClose} style={styles.closeBtn}>
-              <X size={20} color={Colors.textMuted} />
+              <X size={18} color={Colors.dustLight} />
             </TouchableOpacity>
           </View>
 
           <ScrollView showsVerticalScrollIndicator={false}>
             {/* Rating Selector */}
             <View style={styles.ratingSection}>
-              <Text style={styles.sectionLabel}>YOUR RATING</Text>
+              <Text style={styles.sectionLabel}>YOUR CRITICAL RATING</Text>
               <View style={styles.scoreDisplay}>
-                <Star size={28} color={Colors.gold} fill={Colors.gold} />
-                <Text style={styles.scoreNumber}>{rating}</Text>
-                <Text style={styles.scoreMax}>/100</Text>
+                <Stamp size="md" rotation={-2} variant="brass" animate="settle">
+                  {rating}
+                </Stamp>
               </View>
 
               <View style={styles.presetRow}>
                 {presetScores.map((score) => (
                   <TouchableOpacity
                     key={score}
+                    activeOpacity={0.75}
                     onPress={() => handleRatingChange(score)}
                     style={[
                       styles.presetChip,
@@ -125,8 +127,8 @@ export const LogMovieModal: React.FC<LogMovieModalProps> = ({
             {/* Quick Review / Verdict */}
             <View style={styles.reviewSection}>
               <Input
-                label="VERDICT / THOUGHTS (OPTIONAL)"
-                placeholder="What made this film memorable to you?"
+                label="PERSONAL NOTE (OPTIONAL)"
+                placeholder="A line on why it struck or missed you…"
                 value={review}
                 onChangeText={setReview}
                 multiline
@@ -136,10 +138,11 @@ export const LogMovieModal: React.FC<LogMovieModalProps> = ({
             </View>
 
             <Button
-              title="Save to Watched List"
+              title="Save to Watched Archive"
               onPress={handleSubmit}
               loading={isSubmitting}
               size="lg"
+              variant="primary"
               style={styles.submitBtn}
             />
           </ScrollView>
@@ -153,25 +156,22 @@ const styles = StyleSheet.create({
   overlay: {
     flex: 1,
     justifyContent: "flex-end",
-    backgroundColor: "rgba(0,0,0,0.65)",
+    backgroundColor: "rgba(14, 15, 20, 0.8)",
   },
   backdrop: {
     ...StyleSheet.absoluteFill,
   },
   sheetContainer: {
-    backgroundColor: Colors.surface,
-    borderTopLeftRadius: Radius.xl,
-    borderTopRightRadius: Radius.xl,
-    borderTopWidth: 1,
-    borderColor: Colors.border,
+    backgroundColor: Colors.velvet,
+    borderTopWidth: 2,
+    borderColor: Colors.borderBrass,
     padding: Spacing.xl,
     paddingBottom: Platform.OS === "ios" ? 40 : Spacing.xl,
     maxHeight: "85%",
   },
   dragIndicator: {
     width: 36,
-    height: 4,
-    borderRadius: 2,
+    height: 3,
     backgroundColor: Colors.border,
     alignSelf: "center",
     marginBottom: Spacing.md,
@@ -187,25 +187,24 @@ const styles = StyleSheet.create({
     marginRight: Spacing.md,
   },
   headerSubtitle: {
-    fontSize: 11,
-    fontWeight: "700",
-    color: Colors.textMuted,
+    fontSize: 10,
+    fontWeight: "800",
+    color: Colors.brassLight,
     letterSpacing: 1.2,
   },
   movieTitle: {
     fontSize: 18,
-    fontWeight: "800",
-    color: Colors.text,
+    fontWeight: "900",
+    color: Colors.paper,
     marginTop: 2,
   },
   closeBtn: {
     padding: 6,
-    backgroundColor: Colors.surfaceElevated,
-    borderRadius: Radius.full,
+    backgroundColor: Colors.velvetElevated,
   },
   ratingSection: {
-    backgroundColor: Colors.surfaceElevated,
-    borderRadius: Radius.lg,
+    backgroundColor: Colors.velvetElevated,
+    borderRadius: Radius.none,
     padding: Spacing.lg,
     alignItems: "center",
     marginBottom: Spacing.lg,
@@ -213,27 +212,14 @@ const styles = StyleSheet.create({
     borderColor: Colors.borderSubtle,
   },
   sectionLabel: {
-    fontSize: 11,
-    fontWeight: "700",
-    color: Colors.textMuted,
-    letterSpacing: 1,
+    fontSize: 10,
+    fontWeight: "800",
+    color: Colors.dustLight,
+    letterSpacing: 1.2,
     marginBottom: Spacing.sm,
   },
   scoreDisplay: {
-    flexDirection: "row",
-    alignItems: "baseline",
-    gap: 6,
     marginVertical: Spacing.sm,
-  },
-  scoreNumber: {
-    fontSize: 44,
-    fontWeight: "900",
-    color: Colors.text,
-  },
-  scoreMax: {
-    fontSize: 18,
-    fontWeight: "700",
-    color: Colors.textSubtle,
   },
   presetRow: {
     flexDirection: "row",
@@ -243,23 +229,24 @@ const styles = StyleSheet.create({
   presetChip: {
     paddingVertical: 6,
     paddingHorizontal: 12,
-    borderRadius: Radius.full,
-    backgroundColor: Colors.surface,
+    borderRadius: Radius.none,
+    backgroundColor: Colors.velvet,
     borderWidth: 1,
     borderColor: Colors.border,
   },
   presetChipActive: {
-    backgroundColor: Colors.primary,
-    borderColor: Colors.primaryLight,
+    backgroundColor: Colors.brassSubtle,
+    borderColor: Colors.brass,
   },
   presetChipText: {
-    color: Colors.textMuted,
-    fontSize: 13,
-    fontWeight: "600",
+    color: Colors.dustLight,
+    fontSize: 12,
+    fontWeight: "800",
+    fontFamily: "monospace",
   },
   presetChipTextActive: {
-    color: "#ffffff",
-    fontWeight: "700",
+    color: Colors.brassLight,
+    fontWeight: "900",
   },
   reviewSection: {
     marginBottom: Spacing.lg,
@@ -273,3 +260,4 @@ const styles = StyleSheet.create({
     marginTop: Spacing.sm,
   },
 });
+

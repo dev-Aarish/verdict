@@ -398,10 +398,11 @@ function ProfilePage() {
   return (
     <div className="min-h-screen">
       <TopBar />
-      <main className="mx-auto max-w-6xl px-5 py-8 md:px-6 md:py-12">
-        <div className="flex flex-col items-center gap-6 text-center">
+      <main className="mx-auto max-w-6xl px-4 py-8 sm:px-6 md:py-12">
+        {/* Profile Header */}
+        <div className="flex flex-col items-center gap-5 text-center">
           <div className="relative">
-            <div className="h-20 w-20 overflow-hidden rounded-full bg-dust/20 ring-2 ring-brass md:h-24 md:w-24">
+            <div className="h-24 w-24 overflow-hidden rounded-full bg-dust/20 ring-2 ring-brass ring-offset-4 ring-offset-ink md:h-28 md:w-28 shadow-xl">
               <img
                 src={avatarUrlFor(profileUser.username, profileUser.avatarUrl)}
                 alt={profileUser.username}
@@ -412,17 +413,20 @@ function ProfilePage() {
               <button
                 onClick={() => setAvatarOpen(true)}
                 aria-label="Change avatar"
-                className="absolute -bottom-1 -right-1 flex h-7 w-7 cursor-pointer items-center justify-center rounded-full border border-brass bg-velvet text-brass transition-colors hover:bg-brass hover:text-ink"
+                className="absolute -bottom-1 -right-1 flex h-8 w-8 cursor-pointer items-center justify-center rounded-full border border-brass bg-velvet text-brass transition-all hover:bg-brass hover:text-ink active:scale-95 shadow-lg"
               >
-                <Pencil className="h-3.5 w-3.5" />
+                <Pencil className="h-4 w-4" />
               </button>
             )}
           </div>
+
           <div>
-            <h1 className="text-section text-paper">{profileUser.username}</h1>
+            <h1 className="text-section text-paper font-bold tracking-tight">@{profileUser.username}</h1>
+            
+            {/* Bio / About */}
             <div className="mt-2 mx-auto flex max-w-md flex-col items-center gap-2">
               {editingAbout ? (
-                <div className="w-full">
+                <div className="w-full surface-card p-4 rounded-xl">
                   <textarea
                     value={aboutDraft}
                     onChange={(e) => setAboutDraft(e.target.value)}
@@ -430,7 +434,7 @@ function ProfilePage() {
                     rows={3}
                     placeholder="Tell people about your taste in film..."
                     autoFocus
-                    className="w-full resize-none border border-dust/30 bg-transparent px-3 py-2 text-sm text-paper placeholder:text-dust/50 outline-none focus:border-brass/60"
+                    className="w-full resize-none border border-dust/30 bg-ink/60 rounded-lg p-3 text-sm text-paper placeholder:text-dust/50 outline-none focus:border-brass"
                   />
                   <div className="mt-2 flex items-center justify-between gap-3">
                     <span className="text-caption text-dust text-xs">
@@ -442,14 +446,14 @@ function ProfilePage() {
                       )}
                       <button
                         onClick={() => setEditingAbout(false)}
-                        className="cursor-pointer border border-dust/30 px-3 py-1 text-caption text-dust text-xs transition-colors hover:text-paper"
+                        className="cursor-pointer border border-dust/30 px-3 py-1.5 text-caption text-dust text-xs rounded transition-colors hover:text-paper"
                       >
                         Cancel
                       </button>
                       <button
                         onClick={handleSaveAbout}
                         disabled={aboutSaving}
-                        className="cursor-pointer border border-brass px-3 py-1 text-caption text-brass text-xs transition-colors hover:bg-brass hover:text-ink disabled:cursor-not-allowed disabled:opacity-40"
+                        className="cursor-pointer border border-brass bg-brass text-ink px-3.5 py-1.5 text-caption text-xs font-bold rounded transition-all hover:bg-brass/90 disabled:opacity-40"
                       >
                         {aboutSaving ? "Saving..." : "Save"}
                       </button>
@@ -457,8 +461,8 @@ function ProfilePage() {
                   </div>
                 </div>
               ) : profileUser.bio ? (
-                <div className="flex items-start justify-center gap-2">
-                  <p className="text-sm text-paper/70">{profileUser.bio}</p>
+                <div className="flex items-start justify-center gap-2 max-w-lg">
+                  <p className="text-sm md:text-base text-paper/85 italic font-serif leading-relaxed">"{profileUser.bio}"</p>
                   {isOwn && (
                     <button
                       onClick={() => {
@@ -466,7 +470,7 @@ function ProfilePage() {
                         setAboutError(null);
                         setEditingAbout(true);
                       }}
-                      className="mt-0.5 shrink-0 cursor-pointer text-caption text-brass/60 text-xs transition-colors hover:text-brass"
+                      className="mt-0.5 shrink-0 cursor-pointer text-caption text-brass/70 text-xs transition-colors hover:text-brass"
                     >
                       Edit
                     </button>
@@ -479,100 +483,105 @@ function ProfilePage() {
                     setAboutError(null);
                     setEditingAbout(true);
                   }}
-                  className="cursor-pointer text-caption text-brass/60 text-xs transition-colors hover:text-brass"
+                  className="cursor-pointer rounded-full border border-brass/30 bg-brass/10 px-3 py-1 text-caption text-brass text-xs transition-colors hover:bg-brass hover:text-ink"
                 >
-                  + Add about
+                  + Add bio
                 </button>
               ) : null}
             </div>
-            <div className="mt-3 flex flex-wrap items-center justify-center gap-x-4 gap-y-1 text-caption text-dust md:gap-4">
-              <span>
-                {filmCount} film{filmCount !== 1 ? "s" : ""}
+
+            {/* Stat Pill Cluster */}
+            <div className="mt-4 flex flex-wrap items-center justify-center gap-2 text-xs">
+              <span className="rounded-full border border-border/80 bg-velvet/60 px-3 py-1 mono text-dust">
+                <span className="font-bold text-paper">{filmCount}</span> film{filmCount !== 1 ? "s" : ""}
               </span>
               {followCounts && (
                 <>
-                  <span className="hidden opacity-30 md:inline">·</span>
                   <Link
                     to="/profile/$username/followers"
                     params={{ username }}
-                    className="hover:text-brass transition-colors"
+                    className="rounded-full border border-border/80 bg-velvet/60 px-3 py-1 mono text-dust hover:border-brass/50 hover:text-brass transition-colors"
                   >
-                    {followCounts.followers} follower{followCounts.followers !== 1 ? "s" : ""}
+                    <span className="font-bold text-paper">{followCounts.followers}</span> followers
                   </Link>
-                  <span className="hidden opacity-30 md:inline">·</span>
                   <Link
                     to="/profile/$username/following"
                     params={{ username }}
-                    className="hover:text-brass transition-colors"
+                    className="rounded-full border border-border/80 bg-velvet/60 px-3 py-1 mono text-dust hover:border-brass/50 hover:text-brass transition-colors"
                   >
-                    {followCounts.following} following
+                    <span className="font-bold text-paper">{followCounts.following}</span> following
                   </Link>
                 </>
               )}
               {avgRating && (
-                <>
-                  <span className="hidden opacity-30 md:inline">·</span>
-                  <span>
-                    Avg <span className="text-brass">{avgRating}</span>/10
-                  </span>
-                </>
+                <span className="rounded-full border border-border/80 bg-velvet/60 px-3 py-1 mono text-dust">
+                  Avg <span className="font-bold text-brass">{avgRating}</span>/10
+                </span>
               )}
               {memberSince && (
-                <>
-                  <span className="hidden opacity-30 md:inline">·</span>
-                  <span>Since {memberSince}</span>
-                </>
+                <span className="rounded-full border border-border/80 bg-velvet/60 px-3 py-1 mono text-dust/80">
+                  Since {memberSince}
+                </span>
               )}
             </div>
-            {!isOwn && user && (
-              <div className="mt-4 flex items-center justify-center gap-3">
+
+            {/* Profile Action Buttons */}
+            <div className="mt-5 flex flex-wrap items-center justify-center gap-3">
+              {!isOwn && user && (
                 <button
                   onClick={handleFollowToggle}
-                  className={`border px-5 py-2 text-caption transition-colors cursor-pointer ${
+                  className={`min-h-[40px] px-5 py-2 text-caption rounded transition-all cursor-pointer font-bold ${
                     isFollowing
-                      ? "border-dust/40 text-dust hover:border-marquee-red hover:text-marquee-red"
-                      : "border-brass text-brass hover:bg-brass hover:text-ink"
+                      ? "border border-dust/40 text-dust hover:border-marquee-red hover:text-marquee-red"
+                      : "border border-brass bg-brass text-ink hover:bg-transparent hover:text-brass active:scale-95"
                   }`}
                 >
-                  {isFollowing ? "Following" : "Follow"}
+                  {isFollowing ? "Following" : "+ Follow"}
                 </button>
+              )}
+
+              {!isOwn && (
                 <Link
-                  to="/share/$username"
+                  to="/verdict/$username"
                   params={{ username }}
-                  className="border border-dust/30 px-5 py-2 text-caption text-dust hover:border-brass hover:text-brass transition-colors"
+                  className="min-h-[40px] inline-flex items-center gap-2 border border-brass bg-brass/10 px-5 py-2 text-caption text-brass hover:bg-brass hover:text-ink rounded transition-all active:scale-95 font-bold"
                 >
-                  Share card →
+                  Stamp a Verdict →
                 </Link>
-              </div>
-            )}
-            {isOwn && (
-              <div className="mt-4">
-                <Link
-                  to="/share/$username"
-                  params={{ username }}
-                  className="border border-dust/30 px-5 py-2 text-caption text-dust hover:border-brass hover:text-brass transition-colors"
-                >
-                  Share card →
-                </Link>
-              </div>
-            )}
+              )}
+
+              <Link
+                to="/share/$username"
+                params={{ username }}
+                className="min-h-[40px] inline-flex items-center gap-2 border border-dust/40 px-4 py-2 text-caption text-dust hover:border-brass hover:text-brass rounded transition-all active:scale-95"
+              >
+                Share card ↗
+              </Link>
+            </div>
           </div>
         </div>
 
         {!isOwn && user && tasteMatch && <TasteMatchCard username={username} match={tasteMatch} />}
 
+        {/* Bento Score & Genre DNA Section */}
         {dna && (
-          <div className="hairline mt-10 pt-8 w-full max-w-2xl mx-auto">
-            <div className="flex flex-col items-center justify-center gap-8 md:flex-row md:gap-14">
+          <div className="surface-card mt-10 p-6 sm:p-8 rounded-2xl max-w-3xl mx-auto shadow-2xl">
+            <div className="flex flex-col items-center justify-between gap-8 md:flex-row md:gap-10">
               {tasteScore && (
-                <div className="flex flex-col items-center justify-center gap-3 md:flex-row md:gap-8">
-                  <div className="flex flex-col items-center">
-                    <span className="text-[2rem] font-bold text-brass leading-none md:text-[2.5rem]">
+                <div className="flex flex-col items-center md:items-start gap-4">
+                  <div>
+                    <span className="text-caption text-brass text-xs">Taste Profile</span>
+                    <h3 className="text-card-title text-paper mt-0.5">Overall Index</h3>
+                  </div>
+
+                  <div className="flex items-baseline gap-3">
+                    <span className="text-5xl md:text-6xl font-bold font-display text-brass leading-none">
                       {tasteScore.score}
                     </span>
-                    <span className="text-caption text-dust mt-1 whitespace-nowrap">Taste Score</span>
+                    <span className="mono text-xs text-dust">/ 100 PTS</span>
                   </div>
-                  <div className="flex gap-5 md:gap-6">
+
+                  <div className="grid grid-cols-3 gap-3 pt-2">
                     {(
                       [
                         { label: "Diversity", value: tasteScore.breakdown.diversity },
@@ -580,73 +589,71 @@ function ProfilePage() {
                         { label: "Consistency", value: tasteScore.breakdown.consistency },
                       ] as const
                     ).map((item) => (
-                      <div key={item.label} className="flex flex-col items-center">
-                        <span className="text-base font-semibold text-brass md:text-lg">{item.value}</span>
-                        <span className="text-caption text-dust text-xs whitespace-nowrap">{item.label}</span>
+                      <div key={item.label} className="rounded-lg border border-dust/20 bg-ink/40 p-2.5 text-center">
+                        <span className="mono text-base font-bold text-paper block">{item.value}</span>
+                        <span className="text-[0.65rem] uppercase tracking-wider text-dust block mt-0.5">{item.label}</span>
                       </div>
                     ))}
                   </div>
                 </div>
               )}
+
               <div className="flex flex-col items-center">
-                <span className="text-caption mb-3 text-dust whitespace-nowrap">Genre DNA</span>
+                <span className="text-caption mb-2 text-dust text-xs">Genre DNA Radar</span>
                 <GenreRadar dna={dna} size={190} />
               </div>
             </div>
           </div>
         )}
 
-        {!isOwn && (
-          <div className="mt-8 flex justify-center">
-            <Link
-              to="/verdict/$username"
-              params={{ username }}
-              className="border-2 border-brass px-6 py-3 text-caption text-brass hover:bg-brass hover:text-ink transition-colors"
-            >
-              Leave a Verdict →
-            </Link>
-          </div>
-        )}
-
+        {/* Stamped Verdicts Section */}
         {verdicts && verdicts.length > 0 && (
-          <section className="hairline mt-10 pt-8 max-w-xl mx-auto">
-            <h2 className="text-card-title text-paper mb-6 text-center">
-              Verdicts ({verdicts.length})
-            </h2>
-            <div className="space-y-4 max-md:space-y-0">
+          <section className="hairline mt-12 pt-8 max-w-2xl mx-auto">
+            <div className="text-center mb-6">
+              <p className="text-caption text-brass text-xs">Jury Room</p>
+              <h2 className="text-section text-paper">
+                Stamped Verdicts ({verdicts.length})
+              </h2>
+            </div>
+
+            <div className="space-y-3">
               {verdicts.map((v) => {
                 if (!v.fromUser) return null;
+                const isNegative = v.score <= 4;
                 return (
                   <div
                     key={v.id}
-                    className="border border-dust/20 p-4 max-md:border-x-0 max-md:border-t-0 max-md:border-b max-md:border-dust/10 max-md:px-0 max-md:py-3"
+                    className="surface-card surface-card-hover p-4 sm:p-5 rounded-xl flex items-center justify-between gap-4"
                   >
-                    <div className="flex items-start justify-between gap-4">
-                      <div className="flex items-center gap-3 min-w-0">
-                        <div className="h-8 w-8 shrink-0 overflow-hidden rounded-full bg-dust/20">
-                          <img
-                            src={avatarUrlFor(v.fromUser.username, v.fromUser.avatarUrl)}
-                            alt={v.fromUser.username}
-                            className="h-full w-full object-cover"
-                          />
-                        </div>
-                        <div className="min-w-0">
-                          <Link
-                            to="/profile/$username"
-                            params={{ username: v.fromUser.username }}
-                            className="text-sm font-medium text-brass hover:underline"
-                          >
-                            {v.fromUser.username}
-                          </Link>
-                          {v.comment && (
-                            <p className="text-sm text-paper/80 mt-0.5 italic">"{v.comment}"</p>
-                          )}
-                        </div>
+                    <div className="flex items-center gap-3.5 min-w-0">
+                      <Link
+                        to="/profile/$username"
+                        params={{ username: v.fromUser.username }}
+                        className="h-10 w-10 shrink-0 overflow-hidden rounded-full ring-1 ring-brass/60"
+                      >
+                        <img
+                          src={avatarUrlFor(v.fromUser.username, v.fromUser.avatarUrl)}
+                          alt={v.fromUser.username}
+                          className="h-full w-full object-cover"
+                        />
+                      </Link>
+                      <div className="min-w-0">
+                        <Link
+                          to="/profile/$username"
+                          params={{ username: v.fromUser.username }}
+                          className="text-sm font-bold text-brass hover:underline"
+                        >
+                          @{v.fromUser.username}
+                        </Link>
+                        {v.comment && (
+                          <p className="text-sm text-paper/90 mt-0.5 italic font-serif">"{v.comment}"</p>
+                        )}
                       </div>
-                      <Stamp size="sm" rotation={2} variant={v.score <= 4 ? "red" : "brass"}>
-                        {v.score}
-                      </Stamp>
                     </div>
+
+                    <Stamp size="sm" rotation={2} variant={isNegative ? "red" : "brass"}>
+                      {v.score}
+                    </Stamp>
                   </div>
                 );
               })}
@@ -654,13 +661,18 @@ function ProfilePage() {
           </section>
         )}
 
-        <section className="hairline mt-10 pt-8">
+        {/* Watched Films Gallery */}
+        <section className="hairline mt-12 pt-8">
           <div className="flex flex-wrap items-center justify-between gap-3 mb-6">
-            <h2 className="text-card-title text-paper">Watched Films</h2>
-            <div className="flex items-center gap-4">
+            <div>
+              <p className="text-caption text-brass text-xs">Filmography</p>
+              <h2 className="text-section text-paper">Watched Films ({filmCount})</h2>
+            </div>
+
+            <div className="flex items-center gap-3">
               {filmCount > 0 && (
-                <label className="flex items-center gap-2">
-                  <span className="text-caption text-dust text-[0.6rem] tracking-widest uppercase font-mono">
+                <div className="flex items-center gap-2 rounded-lg border border-border/80 bg-velvet/60 px-2.5 py-1">
+                  <span className="text-caption text-dust text-[0.62rem]">
                     Sort
                   </span>
                   <select
@@ -672,7 +684,7 @@ function ProfilePage() {
                         navigate({ search: (prev: ProfileSearch) => ({ ...prev, page: undefined }) });
                       }
                     }}
-                    className="bg-transparent border border-dust/30 px-2 py-1.5 text-caption text-brass text-xs cursor-pointer outline-none hover:border-brass/60"
+                    className="bg-transparent text-caption text-brass text-xs cursor-pointer outline-none font-mono"
                   >
                     {SORT_OPTIONS.map((opt) => (
                       <option key={opt.value} value={opt.value} className="bg-velvet text-paper">
@@ -680,76 +692,78 @@ function ProfilePage() {
                       </option>
                     ))}
                   </select>
-                </label>
+                </div>
               )}
               {isOwn && filmCount > 0 && (
                 <Link
                   to="/search"
-                  className="text-caption text-brass/70 hover:text-brass transition-colors"
+                  className="rounded-lg border border-brass/50 bg-brass/10 px-3 py-1.5 text-caption text-brass hover:bg-brass hover:text-ink transition-colors text-xs font-bold"
                 >
-                  + Add more
+                  + Add film
                 </Link>
               )}
             </div>
           </div>
 
           {!entries || entries.length === 0 ? (
-            <div className="text-center py-16">
-              <p className="text-caption text-dust mb-6">No films logged yet.</p>
-              {isOwn ? (
+            <div className="surface-card p-12 rounded-2xl text-center">
+              <p className="text-card-title text-paper mb-2">No films logged yet</p>
+              <p className="text-sm text-dust mb-6">
+                {isOwn
+                  ? "Build your film history to calculate your Taste Score."
+                  : `${username} hasn't logged any films yet.`}
+              </p>
+              {isOwn && (
                 <Link
                   to="/search"
-                  className="border border-brass px-6 py-3 text-caption text-brass hover:bg-brass hover:text-ink transition-colors"
+                  className="inline-flex items-center gap-2 border-2 border-brass bg-brass px-6 py-3 text-caption text-ink font-bold hover:bg-transparent hover:text-brass transition-colors rounded"
                 >
-                  Search for films →
+                  Search & Log Films →
                 </Link>
-              ) : (
-                <p className="text-caption text-dust">{username} hasn't logged any films yet.</p>
               )}
             </div>
           ) : (
-            <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 sm:gap-5 md:grid-cols-4 lg:grid-cols-5">
+            <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 sm:gap-4 md:grid-cols-4 lg:grid-cols-5">
               {paginatedEntries.map((entry) => {
                 const movie = entry.movie;
                 if (!movie) return null;
                 return (
-                  <div key={entry.id} className="active-scale group relative flex flex-col" data-testid="watched-film">
+                  <div key={entry.id} className="surface-card surface-card-hover group relative flex flex-col p-2 rounded-lg" data-testid="watched-film">
                     <Link
                       to="/film/$imdbId"
                       params={{ imdbId: movie.imdbId }}
-                      className="relative aspect-2/3 overflow-hidden bg-velvet ring-1 ring-white/5 block"
+                      className="relative aspect-2/3 overflow-hidden rounded bg-ink ring-1 ring-white/5 block"
                     >
                       <img
                         src={posterSrc(movie.posterUrl)}
                         alt={movie.title}
-                        className="h-full w-full object-cover"
+                        className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-105"
                         loading="lazy"
                         onError={(e) => {
                           e.currentTarget.src = "/film-placeholder.svg";
                         }}
                       />
-                      <div className="absolute inset-0 flex items-center justify-center bg-ink/60 opacity-0 group-hover:opacity-100 transition-opacity">
-                        <Stamp size="sm" rotation={-2}>
-                          {entry.rating}
-                        </Stamp>
+                      <div className="absolute top-1.5 right-1.5 bg-velvet/90 border border-brass/60 rounded px-1.5 py-0.5 shadow-md">
+                        <span className="mono text-[0.68rem] font-bold text-brass">
+                          {entry.rating}/10
+                        </span>
                       </div>
                     </Link>
-                    <div className="mt-2 flex-1">
+
+                    <div className="mt-2.5 flex-1 px-1">
                       <Link
                         to="/film/$imdbId"
                         params={{ imdbId: movie.imdbId }}
                         data-testid="film-title"
-                        className="text-sm font-medium text-paper leading-tight hover:text-brass hover:underline transition-colors max-md:text-[13px]"
+                        className="text-sm font-medium text-paper leading-snug line-clamp-2 hover:text-brass transition-colors"
                       >
                         {movie.title}
                       </Link>
-                      <p className="text-caption text-dust text-xs">
+                      <p className="text-caption text-dust text-[0.68rem] mt-1">
                         {[movie.year, formatRuntime(movie.runtime)].filter(Boolean).join(" · ")}
-                        {" · "}
-                        <span className="text-brass">{entry.rating}/10</span>
                       </p>
                       {movie.director && (
-                        <p className="text-caption text-dust text-[0.6rem] mt-0.5">
+                        <p className="text-caption text-dust/80 text-[0.62rem] truncate mt-0.5">
                           {movie.director}
                         </p>
                       )}
@@ -757,11 +771,11 @@ function ProfilePage() {
                         <TooltipProvider delayDuration={200}>
                           <Tooltip>
                             <TooltipTrigger asChild>
-                              <p className="text-caption text-paper/70 text-[0.6rem] italic mt-1 leading-snug line-clamp-2 cursor-help">
+                              <p className="text-[0.72rem] text-paper/80 font-serif italic mt-1.5 leading-tight line-clamp-2 cursor-help border-l border-brass/40 pl-1.5">
                                 "{entry.note}"
                               </p>
                             </TooltipTrigger>
-                            <TooltipContent className="max-w-xs border border-white/15 bg-velvet px-3 py-2 text-paper shadow-xl">
+                            <TooltipContent className="max-w-xs border border-white/15 bg-velvet px-3 py-2 text-paper shadow-xl rounded-lg">
                               <p className="text-xs leading-snug italic whitespace-pre-line">
                                 {entry.note}
                               </p>
@@ -770,25 +784,26 @@ function ProfilePage() {
                         </TooltipProvider>
                       )}
                     </div>
+
                     {isOwn && (
-                      <div className="mt-1 flex gap-1">
+                      <div className="mt-2.5 flex gap-1 pt-1 border-t border-border/40">
                         {sortMode === "custom" && (
-                          <>
+                          <div className="flex gap-0.5">
                             <button
                               onClick={() => handleMove(entry.id, "up")}
                               aria-label={`Move ${movie.title} up`}
-                              className="py-1 px-1.5 border border-dust/40 text-dust opacity-0 group-hover:opacity-100 transition-opacity hover:text-brass hover:border-brass/60 cursor-pointer max-md:opacity-100"
+                              className="p-1 rounded border border-dust/30 text-dust hover:text-brass hover:border-brass/60 transition-colors cursor-pointer"
                             >
                               <ArrowUp className="h-3 w-3" />
                             </button>
                             <button
                               onClick={() => handleMove(entry.id, "down")}
                               aria-label={`Move ${movie.title} down`}
-                              className="py-1 px-1.5 border border-dust/40 text-dust opacity-0 group-hover:opacity-100 transition-opacity hover:text-brass hover:border-brass/60 cursor-pointer max-md:opacity-100"
+                              className="p-1 rounded border border-dust/30 text-dust hover:text-brass hover:border-brass/60 transition-colors cursor-pointer"
                             >
                               <ArrowDown className="h-3 w-3" />
                             </button>
-                          </>
+                          </div>
                         )}
                         <button
                           onClick={() => {
@@ -797,33 +812,32 @@ function ProfilePage() {
                             setEditNote(entry.note || "");
                             setEditError(null);
                           }}
-                          className="flex-1 py-1 border border-brass/50 text-brass text-caption text-[0.6rem] opacity-0 group-hover:opacity-100 transition-opacity hover:bg-brass hover:text-ink cursor-pointer max-md:py-2 max-md:opacity-100"
+                          className="flex-1 min-h-[30px] rounded border border-brass/50 text-brass text-[0.65rem] font-mono uppercase tracking-wider hover:bg-brass hover:text-ink transition-colors cursor-pointer"
                         >
                           Rate
                         </button>
                         <AlertDialog>
                           <AlertDialogTrigger asChild>
-                            <button className="flex-1 py-1 border border-marquee-red/40 text-marquee-red text-caption text-[0.6rem] opacity-0 group-hover:opacity-100 transition-opacity hover:bg-marquee-red/10 cursor-pointer max-md:py-2 max-md:opacity-100">
+                            <button className="min-h-[30px] px-2 rounded border border-marquee-red/40 text-marquee-red text-[0.65rem] font-mono uppercase tracking-wider hover:bg-marquee-red/10 transition-colors cursor-pointer">
                               Remove
                             </button>
                           </AlertDialogTrigger>
-                          <AlertDialogContent className="bg-velvet border-white/10">
+                          <AlertDialogContent className="bg-velvet border-white/10 rounded-xl">
                             <AlertDialogHeader>
-                              <AlertDialogTitle className="text-paper">
+                              <AlertDialogTitle className="text-paper font-display">
                                 Remove film?
                               </AlertDialogTitle>
                               <AlertDialogDescription className="text-dust">
-                                Remove "{movie.title}" from your watched list? This cannot be
-                                undone.
+                                Remove "{movie.title}" from your watched list? This will update your Taste Score.
                               </AlertDialogDescription>
                             </AlertDialogHeader>
                             <AlertDialogFooter>
-                              <AlertDialogCancel className="border-white/10 text-paper bg-transparent hover:bg-white/5">
+                              <AlertDialogCancel className="border-white/10 text-paper bg-transparent hover:bg-white/5 rounded">
                                 Cancel
                               </AlertDialogCancel>
                               <AlertDialogAction
                                 onClick={() => handleRemove(entry.id)}
-                                className="bg-marquee-red text-white hover:bg-marquee-red/80"
+                                className="bg-marquee-red text-white hover:bg-marquee-red/80 rounded"
                               >
                                 Remove
                               </AlertDialogAction>
@@ -843,17 +857,17 @@ function ProfilePage() {
               <button
                 onClick={() => goToPage(currentPage - 1)}
                 disabled={currentPage <= 1}
-                className="border border-dust/30 px-4 py-2 text-caption text-dust text-xs hover:text-paper transition-colors disabled:opacity-30 disabled:cursor-not-allowed cursor-pointer"
+                className="border border-dust/30 px-4 py-2 text-caption text-dust text-xs hover:text-paper transition-colors disabled:opacity-30 disabled:cursor-not-allowed cursor-pointer active:scale-95 rounded"
               >
                 Previous
               </button>
-              <span className="text-caption text-dust text-xs">
+              <span className="text-caption text-dust text-xs font-mono">
                 Page {currentPage} of {totalPages}
               </span>
               <button
                 onClick={() => goToPage(currentPage + 1)}
                 disabled={currentPage >= totalPages}
-                className="border border-dust/30 px-4 py-2 text-caption text-dust text-xs hover:text-paper transition-colors disabled:opacity-30 disabled:cursor-not-allowed cursor-pointer"
+                className="border border-dust/30 px-4 py-2 text-caption text-dust text-xs hover:text-paper transition-colors disabled:opacity-30 disabled:cursor-not-allowed cursor-pointer active:scale-95 rounded"
               >
                 Next
               </button>
@@ -861,74 +875,81 @@ function ProfilePage() {
           )}
         </section>
 
-        <section className="hairline mt-10 pt-8">
+        {/* Watchlist / "Worth Your Time" Section */}
+        <section className="hairline mt-12 pt-8">
           <div className="flex items-center justify-between mb-6">
-            <h2 className="text-card-title text-paper">Worth Your Time</h2>
+            <div>
+              <p className="text-caption text-brass text-xs">The Queue</p>
+              <h2 className="text-section text-paper">Worth Your Time</h2>
+            </div>
             {isOwn && (watchlist?.length ?? 0) > 0 && (
               <Link
                 to="/search"
-                className="text-caption text-brass/70 hover:text-brass transition-colors"
+                className="rounded-lg border border-brass/50 bg-brass/10 px-3 py-1.5 text-caption text-brass hover:bg-brass hover:text-ink transition-colors text-xs font-bold"
               >
-                + Add more
+                + Add film
               </Link>
             )}
           </div>
 
           {!watchlist || watchlist.length === 0 ? (
-            <div className="text-center py-12">
-              <p className="text-caption text-dust mb-6">
-                Nothing on the queue — films saved to watch for later.
+            <div className="surface-card p-10 rounded-2xl text-center">
+              <p className="text-card-title text-paper mb-2">Queue is empty</p>
+              <p className="text-sm text-dust mb-6">
+                Films saved to watch for later appear in this screening list.
               </p>
               {isOwn && (
                 <Link
                   to="/search"
-                  className="border border-brass px-6 py-3 text-caption text-brass hover:bg-brass hover:text-ink transition-colors"
+                  className="inline-flex items-center gap-2 border border-brass bg-brass/10 px-6 py-2.5 text-caption text-brass hover:bg-brass hover:text-ink rounded transition-all active:scale-95 font-bold"
                 >
                   Browse films to save →
                 </Link>
               )}
             </div>
           ) : (
-            <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 sm:gap-5 md:grid-cols-4 lg:grid-cols-5">
+            <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 sm:gap-4 md:grid-cols-4 lg:grid-cols-5">
               {watchlist.map((entry) => {
                 const movie = entry.movie;
                 if (!movie) return null;
                 return (
-                  <div key={entry.id} className="group relative flex flex-col">
+                  <div key={entry.id} className="surface-card surface-card-hover group relative flex flex-col p-2 rounded-lg">
                     <Link
                       to="/film/$imdbId"
                       params={{ imdbId: movie.imdbId }}
-                      className="relative aspect-2/3 overflow-hidden bg-velvet ring-1 ring-white/5 block"
+                      className="relative aspect-2/3 overflow-hidden rounded bg-ink ring-1 ring-white/5 block"
                     >
                       <img
                         src={posterSrc(movie.posterUrl)}
                         alt={movie.title}
-                        className="h-full w-full object-cover"
+                        className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-105"
                         loading="lazy"
                         onError={(e) => {
                           e.currentTarget.src = "/film-placeholder.svg";
                         }}
                       />
-                      <div className="absolute inset-0 flex items-center justify-center bg-ink/40 opacity-0 group-hover:opacity-100 transition-opacity">
-                        <span className="text-caption text-paper tracking-widest uppercase font-mono text-xs">
+                      <div className="absolute inset-0 flex items-center justify-center bg-ink/60 opacity-0 group-hover:opacity-100 transition-opacity">
+                        <span className="text-caption text-brass font-bold text-xs bg-velvet/80 px-2.5 py-1 rounded border border-brass/40">
                           Queue
                         </span>
                       </div>
                     </Link>
-                    <div className="mt-2 flex-1">
+
+                    <div className="mt-2.5 flex-1 px-1">
                       <Link
                         to="/film/$imdbId"
                         params={{ imdbId: movie.imdbId }}
-                        className="text-sm font-medium text-paper leading-tight hover:text-brass hover:underline transition-colors max-md:text-[13px]"
+                        className="text-sm font-medium text-paper leading-snug line-clamp-2 hover:text-brass transition-colors"
                       >
                         {movie.title}
                       </Link>
-                      <p className="text-caption text-dust text-xs">
+                      <p className="text-caption text-dust text-[0.68rem] mt-1">
                         {[movie.year, formatRuntime(movie.runtime)].filter(Boolean).join(" · ")}
                       </p>
                     </div>
+
                     {isOwn && (
-                      <div className="mt-1 flex gap-1">
+                      <div className="mt-2.5 flex gap-1.5 pt-1 border-t border-border/40">
                         <button
                           onClick={() => {
                             setLogMovie(entry);
@@ -936,13 +957,13 @@ function ProfilePage() {
                             setLogNote("");
                             setLogError(null);
                           }}
-                          className="flex-1 py-1 border border-brass/50 text-brass text-caption text-[0.6rem] opacity-0 group-hover:opacity-100 transition-opacity hover:bg-brass hover:text-ink cursor-pointer max-md:py-2 max-md:opacity-100"
+                          className="flex-1 min-h-[32px] rounded border border-brass bg-brass text-ink text-[0.65rem] font-mono uppercase tracking-wider font-bold hover:bg-transparent hover:text-brass transition-colors cursor-pointer"
                         >
                           Log it
                         </button>
                         <button
                           onClick={() => handleWatchlistRemove(entry.id)}
-                          className="flex-1 py-1 border border-marquee-red/40 text-marquee-red text-caption text-[0.6rem] opacity-0 group-hover:opacity-100 transition-opacity hover:bg-marquee-red/10 cursor-pointer max-md:py-2 max-md:opacity-100"
+                          className="min-h-[32px] px-2.5 rounded border border-marquee-red/40 text-marquee-red text-[0.65rem] font-mono uppercase tracking-wider hover:bg-marquee-red/10 transition-colors cursor-pointer"
                         >
                           Remove
                         </button>
