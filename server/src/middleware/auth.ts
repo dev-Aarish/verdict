@@ -124,8 +124,17 @@ export async function resolveSession(sessionId: string, res?: Response): Promise
   return authUser;
 }
 
+export function extractSessionId(req: Request): string | undefined {
+  const authHeader = req.headers.authorization;
+  if (authHeader && authHeader.startsWith("Bearer ")) {
+    const token = authHeader.substring(7).trim();
+    if (token) return token;
+  }
+  return (req as any).cookies?.[COOKIE_NAME];
+}
+
 export async function optionalAuth(req: AuthRequest, res: Response, next: NextFunction) {
-  const sessionId = (req as any).cookies?.[COOKIE_NAME];
+  const sessionId = extractSessionId(req);
   if (sessionId) {
     req.user = (await resolveSession(sessionId, res)) ?? undefined;
   }
@@ -133,7 +142,7 @@ export async function optionalAuth(req: AuthRequest, res: Response, next: NextFu
 }
 
 export async function requireAuth(req: AuthRequest, res: Response, next: NextFunction) {
-  const sessionId = (req as any).cookies?.[COOKIE_NAME];
+  const sessionId = extractSessionId(req);
   if (!sessionId) {
     res.status(401).json({ error: "Not authenticated" });
     return;

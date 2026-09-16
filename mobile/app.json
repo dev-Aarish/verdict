@@ -1,0 +1,47 @@
+{
+  "expo": {
+    "name": "Verdict",
+    "slug": "verdict-mobile",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "icon": "./assets/icon.png",
+    "scheme": "verdict",
+    "userInterfaceStyle": "dark",
+    "backgroundColor": "#09090b",
+    "ios": {
+      "supportsTablet": true,
+      "bundleIdentifier": "com.verdict.app"
+    },
+    "android": {
+      "package": "com.verdict.app",
+      "adaptiveIcon": {
+        "backgroundColor": "#09090b",
+        "foregroundImage": "./assets/android-icon-foreground.png",
+        "backgroundImage": "./assets/android-icon-background.png"
+      },
+      "predictiveBackGestureEnabled": true
+    },
+    "plugins": [
+      "expo-router",
+      "expo-secure-store",
+      [
+        "expo-splash-screen",
+        {
+          "image": "./assets/splash-icon.png",
+          "resizeMode": "contain",
+          "backgroundColor": "#09090b"
+        }
+      ],
+      "expo-sharing"
+    ],
+    "web": {
+      "favicon": "./assets/favicon.png"
+    },
+    "extra": {
+      "router": {},
+      "eas": {
+        "projectId": "4cada423-6427-4f2e-9f64-734ab05ed47e"
+      }
+    }
+  }
+}

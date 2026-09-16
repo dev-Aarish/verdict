@@ -9,7 +9,7 @@ const pastelGreen = "\x1b[38;2;186;255;201m";
 const pastelBlue = "\x1b[38;2;186;225;255m";
 const pastelYellow = "\x1b[38;2;255;255;186m";
 
-app.listen(config.port, () => {
-  console.log(`${pastelPink}[verdict-api]${reset} ${pastelGreen}listening on http://localhost:${config.port}${reset}`);
+app.listen(config.port, "0.0.0.0", () => {
+  console.log(`${pastelPink}[verdict-api]${reset} ${pastelGreen}listening on http://0.0.0.0:${config.port}${reset}`);
   console.log(`${pastelPink}[verdict-api]${reset} ${pastelYellow}env: ${config.nodeEnv}${reset}`);
 });

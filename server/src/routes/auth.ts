@@ -18,6 +18,7 @@ import {
   resolveSession,
   cacheSession,
   invalidateSession,
+  extractSessionId,
 } from "../middleware/auth.js";
 
 export const authRouter = Router();
@@ -58,14 +59,14 @@ async function verifyPassword(password: string, stored: string): Promise<boolean
 
 // GET /me
 authRouter.get("/me", async (req: Request, res: Response) => {
-  const sessionId = (req as any).cookies?.[COOKIE_NAME];
+  const sessionId = extractSessionId(req);
   if (!sessionId) {
     res.json({ user: null });
     return;
   }
 
   const user = await resolveSession(sessionId, res);
-  res.json({ user });
+  res.json({ user, token: sessionId, sessionId });
 });
 
 // POST /signup
@@ -131,6 +132,8 @@ authRouter.post("/signup", async (req: Request, res: Response) => {
 
   res.status(201).json({
     user: userObj,
+    token: sessionId,
+    sessionId,
   });
 });
 
@@ -182,6 +185,8 @@ authRouter.post("/login", async (req: Request, res: Response) => {
 
   res.json({
     user: authUser,
+    token: sessionId,
+    sessionId,
   });
 });
 
@@ -266,12 +271,14 @@ authRouter.post("/google", async (req: Request, res: Response) => {
 
   res.json({
     user: authUser,
+    token: sessionId,
+    sessionId,
   });
 });
 
 // POST /logout
 authRouter.post("/logout", async (req: Request, res: Response) => {
-  const sessionId = (req as any).cookies?.[COOKIE_NAME];
+  const sessionId = extractSessionId(req);
 
   if (sessionId) {
     invalidateSession(sessionId);

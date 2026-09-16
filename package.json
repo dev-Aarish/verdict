@@ -17,6 +17,7 @@
     "test:e2e:ui": "playwright test --ui",
     "test:e2e:report": "playwright show-report",
     "dev:api": "cd server && npm run dev",
+    "dev:mobile": "cd mobile && bun run start",
     "dev:all": "concurrently --names vite,api --prefix-colors \"#bae1ff,#ffb3ba\" \"npm run dev\" \"npm run dev:api\""
   },
   "dependencies": {

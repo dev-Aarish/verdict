@@ -4,7 +4,7 @@ import { config } from "../config.js";
 export function corsMiddleware() {
   return cors({
     origin: (origin, callback) => {
-      if (!origin) {
+      if (!origin || config.nodeEnv !== "production") {
         callback(null, true);
         return;
       }
