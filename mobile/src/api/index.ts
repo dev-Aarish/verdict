@@ -96,7 +96,7 @@ export const moviesApi = {
       id: e.id || e.imdbId,
       userId: "",
       movieId: e.imdbId,
-      rating: (e.rating || 0) * 10,
+      rating: e.rating > 10 ? Math.round(e.rating / 10) : (e.rating || 0),
       movie: {
         id: e.imdbId,
         imdbId: e.imdbId,
@@ -108,11 +108,11 @@ export const moviesApi = {
 
   async logMovie(params: {
     imdbId: string;
-    rating: number; // 1-100 or 1-10
+    rating: number; // 1-10
     review?: string;
   }): Promise<WatchedEntry> {
     // Backend expects rating 1-10 integer
-    const numericRating = Math.max(1, Math.min(10, Math.round(params.rating > 10 ? params.rating / 10 : params.rating)));
+    const numericRating = Math.max(1, Math.min(10, Math.round(params.rating)));
     const res = await apiClient.post<{ entry: WatchedEntry; movie?: Movie }>("/movies/watched", {
       imdbId: params.imdbId,
       rating: numericRating,
@@ -322,7 +322,7 @@ export const usersApi = {
       id: e.id,
       userId: e.userId,
       movieId: e.movieId,
-      rating: e.rating * 10,
+      rating: e.rating > 10 ? Math.round(e.rating / 10) : e.rating,
       note: e.note,
       watchedAt: e.watchedAt,
       movie: e.movie,

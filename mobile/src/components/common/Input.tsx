@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useRef } from "react";
 import {
   View,
   TextInput,
@@ -7,6 +7,8 @@ import {
   TextInputProps,
   StyleProp,
   ViewStyle,
+  Platform,
+  Pressable,
 } from "react-native";
 import { Colors, Radius, Spacing } from "../../constants/theme";
 
@@ -32,22 +34,44 @@ export const Input: React.FC<InputProps> = ({
   ...props
 }) => {
   const [isFocused, setIsFocused] = useState(false);
+  const inputRef = useRef<TextInput>(null);
+  const isMultiline = props.multiline;
+
+  const flattenedStyle = StyleSheet.flatten(style) || {};
+  const customHeight = flattenedStyle.height;
+
+  // For multiline input, strip height from input style so container owns the height
+  const inputStyle = isMultiline
+    ? { ...flattenedStyle, height: undefined, paddingTop: 0, paddingBottom: 0 }
+    : style;
+
+  const handleContainerPress = () => {
+    inputRef.current?.focus();
+  };
 
   return (
     <View style={[styles.wrapper, wrapperStyle]}>
       {label && <Text style={styles.label}>{label}</Text>}
-      <View
+      <Pressable
+        onPress={handleContainerPress}
         style={[
           styles.container,
+          isMultiline && styles.containerMultiline,
+          isMultiline && customHeight ? { height: customHeight as any } : null,
           isFocused && styles.containerFocused,
           !!error && styles.containerError,
           containerStyle,
         ]}
       >
-        {leftIcon && <View style={styles.leftIcon}>{leftIcon}</View>}
+        {leftIcon && (
+          <View pointerEvents="none" style={[styles.leftIcon, isMultiline && styles.iconMultiline]}>
+            {leftIcon}
+          </View>
+        )}
         <TextInput
+          ref={inputRef}
           placeholderTextColor={Colors.dust}
-          style={[styles.input, style]}
+          style={[styles.input, isMultiline && styles.inputMultiline, inputStyle]}
           onFocus={(e) => {
             setIsFocused(true);
             onFocus?.(e);
@@ -58,8 +82,12 @@ export const Input: React.FC<InputProps> = ({
           }}
           {...props}
         />
-        {rightIcon && <View style={styles.rightIcon}>{rightIcon}</View>}
-      </View>
+        {rightIcon && (
+          <View pointerEvents="none" style={[styles.rightIcon, isMultiline && styles.iconMultiline]}>
+            {rightIcon}
+          </View>
+        )}
+      </Pressable>
       {error && <Text style={styles.errorText}>{error}</Text>}
     </View>
   );
@@ -87,6 +115,12 @@ const styles = StyleSheet.create({
     paddingHorizontal: Spacing.md,
     height: 48,
   },
+  containerMultiline: {
+    height: undefined,
+    minHeight: 80,
+    alignItems: "flex-start",
+    paddingVertical: 10,
+  },
   containerFocused: {
     borderColor: Colors.brass,
     backgroundColor: "rgba(37, 39, 51, 0.9)",
@@ -100,11 +134,18 @@ const styles = StyleSheet.create({
     fontSize: 14,
     height: "100%",
   },
+  inputMultiline: {
+    height: "100%",
+    textAlignVertical: "top",
+  },
   leftIcon: {
     marginRight: Spacing.sm,
   },
   rightIcon: {
     marginLeft: Spacing.sm,
+  },
+  iconMultiline: {
+    marginTop: Platform.OS === "ios" ? 2 : 0,
   },
   errorText: {
     color: Colors.marqueeRed,
@@ -113,4 +154,3 @@ const styles = StyleSheet.create({
     marginTop: 4,
   },
 });
-

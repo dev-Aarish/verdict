@@ -1,15 +1,18 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import {
   View,
   Text,
   Modal,
   StyleSheet,
   TouchableOpacity,
+  Pressable,
   KeyboardAvoidingView,
   Platform,
   ScrollView,
+  Keyboard,
 } from "react-native";
-import { X, Star } from "lucide-react-native";
+import { X } from "lucide-react-native";
+import Slider from "@react-native-community/slider";
 import * as Haptics from "expo-haptics";
 import { Colors, Radius, Spacing } from "../../constants/theme";
 import { Movie } from "../../types";
@@ -20,6 +23,7 @@ import { Stamp } from "./Stamp";
 interface LogMovieModalProps {
   visible: boolean;
   movie: Movie | null;
+  initialRating?: number;
   onClose: () => void;
   onSubmit: (params: { imdbId: string; rating: number; review?: string }) => Promise<void>;
 }
@@ -27,20 +31,36 @@ interface LogMovieModalProps {
 export const LogMovieModal: React.FC<LogMovieModalProps> = ({
   visible,
   movie,
+  initialRating = 7,
   onClose,
   onSubmit,
 }) => {
-  const [rating, setRating] = useState<number>(85);
+  const [rating, setRating] = useState<number>(initialRating);
   const [review, setReview] = useState<string>("");
   const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
+
+  useEffect(() => {
+    if (visible) {
+      setRating(initialRating);
+      setReview("");
+    }
+  }, [visible, initialRating]);
 
   if (!movie) return null;
 
   const handleRatingChange = (newRating: number) => {
-    try {
-      Haptics.selectionAsync();
-    } catch {}
-    setRating(newRating);
+    const intRating = Math.round(newRating);
+    if (intRating !== rating) {
+      try {
+        Haptics.selectionAsync();
+      } catch {}
+      setRating(intRating);
+    }
+  };
+
+  const handleClose = () => {
+    Keyboard.dismiss();
+    onClose();
   };
 
   const handleSubmit = async () => {
@@ -51,29 +71,26 @@ export const LogMovieModal: React.FC<LogMovieModalProps> = ({
         rating,
         review: review.trim() || undefined,
       });
-      onClose();
+      handleClose();
     } finally {
       setIsSubmitting(false);
     }
   };
-
-  const presetScores = [50, 65, 75, 85, 95, 100];
 
   return (
     <Modal
       visible={visible}
       animationType="slide"
       transparent={true}
-      onRequestClose={onClose}
+      onRequestClose={handleClose}
     >
       <KeyboardAvoidingView
         behavior={Platform.OS === "ios" ? "padding" : "height"}
         style={styles.overlay}
       >
-        <TouchableOpacity
+        <Pressable
           style={styles.backdrop}
-          activeOpacity={1}
-          onPress={onClose}
+          onPress={handleClose}
         />
         <View style={styles.sheetContainer}>
           <View style={styles.dragIndicator} />
@@ -85,42 +102,48 @@ export const LogMovieModal: React.FC<LogMovieModalProps> = ({
                 {movie.title} {movie.year ? `(${movie.year})` : ""}
               </Text>
             </View>
-            <TouchableOpacity onPress={onClose} style={styles.closeBtn}>
+            <TouchableOpacity onPress={handleClose} style={styles.closeBtn}>
               <X size={18} color={Colors.dustLight} />
             </TouchableOpacity>
           </View>
 
-          <ScrollView showsVerticalScrollIndicator={false}>
+          <ScrollView
+            showsVerticalScrollIndicator={false}
+            keyboardShouldPersistTaps="handled"
+            keyboardDismissMode="on-drag"
+          >
             {/* Rating Selector */}
-            <View style={styles.ratingSection}>
+            <View
+              style={styles.ratingSection}
+              onStartShouldSetResponder={() => {
+                Keyboard.dismiss();
+                return false;
+              }}
+            >
               <Text style={styles.sectionLabel}>YOUR CRITICAL RATING</Text>
               <View style={styles.scoreDisplay}>
-                <Stamp size="md" rotation={-2} variant="brass" animate="settle">
+                <Stamp size="md" rotation={-2} variant={rating <= 4 ? "red" : "brass"} animate="settle">
                   {rating}
                 </Stamp>
               </View>
 
-              <View style={styles.presetRow}>
-                {presetScores.map((score) => (
-                  <TouchableOpacity
-                    key={score}
-                    activeOpacity={0.75}
-                    onPress={() => handleRatingChange(score)}
-                    style={[
-                      styles.presetChip,
-                      rating === score && styles.presetChipActive,
-                    ]}
-                  >
-                    <Text
-                      style={[
-                        styles.presetChipText,
-                        rating === score && styles.presetChipTextActive,
-                      ]}
-                    >
-                      {score}
-                    </Text>
-                  </TouchableOpacity>
-                ))}
+              <View style={styles.sliderContainer}>
+                <Slider
+                  style={styles.slider}
+                  value={rating}
+                  minimumValue={1}
+                  maximumValue={10}
+                  step={1}
+                  minimumTrackTintColor={Colors.brass}
+                  maximumTrackTintColor={Colors.border}
+                  thumbTintColor={Colors.brass}
+                  onSlidingStart={() => Keyboard.dismiss()}
+                  onValueChange={handleRatingChange}
+                />
+                <View style={styles.sliderLabels}>
+                  <Text style={styles.sliderLabelText}>1 · Miss</Text>
+                  <Text style={styles.sliderLabelText}>10 · Masterpiece</Text>
+                </View>
               </View>
             </View>
 
@@ -221,43 +244,32 @@ const styles = StyleSheet.create({
   scoreDisplay: {
     marginVertical: Spacing.sm,
   },
-  presetRow: {
+  sliderContainer: {
+    width: "100%",
+    marginTop: Spacing.xs,
+  },
+  slider: {
+    width: "100%",
+    height: 40,
+  },
+  sliderLabels: {
     flexDirection: "row",
-    gap: Spacing.sm,
-    marginTop: Spacing.md,
+    justifyContent: "space-between",
+    marginTop: 2,
   },
-  presetChip: {
-    paddingVertical: 6,
-    paddingHorizontal: 12,
-    borderRadius: Radius.none,
-    backgroundColor: Colors.velvet,
-    borderWidth: 1,
-    borderColor: Colors.border,
-  },
-  presetChipActive: {
-    backgroundColor: Colors.brassSubtle,
-    borderColor: Colors.brass,
-  },
-  presetChipText: {
+  sliderLabelText: {
+    fontSize: 11,
+    fontWeight: "700",
     color: Colors.dustLight,
-    fontSize: 12,
-    fontWeight: "800",
-    fontFamily: "monospace",
-  },
-  presetChipTextActive: {
-    color: Colors.brassLight,
-    fontWeight: "900",
+    letterSpacing: 0.5,
   },
   reviewSection: {
     marginBottom: Spacing.lg,
   },
   reviewInput: {
     height: 80,
-    textAlignVertical: "top",
-    paddingTop: 10,
   },
   submitBtn: {
     marginTop: Spacing.sm,
   },
 });
-

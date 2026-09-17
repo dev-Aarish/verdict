@@ -176,7 +176,7 @@ export const MovieCard: React.FC<MovieCardProps> = ({
           <View style={styles.userRatingRow}>
             <Star size={12} color={Colors.brass} fill={Colors.brass} />
             <Text style={styles.userRatingLabel}>PERSONAL RATING:</Text>
-            <Text style={styles.userRatingText}>{userRating}/100</Text>
+            <Text style={styles.userRatingText}>{userRating}/10</Text>
           </View>
         )}
       </View>

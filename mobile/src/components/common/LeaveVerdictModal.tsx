@@ -94,7 +94,11 @@ export const LeaveVerdictModal: React.FC<LeaveVerdictModalProps> = ({
             </TouchableOpacity>
           </View>
 
-          <ScrollView showsVerticalScrollIndicator={false}>
+          <ScrollView
+            showsVerticalScrollIndicator={false}
+            keyboardShouldPersistTaps="handled"
+            keyboardDismissMode="on-drag"
+          >
             {/* Star Rating Section */}
             <View style={styles.starsSection}>
               <Text style={styles.sectionLabel}>JUDGE THEIR TASTE</Text>
