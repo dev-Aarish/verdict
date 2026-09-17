@@ -6,7 +6,6 @@ import {
   RefreshControl,
   StyleSheet,
   TouchableOpacity,
-  ActivityIndicator,
 } from "react-native";
 import { useRouter } from "expo-router";
 import { useQuery } from "@tanstack/react-query";
@@ -18,6 +17,11 @@ import { VerdictCard } from "../../components/common/VerdictCard";
 import { Button } from "../../components/common/Button";
 import { Avatar } from "../../components/common/Avatar";
 import { Stamp } from "../../components/common/Stamp";
+import { ClapperLoader } from "../../components/common/ClapperLoader";
+import {
+  ClapperRefreshControl,
+  ClapperRefreshHeader,
+} from "../../components/common/ClapperRefreshControl";
 import { MovieCarouselSection } from "../../components/common/MovieCarousel";
 import { FeedItem } from "../../types";
 
@@ -61,6 +65,7 @@ export default function FeedScreen() {
 
   const renderHeader = () => (
     <View style={styles.headerContainer}>
+      <ClapperRefreshHeader refreshing={isRefetching} />
       {/* Top Welcome / Auth state */}
       {!isAuthenticated && (
         <View style={styles.authBanner}>
@@ -141,7 +146,7 @@ export default function FeedScreen() {
     if (isLoading) {
       return (
         <View style={styles.loadingContainer}>
-          <ActivityIndicator size="large" color={Colors.brass} />
+          <ClapperLoader size="lg" />
         </View>
       );
     }
@@ -203,11 +208,9 @@ export default function FeedScreen() {
         contentContainerStyle={styles.listContent}
         showsVerticalScrollIndicator={false}
         refreshControl={
-          <RefreshControl
+          <ClapperRefreshControl
             refreshing={isRefetching}
             onRefresh={refetch}
-            tintColor={Colors.brass}
-            colors={[Colors.brass]}
           />
         }
       />

@@ -4,7 +4,6 @@ import {
   Text,
   ScrollView,
   StyleSheet,
-  ActivityIndicator,
   Alert,
 } from "react-native";
 import { useLocalSearchParams, useRouter } from "expo-router";
@@ -27,8 +26,9 @@ import { Colors, Radius, Spacing } from "../../constants/theme";
 import { Badge } from "../../components/common/Badge";
 import { Button } from "../../components/common/Button";
 import { Stamp } from "../../components/common/Stamp";
+import { ClapperLoader } from "../../components/common/ClapperLoader";
 import { LogMovieModal } from "../../components/common/LogMovieModal";
-import { Movie, parseGenres } from "../../types";
+import { Movie, parseGenres, WatchedEntry } from "../../types";
 
 export default function MovieDetailScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
@@ -88,7 +88,7 @@ export default function MovieDetailScreen() {
   if (isLoading) {
     return (
       <View style={styles.loadingContainer}>
-        <ActivityIndicator size="large" color={Colors.brass} />
+        <ClapperLoader size="lg" />
       </View>
     );
   }

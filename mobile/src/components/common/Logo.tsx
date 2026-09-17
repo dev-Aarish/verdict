@@ -3,13 +3,25 @@ import { View, Text, StyleSheet, ViewStyle } from "react-native";
 import Svg, { Rect, Circle, G, Mask, Defs } from "react-native-svg";
 import { Colors } from "../../constants/theme";
 
+import { ClapperLoader } from "./ClapperLoader";
+
 interface LogoMarkProps {
   size?: number;
   color?: string;
+  animated?: boolean;
   style?: ViewStyle;
 }
 
-export function LogoMark({ size = 32, color = "#C9A03C", style }: LogoMarkProps) {
+export function LogoMark({
+  size = 32,
+  color = "#C9A03C",
+  animated = false,
+  style,
+}: LogoMarkProps) {
+  if (animated) {
+    return <ClapperLoader size={size} color={color} style={style} />;
+  }
+
   return (
     <View style={style}>
       <Svg width={size} height={size} viewBox="0 0 64 64">
@@ -37,6 +49,7 @@ interface LogoProps {
   size?: "sm" | "md" | "lg" | "xl";
   color?: string;
   markOnly?: boolean;
+  animated?: boolean;
   style?: ViewStyle;
 }
 
@@ -51,13 +64,14 @@ export function Logo({
   size = "md",
   color = "#C9A03C",
   markOnly = false,
+  animated = false,
   style,
 }: LogoProps) {
   const config = sizeConfig[size];
 
   return (
     <View style={[styles.container, style]}>
-      <LogoMark size={config.mark} color={color} />
+      <LogoMark size={config.mark} color={color} animated={animated} />
       {!markOnly && (
         <Text
           style={[

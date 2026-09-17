@@ -5,7 +5,6 @@ import {
   FlatList,
   RefreshControl,
   StyleSheet,
-  ActivityIndicator,
   TouchableOpacity,
   Alert,
 } from "react-native";
@@ -19,6 +18,11 @@ import { Colors, Radius, Spacing } from "../../constants/theme";
 import { MovieCard } from "../../components/common/MovieCard";
 import { Button } from "../../components/common/Button";
 import { LogMovieModal } from "../../components/common/LogMovieModal";
+import { ClapperLoader } from "../../components/common/ClapperLoader";
+import {
+  ClapperRefreshControl,
+  ClapperRefreshHeader,
+} from "../../components/common/ClapperRefreshControl";
 import { WatchlistEntry, Movie } from "../../types";
 
 export default function WatchlistScreen() {
@@ -106,7 +110,7 @@ export default function WatchlistScreen() {
     if (isLoading) {
       return (
         <View style={styles.loadingContainer}>
-          <ActivityIndicator size="large" color={Colors.brass} />
+          <ClapperLoader size="lg" />
         </View>
       );
     }
@@ -165,15 +169,14 @@ export default function WatchlistScreen() {
             </View>
           );
         }}
+        ListHeaderComponent={<ClapperRefreshHeader refreshing={isRefetching} />}
         ListEmptyComponent={renderEmpty}
         contentContainerStyle={styles.listContent}
         showsVerticalScrollIndicator={false}
         refreshControl={
-          <RefreshControl
+          <ClapperRefreshControl
             refreshing={isRefetching}
             onRefresh={refetch}
-            tintColor={Colors.brass}
-            colors={[Colors.brass]}
           />
         }
       />

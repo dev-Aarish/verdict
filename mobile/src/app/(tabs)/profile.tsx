@@ -6,7 +6,6 @@ import {
   RefreshControl,
   StyleSheet,
   TouchableOpacity,
-  ActivityIndicator,
   Platform,
 } from "react-native";
 import { useRouter } from "expo-router";
@@ -28,6 +27,13 @@ import { TasteScoreGauge } from "../../components/common/TasteScoreGauge";
 import { MovieCard } from "../../components/common/MovieCard";
 import { VerdictCard } from "../../components/common/VerdictCard";
 import { Button } from "../../components/common/Button";
+import { Stamp } from "../../components/common/Stamp";
+import { ClapperLoader } from "../../components/common/ClapperLoader";
+import {
+  ClapperRefreshControl,
+  ClapperRefreshHeader,
+} from "../../components/common/ClapperRefreshControl";
+import { LogMovieModal } from "../../components/common/LogMovieModal";
 import { ShareCardModal } from "../../components/common/ShareCardModal";
 import { AvatarPickerModal } from "../../components/common/AvatarPickerModal";
 import { LogoutModal } from "../../components/common/LogoutModal";
@@ -106,14 +112,14 @@ export default function ProfileScreen() {
   if (isLoadingProfile && !profileData) {
     return (
       <View style={styles.loadingContainer}>
-        <ActivityIndicator size="large" color={Colors.brass} />
-        <Text style={styles.loadingText}>Opening vault...</Text>
+        <ClapperLoader size="lg" />
       </View>
     );
   }
 
   const renderHeader = () => (
     <View style={styles.headerContainer}>
+      <ClapperRefreshHeader refreshing={isRefetching || isLoadingProfile} />
       {/* Profile Info Bar */}
       <View style={styles.profileCard}>
         <View style={styles.profileTopRow}>
@@ -261,11 +267,9 @@ export default function ProfileScreen() {
           contentContainerStyle={styles.listContent}
           showsVerticalScrollIndicator={false}
           refreshControl={
-            <RefreshControl
+            <ClapperRefreshControl
               refreshing={isRefetching || isLoadingProfile}
               onRefresh={handleRefresh}
-              tintColor={Colors.brass}
-              colors={[Colors.brass]}
             />
           }
         />
@@ -296,11 +300,9 @@ export default function ProfileScreen() {
           contentContainerStyle={styles.listContent}
           showsVerticalScrollIndicator={false}
           refreshControl={
-            <RefreshControl
+            <ClapperRefreshControl
               refreshing={isRefetching || isLoadingProfile}
               onRefresh={handleRefresh}
-              tintColor={Colors.brass}
-              colors={[Colors.brass]}
             />
           }
         />

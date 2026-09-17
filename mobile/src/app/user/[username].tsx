@@ -6,7 +6,6 @@ import {
   RefreshControl,
   StyleSheet,
   TouchableOpacity,
-  ActivityIndicator,
   Alert,
   Platform,
 } from "react-native";
@@ -34,6 +33,11 @@ import { MovieCard } from "../../components/common/MovieCard";
 import { VerdictCard } from "../../components/common/VerdictCard";
 import { Button } from "../../components/common/Button";
 import { Badge } from "../../components/common/Badge";
+import { ClapperLoader } from "../../components/common/ClapperLoader";
+import {
+  ClapperRefreshControl,
+  ClapperRefreshHeader,
+} from "../../components/common/ClapperRefreshControl";
 import { LeaveVerdictModal } from "../../components/common/LeaveVerdictModal";
 import { AvatarPickerModal } from "../../components/common/AvatarPickerModal";
 
@@ -114,8 +118,7 @@ export default function UserProfileScreen() {
   if (isLoadingProfile) {
     return (
       <View style={styles.loadingContainer}>
-        <ActivityIndicator size="large" color={Colors.brass} />
-        <Text style={styles.loadingText}>Retrieving taste dossier...</Text>
+        <ClapperLoader size="lg" />
       </View>
     );
   }
@@ -137,6 +140,7 @@ export default function UserProfileScreen() {
 
   const renderHeader = () => (
     <View style={styles.headerContainer}>
+      <ClapperRefreshHeader refreshing={isRefetching} />
       {/* Profile Header Card */}
       <View style={styles.profileCard}>
         <View style={styles.cardHeaderAccent} />
@@ -289,10 +293,9 @@ export default function UserProfileScreen() {
           data={watchedList}
           keyExtractor={(item) => item.id}
           refreshControl={
-            <RefreshControl
+            <ClapperRefreshControl
               refreshing={isRefetching}
               onRefresh={refetch}
-              tintColor={Colors.brass}
             />
           }
           initialNumToRender={6}
@@ -333,10 +336,9 @@ export default function UserProfileScreen() {
           windowSize={5}
           removeClippedSubviews={Platform.OS !== "web"}
           refreshControl={
-            <RefreshControl
+            <ClapperRefreshControl
               refreshing={isRefetching}
               onRefresh={refetch}
-              tintColor={Colors.brass}
             />
           }
           renderItem={({ item }) => (

@@ -4,7 +4,6 @@ import {
   Text,
   FlatList,
   StyleSheet,
-  ActivityIndicator,
   TouchableOpacity,
   Keyboard,
 } from "react-native";
@@ -17,6 +16,7 @@ import { Colors, Radius, Spacing } from "../../constants/theme";
 import { Input } from "../../components/common/Input";
 import { MovieCard } from "../../components/common/MovieCard";
 import { LogMovieModal } from "../../components/common/LogMovieModal";
+import { ClapperLoader } from "../../components/common/ClapperLoader";
 import { Movie } from "../../types";
 
 export default function SearchScreen() {
@@ -72,8 +72,7 @@ export default function SearchScreen() {
     if (isSearching) {
       return (
         <View style={styles.loadingContainer}>
-          <ActivityIndicator size="large" color={Colors.brass} />
-          <Text style={styles.loadingText}>Searching the vaults...</Text>
+          <ClapperLoader size="lg" />
         </View>
       );
     }

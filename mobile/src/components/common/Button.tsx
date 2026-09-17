@@ -1,7 +1,6 @@
 import React from "react";
 import {
   Text,
-  ActivityIndicator,
   StyleSheet,
   ViewStyle,
   TextStyle,
@@ -14,6 +13,7 @@ import Animated, {
 } from "react-native-reanimated";
 import * as Haptics from "expo-haptics";
 import { Colors, Radius, Spacing } from "../../constants/theme";
+import { ClapperLoader } from "./ClapperLoader";
 
 const AnimatedPressable = Animated.createAnimatedComponent(Pressable);
 
@@ -180,9 +180,14 @@ export const Button: React.FC<ButtonProps> = ({
       style={[getContainerStyle(), animatedStyle, style]}
     >
       {loading ? (
-        <ActivityIndicator
-          size="small"
-          color={variant === "primary" || variant === "gold" || variant === "brass" ? Colors.inkDark : Colors.paper}
+        <ClapperLoader
+          size={size === "sm" ? 18 : 22}
+          color={
+            variant === "primary" || variant === "gold" || variant === "brass"
+              ? Colors.inkDark
+              : Colors.paper
+          }
+          inline
         />
       ) : (
         <>
