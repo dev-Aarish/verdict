@@ -11,7 +11,7 @@ import {
 } from "react-native";
 import { useRouter } from "expo-router";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { Mail, Lock, Sparkles, Clapperboard, Award } from "lucide-react-native";
+import { Mail, Lock, Eye, EyeOff, Sparkles, Clapperboard, Award } from "lucide-react-native";
 import * as Haptics from "expo-haptics";
 import { useAuth } from "../../context/AuthContext";
 import { Colors, Radius, Spacing, Typography } from "../../constants/theme";
@@ -25,6 +25,7 @@ export default function LoginScreen() {
 
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
 
   const handleLogin = async () => {
@@ -113,8 +114,27 @@ export default function LoginScreen() {
               placeholder="••••••••"
               value={password}
               onChangeText={setPassword}
-              secureTextEntry
+              secureTextEntry={!showPassword}
               leftIcon={<Lock size={18} color={Colors.dust} />}
+              rightIcon={
+                <TouchableOpacity
+                  onPress={() => {
+                    try {
+                      Haptics.selectionAsync();
+                    } catch {}
+                    setShowPassword((prev) => !prev);
+                  }}
+                  hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+                  activeOpacity={0.7}
+                  accessibilityLabel={showPassword ? "Hide password" : "Show password"}
+                >
+                  {showPassword ? (
+                    <EyeOff size={18} color={Colors.brass} />
+                  ) : (
+                    <Eye size={18} color={Colors.dust} />
+                  )}
+                </TouchableOpacity>
+              }
             />
 
             <Button

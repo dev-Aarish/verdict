@@ -83,7 +83,7 @@ export const Input: React.FC<InputProps> = ({
           {...props}
         />
         {rightIcon && (
-          <View pointerEvents="none" style={[styles.rightIcon, isMultiline && styles.iconMultiline]}>
+          <View pointerEvents="box-none" style={[styles.rightIcon, isMultiline && styles.iconMultiline]}>
             {rightIcon}
           </View>
         )}
