@@ -11,7 +11,18 @@ import {
 } from "react-native";
 import { useRouter } from "expo-router";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { User, Mail, Lock, Eye, EyeOff, AlignLeft, Sparkles } from "lucide-react-native";
+import {
+  User,
+  Mail,
+  Lock,
+  Eye,
+  EyeOff,
+  AlignLeft,
+  Sparkles,
+  Ticket,
+  ArrowRight,
+  UserPlus,
+} from "lucide-react-native";
 import * as Haptics from "expo-haptics";
 import { useAuth } from "../../context/AuthContext";
 import { Colors, Radius, Spacing, Typography } from "../../constants/theme";
@@ -32,18 +43,29 @@ export default function SignupScreen() {
 
   const handleSignup = async () => {
     if (!username.trim() || !email.trim() || !password.trim()) {
-      Alert.alert("Required Credentials", "Please provide a username, email, and password.");
+      Alert.alert(
+        "Required Credentials",
+        "Please provide a username, email, and password to enroll in the jury."
+      );
       return;
     }
 
     if (password.length < 8) {
-      Alert.alert("Security Requirement", "Your passkey must be at least 8 characters long.");
+      Alert.alert(
+        "Security Requirement",
+        "Your passkey must be at least 8 characters long."
+      );
       return;
     }
 
     setLoading(true);
     try {
-      await signup(username.trim(), email.trim(), password, bio.trim() || undefined);
+      await signup(
+        username.trim(),
+        email.trim(),
+        password,
+        bio.trim() || undefined
+      );
       try {
         Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
       } catch {}
@@ -52,7 +74,10 @@ export default function SignupScreen() {
       try {
         Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
       } catch {}
-      Alert.alert("Registration Failed", err.message || "Could not complete membership enrollment.");
+      Alert.alert(
+        "Registration Failed",
+        err.message || "Could not complete membership enrollment."
+      );
     } finally {
       setLoading(false);
     }
@@ -67,101 +92,119 @@ export default function SignupScreen() {
         <ScrollView
           contentContainerStyle={styles.scrollContent}
           showsVerticalScrollIndicator={false}
+          keyboardShouldPersistTaps="handled"
         >
           {/* Header Brand */}
           <View style={styles.brandHeader}>
-            <View style={styles.logoBadge}>
-              <LogoMark size={34} color={Colors.brass} />
+            <View style={styles.logoContainer}>
+              <LogoMark size={36} color={Colors.brass} />
             </View>
             <Text style={styles.brandTitle}>JOIN THE JURY</Text>
-            <Text style={styles.brandSubtitle}>
-              MEMBERSHIP ENROLLMENT
-            </Text>
             <Text style={styles.brandTagline}>
-              Establish your critical dossier and calibrate your cinematic taste.
+              Establish your critical dossier and calibrate your cinematic taste
             </Text>
           </View>
 
-          {/* Form */}
-          <View style={styles.formContainer}>
-            <View style={styles.formAccentBar} />
+          {/* Form Docket */}
+          <View style={styles.cardContainer}>
+            {/* Docket Header */}
+            <View style={styles.cardHeader}>
+              <View style={styles.cardHeaderLeft}>
+                <Ticket size={13} color={Colors.brass} />
+                <Text style={styles.cardHeaderText}>MEMBERSHIP DOSSIER</Text>
+              </View>
+              <Text style={styles.cardHeaderRight}>NEW CRITIC APPLICATION</Text>
+            </View>
 
-            <Input
-              label="HANDLE / CALLSIGN"
-              placeholder="e.g. godard_enjoyer"
-              value={username}
-              onChangeText={setUsername}
-              autoCapitalize="none"
-              leftIcon={<User size={18} color={Colors.dust} />}
-            />
+            <View style={styles.formBody}>
+              <Input
+                label="Callsign / Handle"
+                placeholder="e.g. godard_enjoyer"
+                value={username}
+                onChangeText={setUsername}
+                autoCapitalize="none"
+                leftIcon={<User size={16} color={Colors.dust} />}
+                containerStyle={styles.inputContainer}
+              />
 
-            <Input
-              label="EMAIL ADDRESS"
-              placeholder="critic@screeningroom.org"
-              value={email}
-              onChangeText={setEmail}
-              autoCapitalize="none"
-              keyboardType="email-address"
-              leftIcon={<Mail size={18} color={Colors.dust} />}
-            />
+              <Input
+                label="Email Address"
+                placeholder="critic@screeningroom.org"
+                value={email}
+                onChangeText={setEmail}
+                autoCapitalize="none"
+                keyboardType="email-address"
+                leftIcon={<Mail size={16} color={Colors.dust} />}
+                containerStyle={styles.inputContainer}
+              />
 
-            <Input
-              label="PASSKEY (MIN 8 CHARACTERS)"
-              placeholder="••••••••"
-              value={password}
-              onChangeText={setPassword}
-              secureTextEntry={!showPassword}
-              leftIcon={<Lock size={18} color={Colors.dust} />}
-              rightIcon={
-                <TouchableOpacity
-                  onPress={() => {
-                    try {
-                      Haptics.selectionAsync();
-                    } catch {}
-                    setShowPassword((prev) => !prev);
-                  }}
-                  hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
-                  activeOpacity={0.7}
-                  accessibilityLabel={showPassword ? "Hide password" : "Show password"}
-                >
-                  {showPassword ? (
-                    <EyeOff size={18} color={Colors.brass} />
-                  ) : (
-                    <Eye size={18} color={Colors.dust} />
-                  )}
-                </TouchableOpacity>
-              }
-            />
+              <Input
+                label="Passkey (Min 8 Characters)"
+                placeholder="••••••••"
+                value={password}
+                onChangeText={setPassword}
+                secureTextEntry={!showPassword}
+                leftIcon={<Lock size={16} color={Colors.dust} />}
+                containerStyle={styles.inputContainer}
+                rightIcon={
+                  <TouchableOpacity
+                    onPress={() => {
+                      try {
+                        Haptics.selectionAsync();
+                      } catch {}
+                      setShowPassword((prev) => !prev);
+                    }}
+                    hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}
+                    activeOpacity={0.7}
+                    accessibilityLabel={
+                      showPassword ? "Hide password" : "Show password"
+                    }
+                  >
+                    {showPassword ? (
+                      <EyeOff size={16} color={Colors.brass} />
+                    ) : (
+                      <Eye size={16} color={Colors.dust} />
+                    )}
+                  </TouchableOpacity>
+                }
+              />
 
-            <Input
-              label="CRITICAL STATEMENT / BIO (OPTIONAL)"
-              placeholder="A24 aficionado, 70mm purist, French New Wave..."
-              value={bio}
-              onChangeText={setBio}
-              leftIcon={<AlignLeft size={18} color={Colors.dust} />}
-            />
+              <Input
+                label="Critical Statement / Bio (Optional)"
+                placeholder="A24 devotee, 70mm purist, French New Wave..."
+                value={bio}
+                onChangeText={setBio}
+                leftIcon={<AlignLeft size={16} color={Colors.dust} />}
+                containerStyle={styles.inputContainer}
+              />
 
-            <Button
-              title="Enroll in Screening Room"
-              onPress={handleSignup}
-              loading={loading}
-              variant="brass"
-              size="lg"
-              style={styles.submitBtn}
-            />
+              <Button
+                title="Enroll in Screening Room"
+                onPress={handleSignup}
+                loading={loading}
+                variant="brass"
+                size="lg"
+                style={styles.submitBtn}
+                icon={<UserPlus size={16} color={Colors.inkDark} />}
+              />
+            </View>
           </View>
 
           {/* Footer link to sign in */}
           <View style={styles.footer}>
-            <Text style={styles.footerText}>Already enrolled in the jury?</Text>
-            <TouchableOpacity 
+            <Text style={styles.footerPrompt}>Already enrolled in the jury?</Text>
+            <TouchableOpacity
               activeOpacity={0.7}
               onPress={() => {
-                try { Haptics.selectionAsync(); } catch {}
+                try {
+                  Haptics.selectionAsync();
+                } catch {}
                 router.push("/(auth)/login");
               }}
+              style={styles.footerLinkWrapper}
             >
-              <Text style={styles.footerLink}> Sign In</Text>
+              <Text style={styles.footerLinkText}>Sign In</Text>
+              <ArrowRight size={13} color={Colors.brass} />
             </TouchableOpacity>
           </View>
         </ScrollView>
@@ -180,60 +223,72 @@ const styles = StyleSheet.create({
   },
   scrollContent: {
     flexGrow: 1,
-    padding: Spacing.xl,
+    paddingHorizontal: Spacing.xl,
+    paddingTop: Spacing.xl,
+    paddingBottom: Spacing.xxxl,
     justifyContent: "center",
   },
   brandHeader: {
     alignItems: "center",
     marginBottom: Spacing.xl,
   },
-  logoBadge: {
-    width: 60,
-    height: 60,
-    borderRadius: Radius.xl,
-    backgroundColor: "rgba(197, 165, 114, 0.1)",
-    borderWidth: 1.5,
-    borderColor: "rgba(197, 165, 114, 0.35)",
-    alignItems: "center",
-    justifyContent: "center",
-    marginBottom: Spacing.md,
+  logoContainer: {
+    marginBottom: Spacing.xs,
   },
   brandTitle: {
-    fontSize: 26,
+    fontSize: 28,
     fontWeight: "900",
     color: Colors.paper,
-    letterSpacing: 3,
-  },
-  brandSubtitle: {
-    fontSize: 10,
-    fontWeight: "800",
-    color: Colors.brass,
-    letterSpacing: 2,
-    marginTop: 4,
+    letterSpacing: 4,
   },
   brandTagline: {
     fontSize: 13,
-    color: Colors.dust,
+    color: Colors.dustLight,
     textAlign: "center",
     marginTop: 6,
-    maxWidth: 290,
+    maxWidth: 280,
     lineHeight: 18,
   },
-  formContainer: {
+  cardContainer: {
     backgroundColor: Colors.velvet,
-    borderRadius: Radius.xl,
-    padding: Spacing.xl,
+    borderRadius: Radius.md,
     borderWidth: 1,
     borderColor: Colors.hairline,
     overflow: "hidden",
   },
-  formAccentBar: {
-    position: "absolute",
-    top: 0,
-    left: 0,
-    right: 0,
-    height: 3,
-    backgroundColor: Colors.brass,
+  cardHeader: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    paddingHorizontal: Spacing.lg,
+    paddingVertical: 10,
+    backgroundColor: "rgba(20, 21, 29, 0.6)",
+    borderBottomWidth: 1,
+    borderBottomColor: Colors.hairline,
+  },
+  cardHeaderLeft: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 6,
+  },
+  cardHeaderText: {
+    fontSize: 10,
+    fontWeight: "800",
+    color: Colors.brass,
+    letterSpacing: 1.5,
+  },
+  cardHeaderRight: {
+    fontFamily: Platform.OS === "ios" ? "Courier" : "monospace",
+    fontSize: 9,
+    color: Colors.dust,
+    letterSpacing: 1,
+  },
+  formBody: {
+    padding: Spacing.xl,
+  },
+  inputContainer: {
+    backgroundColor: Colors.velvetElevated,
+    borderColor: "rgba(255, 255, 255, 0.08)",
   },
   submitBtn: {
     marginTop: Spacing.sm,
@@ -242,15 +297,23 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     justifyContent: "center",
     alignItems: "center",
-    marginTop: Spacing.xl,
+    marginTop: Spacing.xxl,
+    gap: Spacing.xs,
   },
-  footerText: {
+  footerPrompt: {
     color: Colors.dust,
     fontSize: 13,
   },
-  footerLink: {
+  footerLinkWrapper: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 4,
+  },
+  footerLinkText: {
     color: Colors.brass,
     fontWeight: "700",
     fontSize: 13,
+    letterSpacing: 0.3,
   },
 });
+

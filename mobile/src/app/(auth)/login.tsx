@@ -8,16 +8,98 @@ import {
   Platform,
   ScrollView,
   Alert,
+  Pressable,
 } from "react-native";
 import { useRouter } from "expo-router";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { Mail, Lock, Eye, EyeOff, Sparkles, Clapperboard, Award } from "lucide-react-native";
+import {
+  Mail,
+  Lock,
+  Eye,
+  EyeOff,
+  Sparkles,
+  Film,
+  Ticket,
+  ArrowRight,
+  ShieldCheck,
+} from "lucide-react-native";
 import * as Haptics from "expo-haptics";
+import Animated, {
+  useSharedValue,
+  useAnimatedStyle,
+  withSpring,
+} from "react-native-reanimated";
 import { useAuth } from "../../context/AuthContext";
 import { Colors, Radius, Spacing, Typography } from "../../constants/theme";
 import { Button } from "../../components/common/Button";
 import { Input } from "../../components/common/Input";
 import { LogoMark } from "../../components/common/Logo";
+
+interface GuestPassCardProps {
+  name: string;
+  role: string;
+  email: string;
+  pass: string;
+  onSelect: (email: string, pass: string) => void;
+  disabled?: boolean;
+}
+
+function GuestPassCard({
+  name,
+  role,
+  email,
+  pass,
+  onSelect,
+  disabled,
+}: GuestPassCardProps) {
+  const scale = useSharedValue(1);
+
+  const handlePressIn = () => {
+    if (disabled) return;
+    scale.value = withSpring(0.96, { damping: 15, stiffness: 350 });
+  };
+
+  const handlePressOut = () => {
+    scale.value = withSpring(1, { damping: 15, stiffness: 350 });
+  };
+
+  const handlePress = () => {
+    if (disabled) return;
+    try {
+      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    } catch {}
+    onSelect(email, pass);
+  };
+
+  const animatedStyle = useAnimatedStyle(() => ({
+    transform: [{ scale: scale.value }],
+  }));
+
+  return (
+    <Animated.View style={[{ flex: 1 }, animatedStyle]}>
+      <Pressable
+        onPressIn={handlePressIn}
+        onPressOut={handlePressOut}
+        onPress={handlePress}
+        disabled={disabled}
+        style={styles.guestPassCard}
+      >
+        <View style={styles.guestPassTopRow}>
+          <View style={styles.guestPassBadge}>
+            <Text style={styles.guestPassBadgeText}>PASS</Text>
+          </View>
+          <Sparkles size={12} color={Colors.brass} />
+        </View>
+        <Text style={styles.guestPassName} numberOfLines={1}>
+          {name}
+        </Text>
+        <Text style={styles.guestPassRole} numberOfLines={1}>
+          {role}
+        </Text>
+      </Pressable>
+    </Animated.View>
+  );
+}
 
 export default function LoginScreen() {
   const router = useRouter();
@@ -30,7 +112,10 @@ export default function LoginScreen() {
 
   const handleLogin = async () => {
     if (!email.trim() || !password.trim()) {
-      Alert.alert("Credentials Required", "Please provide both an email and password to enter the screening room.");
+      Alert.alert(
+        "Credentials Required",
+        "Please provide both your email or username and passkey to enter the screening room."
+      );
       return;
     }
 
@@ -65,7 +150,10 @@ export default function LoginScreen() {
       try {
         Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
       } catch {}
-      Alert.alert("Demo Access Failed", err.message || "Failed to log in with demo account.");
+      Alert.alert(
+        "Demo Access Failed",
+        err.message || "Failed to log in with guest jury pass."
+      );
     } finally {
       setLoading(false);
     }
@@ -80,112 +168,126 @@ export default function LoginScreen() {
         <ScrollView
           contentContainerStyle={styles.scrollContent}
           showsVerticalScrollIndicator={false}
+          keyboardShouldPersistTaps="handled"
         >
-          {/* Header Brand */}
+          {/* Brand Presentation */}
           <View style={styles.brandHeader}>
-            <View style={styles.logoBadge}>
-              <LogoMark size={36} color={Colors.brass} />
+            <View style={styles.logoContainer}>
+              <LogoMark size={40} color={Colors.brass} />
             </View>
             <Text style={styles.brandTitle}>VERDICT</Text>
-            <Text style={styles.brandSubtitle}>
-              THE SCREENING ROOM FOR CINEPHILES
-            </Text>
             <Text style={styles.brandTagline}>
-              Log films. Compute your Taste Score. Deliver your critical verdict.
+              The screening room for cinema verdicts & taste calibration
             </Text>
           </View>
 
-          {/* Form */}
-          <View style={styles.formContainer}>
-            <View style={styles.formAccentBar} />
-            
-            <Input
-              label="MEMBER EMAIL OR USERNAME"
-              placeholder="Email or Username"
-              value={email}
-              onChangeText={setEmail}
-              autoCapitalize="none"
-              keyboardType="default"
-              leftIcon={<Mail size={18} color={Colors.dust} />}
-            />
-
-            <Input
-              label="PASSKEY"
-              placeholder="••••••••"
-              value={password}
-              onChangeText={setPassword}
-              secureTextEntry={!showPassword}
-              leftIcon={<Lock size={18} color={Colors.dust} />}
-              rightIcon={
-                <TouchableOpacity
-                  onPress={() => {
-                    try {
-                      Haptics.selectionAsync();
-                    } catch {}
-                    setShowPassword((prev) => !prev);
-                  }}
-                  hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
-                  activeOpacity={0.7}
-                  accessibilityLabel={showPassword ? "Hide password" : "Show password"}
-                >
-                  {showPassword ? (
-                    <EyeOff size={18} color={Colors.brass} />
-                  ) : (
-                    <Eye size={18} color={Colors.dust} />
-                  )}
-                </TouchableOpacity>
-              }
-            />
-
-            <Button
-              title="Enter Screening Room"
-              onPress={handleLogin}
-              loading={loading}
-              variant="brass"
-              size="lg"
-              style={styles.submitBtn}
-            />
-
-            {/* Quick Demo Login Option */}
-            <View style={styles.demoSection}>
-              <View style={styles.demoDivider}>
-                <View style={styles.dividerLine} />
-                <Text style={styles.dividerText}>JURY GUEST PASSES</Text>
-                <View style={styles.dividerLine} />
+          {/* Main Admission Card */}
+          <View style={styles.cardContainer}>
+            {/* Card Header Notch / Meta info */}
+            <View style={styles.cardHeader}>
+              <View style={styles.cardHeaderLeft}>
+                <Ticket size={13} color={Colors.brass} />
+                <Text style={styles.cardHeaderText}>MEMBER ADMISSION</Text>
               </View>
+              <Text style={styles.cardHeaderRight}>AUTHENTICATED ACCESS</Text>
+            </View>
 
-              <View style={styles.demoButtonsRow}>
-                <Button
-                  title="Alice (Critic)"
-                  variant="secondary"
-                  size="sm"
-                  onPress={() => handleDemoLogin("alice@example.com", "password123")}
-                  style={styles.demoBtn}
-                  icon={<Sparkles size={13} color={Colors.brass} />}
-                />
-                <Button
-                  title="Bob (Auteur)"
-                  variant="secondary"
-                  size="sm"
-                  onPress={() => handleDemoLogin("bob@example.com", "password123")}
-                  style={styles.demoBtn}
-                  icon={<Sparkles size={13} color={Colors.brass} />}
-                />
+            <View style={styles.formBody}>
+              <Input
+                label="Member Identifier"
+                placeholder="Email or Username"
+                value={email}
+                onChangeText={setEmail}
+                autoCapitalize="none"
+                keyboardType="email-address"
+                leftIcon={<Mail size={16} color={Colors.dust} />}
+                containerStyle={styles.inputContainer}
+              />
+
+              <Input
+                label="Passkey"
+                placeholder="••••••••"
+                value={password}
+                onChangeText={setPassword}
+                secureTextEntry={!showPassword}
+                leftIcon={<Lock size={16} color={Colors.dust} />}
+                containerStyle={styles.inputContainer}
+                rightIcon={
+                  <TouchableOpacity
+                    onPress={() => {
+                      try {
+                        Haptics.selectionAsync();
+                      } catch {}
+                      setShowPassword((prev) => !prev);
+                    }}
+                    hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}
+                    activeOpacity={0.7}
+                    accessibilityLabel={showPassword ? "Hide password" : "Show password"}
+                  >
+                    {showPassword ? (
+                      <EyeOff size={16} color={Colors.brass} />
+                    ) : (
+                      <Eye size={16} color={Colors.dust} />
+                    )}
+                  </TouchableOpacity>
+                }
+              />
+
+              <Button
+                title="Take Your Seat"
+                onPress={handleLogin}
+                loading={loading}
+                variant="brass"
+                size="lg"
+                style={styles.submitBtn}
+                icon={<Film size={16} color={Colors.inkDark} />}
+              />
+
+              {/* Guest Jury Passes */}
+              <View style={styles.guestPassSection}>
+                <View style={styles.dividerRow}>
+                  <View style={styles.dividerHairline} />
+                  <Text style={styles.dividerLabel}>GUEST JURY PASSES</Text>
+                  <View style={styles.dividerHairline} />
+                </View>
+
+                <View style={styles.guestPassRow}>
+                  <GuestPassCard
+                    name="Alice"
+                    role="Lead Critic"
+                    email="alice@example.com"
+                    pass="password123"
+                    onSelect={handleDemoLogin}
+                    disabled={loading}
+                  />
+                  <GuestPassCard
+                    name="Bob"
+                    role="Film Auteur"
+                    email="bob@example.com"
+                    pass="password123"
+                    onSelect={handleDemoLogin}
+                    disabled={loading}
+                  />
+                </View>
               </View>
             </View>
           </View>
 
-          {/* Footer link to sign up */}
+          {/* Footer - Membership Enrollment Link */}
           <View style={styles.footer}>
-            <Text style={styles.footerText}>New to the screening room?</Text>
-            <TouchableOpacity 
+            <Text style={styles.footerPrompt}>No ticket yet?</Text>
+            <TouchableOpacity
               activeOpacity={0.7}
               onPress={() => {
-                try { Haptics.selectionAsync(); } catch {}
+                try {
+                  Haptics.selectionAsync();
+                } catch {}
                 router.push("/(auth)/signup");
               }}
+              style={styles.footerLinkWrapper}
             >
-              <Text style={styles.footerLink}> Request Credentials</Text>
+              <Text style={styles.footerLinkText}>Get on the jury list</Text>
+              <ArrowRight size={13} color={Colors.brass} />
             </TouchableOpacity>
           </View>
         </ScrollView>
@@ -204,104 +306,160 @@ const styles = StyleSheet.create({
   },
   scrollContent: {
     flexGrow: 1,
-    padding: Spacing.xl,
+    paddingHorizontal: Spacing.xl,
+    paddingTop: Spacing.xl,
+    paddingBottom: Spacing.xxxl,
     justifyContent: "center",
   },
   brandHeader: {
     alignItems: "center",
-    marginBottom: Spacing.xl,
+    marginBottom: Spacing.xxl,
   },
-  logoBadge: {
-    width: 68,
-    height: 68,
-    borderRadius: Radius.xl,
-    backgroundColor: "rgba(197, 165, 114, 0.1)",
-    borderWidth: 1.5,
-    borderColor: "rgba(197, 165, 114, 0.35)",
-    alignItems: "center",
-    justifyContent: "center",
-    marginBottom: Spacing.md,
+  logoContainer: {
+    marginBottom: Spacing.sm,
   },
   brandTitle: {
-    fontSize: 28,
+    fontSize: 32,
     fontWeight: "900",
     color: Colors.paper,
-    letterSpacing: 4,
-  },
-  brandSubtitle: {
-    fontSize: 10,
-    fontWeight: "800",
-    color: Colors.brass,
-    letterSpacing: 2,
-    marginTop: 4,
+    letterSpacing: 5,
   },
   brandTagline: {
     fontSize: 13,
-    color: Colors.dust,
+    color: Colors.dustLight,
     textAlign: "center",
-    marginTop: 8,
-    maxWidth: 290,
+    marginTop: 6,
+    maxWidth: 280,
     lineHeight: 18,
   },
-  formContainer: {
+  cardContainer: {
     backgroundColor: Colors.velvet,
-    borderRadius: Radius.xl,
-    padding: Spacing.xl,
+    borderRadius: Radius.md,
     borderWidth: 1,
     borderColor: Colors.hairline,
     overflow: "hidden",
   },
-  formAccentBar: {
-    position: "absolute",
-    top: 0,
-    left: 0,
-    right: 0,
-    height: 3,
-    backgroundColor: Colors.brass,
+  cardHeader: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    paddingHorizontal: Spacing.lg,
+    paddingVertical: 10,
+    backgroundColor: "rgba(20, 21, 29, 0.6)",
+    borderBottomWidth: 1,
+    borderBottomColor: Colors.hairline,
+  },
+  cardHeaderLeft: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 6,
+  },
+  cardHeaderText: {
+    fontSize: 10,
+    fontWeight: "800",
+    color: Colors.brass,
+    letterSpacing: 1.5,
+  },
+  cardHeaderRight: {
+    fontFamily: Platform.OS === "ios" ? "Courier" : "monospace",
+    fontSize: 9,
+    color: Colors.dust,
+    letterSpacing: 1,
+  },
+  formBody: {
+    padding: Spacing.xl,
+  },
+  inputContainer: {
+    backgroundColor: Colors.velvetElevated,
+    borderColor: "rgba(255, 255, 255, 0.08)",
   },
   submitBtn: {
     marginTop: Spacing.sm,
   },
-  demoSection: {
-    marginTop: Spacing.xl,
+  guestPassSection: {
+    marginTop: Spacing.xxl,
   },
-  demoDivider: {
+  dividerRow: {
     flexDirection: "row",
     alignItems: "center",
     marginBottom: Spacing.md,
   },
-  dividerLine: {
+  dividerHairline: {
     flex: 1,
     height: 1,
-    backgroundColor: Colors.hairline,
+    backgroundColor: "rgba(255, 255, 255, 0.08)",
   },
-  dividerText: {
+  dividerLabel: {
+    fontFamily: Platform.OS === "ios" ? "Courier" : "monospace",
     fontSize: 9,
-    fontWeight: "800",
+    fontWeight: "700",
     color: Colors.dust,
     letterSpacing: 1.5,
-    marginHorizontal: Spacing.sm,
+    marginHorizontal: Spacing.md,
   },
-  demoButtonsRow: {
+  guestPassRow: {
     flexDirection: "row",
-    gap: Spacing.sm,
+    gap: Spacing.md,
   },
-  demoBtn: {
-    flex: 1,
+  guestPassCard: {
+    backgroundColor: Colors.velvetElevated,
+    borderWidth: 1,
+    borderColor: "rgba(197, 165, 114, 0.2)",
+    borderRadius: Radius.none,
+    padding: Spacing.md,
+  },
+  guestPassTopRow: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    marginBottom: 6,
+  },
+  guestPassBadge: {
+    backgroundColor: "rgba(197, 165, 114, 0.12)",
+    paddingHorizontal: 5,
+    paddingVertical: 2,
+    borderWidth: 0.5,
+    borderColor: Colors.brass,
+  },
+  guestPassBadgeText: {
+    fontFamily: Platform.OS === "ios" ? "Courier" : "monospace",
+    fontSize: 8,
+    fontWeight: "800",
+    color: Colors.brass,
+    letterSpacing: 1,
+  },
+  guestPassName: {
+    fontSize: 13,
+    fontWeight: "800",
+    color: Colors.paper,
+    letterSpacing: 0.5,
+  },
+  guestPassRole: {
+    fontSize: 11,
+    color: Colors.dust,
+    marginTop: 2,
   },
   footer: {
     flexDirection: "row",
     justifyContent: "center",
     alignItems: "center",
-    marginTop: Spacing.xl,
+    marginTop: Spacing.xxl,
+    gap: Spacing.xs,
   },
-  footerText: {
+  footerPrompt: {
     color: Colors.dust,
     fontSize: 13,
   },
-  footerLink: {
+  footerLinkWrapper: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 4,
+  },
+  footerLinkText: {
     color: Colors.brass,
     fontWeight: "700",
     fontSize: 13,
+    letterSpacing: 0.3,
   },
 });
+
