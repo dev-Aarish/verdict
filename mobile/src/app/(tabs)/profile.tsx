@@ -17,6 +17,7 @@ import {
   Film,
   Gavel,
   Plus,
+  Pencil,
 } from "lucide-react-native";
 import * as Haptics from "expo-haptics";
 import { usersApi } from "../../api";
@@ -28,14 +29,16 @@ import { MovieCard } from "../../components/common/MovieCard";
 import { VerdictCard } from "../../components/common/VerdictCard";
 import { Button } from "../../components/common/Button";
 import { ShareCardModal } from "../../components/common/ShareCardModal";
+import { AvatarPickerModal } from "../../components/common/AvatarPickerModal";
 
 export default function ProfileScreen() {
   const router = useRouter();
   const queryClient = useQueryClient();
-  const { user, isAuthenticated, logout } = useAuth();
+  const { user, isAuthenticated, logout, refreshUser } = useAuth();
 
   const [activeTab, setActiveTab] = useState<"watched" | "verdicts">("watched");
   const [shareModalVisible, setShareModalVisible] = useState<boolean>(false);
+  const [avatarModalVisible, setAvatarModalVisible] = useState<boolean>(false);
 
   const username = user?.username || "";
 
@@ -56,6 +59,12 @@ export default function ProfileScreen() {
   const verdicts = profileData?.verdicts || [];
 
   const handleRefresh = async () => {
+    await refetch();
+  };
+
+  const handleSaveAvatar = async (avatarUrl: string | null) => {
+    await usersApi.updateProfile({ avatarUrl });
+    await refreshUser();
     await refetch();
   };
 
@@ -100,7 +109,16 @@ export default function ProfileScreen() {
       {/* Profile Info Bar */}
       <View style={styles.profileCard}>
         <View style={styles.profileTopRow}>
-          <Avatar uri={user.avatarUrl} username={user.username} size={60} />
+          <TouchableOpacity
+            activeOpacity={0.8}
+            onPress={() => setAvatarModalVisible(true)}
+            style={styles.avatarEditContainer}
+          >
+            <Avatar uri={user.avatarUrl} username={user.username} size={60} />
+            <View style={styles.pencilBadge}>
+              <Pencil size={11} color={Colors.brass} />
+            </View>
+          </TouchableOpacity>
           <View style={styles.profileDetails}>
             <Text style={styles.profileName}>@{user.username}</Text>
             {user.bio ? (
@@ -279,6 +297,15 @@ export default function ProfileScreen() {
         score={tasteScore || null}
         onClose={() => setShareModalVisible(false)}
       />
+
+      {/* Avatar Picker Modal */}
+      <AvatarPickerModal
+        visible={avatarModalVisible}
+        onClose={() => setAvatarModalVisible(false)}
+        username={user.username}
+        currentAvatarUrl={user.avatarUrl || null}
+        onSave={handleSaveAvatar}
+      />
     </View>
   );
 }
@@ -333,6 +360,22 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     gap: Spacing.md,
+  },
+  avatarEditContainer: {
+    position: "relative",
+  },
+  pencilBadge: {
+    position: "absolute",
+    bottom: -2,
+    right: -2,
+    backgroundColor: Colors.velvet,
+    borderWidth: 1,
+    borderColor: Colors.brass,
+    borderRadius: Radius.full,
+    width: 22,
+    height: 22,
+    alignItems: "center",
+    justifyContent: "center",
   },
   profileDetails: {
     flex: 1,

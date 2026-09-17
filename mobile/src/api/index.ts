@@ -384,6 +384,11 @@ export const usersApi = {
       return [];
     }
   },
+
+  async updateProfile(data: { bio?: string; avatarUrl?: string | null }): Promise<User> {
+    const res = await apiClient.patch<{ user: User }>("/users/me", data);
+    return res.data.user;
+  },
 };
 
 // Verdicts API

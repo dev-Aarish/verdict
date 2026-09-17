@@ -21,6 +21,7 @@ import {
   Award,
   Clapperboard,
   ShieldAlert,
+  Pencil,
 } from "lucide-react-native";
 import * as Haptics from "expo-haptics";
 import { usersApi, followsApi, verdictsApi } from "../../api";
@@ -33,15 +34,17 @@ import { VerdictCard } from "../../components/common/VerdictCard";
 import { Button } from "../../components/common/Button";
 import { Badge } from "../../components/common/Badge";
 import { LeaveVerdictModal } from "../../components/common/LeaveVerdictModal";
+import { AvatarPickerModal } from "../../components/common/AvatarPickerModal";
 
 export default function UserProfileScreen() {
   const { username } = useLocalSearchParams<{ username: string }>();
   const router = useRouter();
   const queryClient = useQueryClient();
-  const { user: currentUser, isAuthenticated } = useAuth();
+  const { user: currentUser, isAuthenticated, refreshUser } = useAuth();
 
   const [activeTab, setActiveTab] = useState<"watched" | "verdicts">("watched");
   const [verdictModalVisible, setVerdictModalVisible] = useState<boolean>(false);
+  const [avatarModalVisible, setAvatarModalVisible] = useState<boolean>(false);
 
   const isSelf = currentUser?.username?.toLowerCase() === (username as string)?.toLowerCase();
 
@@ -99,6 +102,12 @@ export default function UserProfileScreen() {
     await verdictMutation.mutateAsync(params);
   };
 
+  const handleSaveAvatar = async (avatarUrl: string | null) => {
+    await usersApi.updateProfile({ avatarUrl });
+    await refreshUser();
+    queryClient.invalidateQueries({ queryKey: ["fullProfile", username] });
+  };
+
   if (isLoadingProfile) {
     return (
       <View style={styles.loadingContainer}>
@@ -130,11 +139,28 @@ export default function UserProfileScreen() {
         <View style={styles.cardHeaderAccent} />
         
         <View style={styles.profileTopRow}>
-          <Avatar
-            uri={profileUser.avatarUrl}
-            username={profileUser.username}
-            size={72}
-          />
+          {isSelf ? (
+            <TouchableOpacity
+              activeOpacity={0.8}
+              onPress={() => setAvatarModalVisible(true)}
+              style={styles.avatarEditContainer}
+            >
+              <Avatar
+                uri={profileUser.avatarUrl}
+                username={profileUser.username}
+                size={72}
+              />
+              <View style={styles.pencilBadge}>
+                <Pencil size={12} color={Colors.brass} />
+              </View>
+            </TouchableOpacity>
+          ) : (
+            <Avatar
+              uri={profileUser.avatarUrl}
+              username={profileUser.username}
+              size={72}
+            />
+          )}
           <View style={styles.profileDetails}>
             <View style={styles.usernameRow}>
               <Text style={styles.profileName}>@{profileUser.username}</Text>
@@ -335,6 +361,17 @@ export default function UserProfileScreen() {
         onClose={() => setVerdictModalVisible(false)}
         onSubmit={handleDeliverVerdict}
       />
+
+      {/* Avatar Picker Modal */}
+      {isSelf && currentUser && (
+        <AvatarPickerModal
+          visible={avatarModalVisible}
+          onClose={() => setAvatarModalVisible(false)}
+          username={currentUser.username}
+          currentAvatarUrl={currentUser.avatarUrl || null}
+          onSave={handleSaveAvatar}
+        />
+      )}
     </View>
   );
 }
@@ -418,6 +455,22 @@ const styles = StyleSheet.create({
     alignItems: "center",
     gap: Spacing.md,
     marginTop: Spacing.xs,
+  },
+  avatarEditContainer: {
+    position: "relative",
+  },
+  pencilBadge: {
+    position: "absolute",
+    bottom: -2,
+    right: -2,
+    backgroundColor: Colors.velvet,
+    borderWidth: 1,
+    borderColor: Colors.brass,
+    borderRadius: Radius.full,
+    width: 24,
+    height: 24,
+    alignItems: "center",
+    justifyContent: "center",
   },
   profileDetails: {
     flex: 1,

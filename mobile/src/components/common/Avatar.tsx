@@ -3,6 +3,8 @@ import { View, Text, StyleSheet, StyleProp, ViewStyle } from "react-native";
 import { Image } from "expo-image";
 import { Colors, Radius } from "../../constants/theme";
 
+import { avatarUrlFor } from "../../lib/avatar";
+
 interface AvatarProps {
   uri?: string | null;
   username?: string;
@@ -18,18 +20,13 @@ export const Avatar: React.FC<AvatarProps> = ({
   ring = true,
   style,
 }) => {
-  const initial = username ? username.charAt(0).toUpperCase() : "U";
-
   const containerStyle = {
     width: size,
     height: size,
-    borderRadius: Radius.none, // sharp square film ticket look or slight radius
+    borderRadius: Radius.none, // sharp square film ticket look
   };
 
-  const imageUri =
-    uri && uri !== ""
-      ? uri
-      : `https://api.dicebear.com/7.x/bottts/png?seed=${encodeURIComponent(username || "verdict")}`;
+  const imageUri = avatarUrlFor(username, uri);
 
   return (
     <View
@@ -40,18 +37,12 @@ export const Avatar: React.FC<AvatarProps> = ({
         style,
       ]}
     >
-      {uri ? (
-        <Image
-          source={{ uri: imageUri }}
-          style={[containerStyle, styles.image]}
-          contentFit="cover"
-          transition={200}
-        />
-      ) : (
-        <View style={[containerStyle, styles.fallback]}>
-          <Text style={[styles.initial, { fontSize: size * 0.44 }]}>{initial}</Text>
-        </View>
-      )}
+      <Image
+        source={{ uri: imageUri }}
+        style={[containerStyle, styles.image]}
+        contentFit="cover"
+        transition={200}
+      />
     </View>
   );
 };
