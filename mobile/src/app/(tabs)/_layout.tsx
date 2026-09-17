@@ -1,11 +1,26 @@
-import React from "react";
+import React, { useEffect } from "react";
 import { Tabs } from "expo-router";
 import { Platform, View, StyleSheet } from "react-native";
 import { Compass, Search, Bookmark, User } from "lucide-react-native";
+import { useQueryClient } from "@tanstack/react-query";
+import { useAuth } from "../../context/AuthContext";
+import { usersApi } from "../../api";
 import { Colors } from "../../constants/theme";
 import { Logo } from "../../components/common/Logo";
 
 export default function TabLayout() {
+  const queryClient = useQueryClient();
+  const { user } = useAuth();
+
+  useEffect(() => {
+    if (user?.username) {
+      queryClient.prefetchQuery({
+        queryKey: ["fullProfile", user.username],
+        queryFn: () => usersApi.getFullProfile(user.username),
+        staleTime: 1000 * 60 * 5,
+      });
+    }
+  }, [user?.username, queryClient]);
   return (
     <Tabs
       screenOptions={{

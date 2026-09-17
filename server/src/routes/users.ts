@@ -41,16 +41,27 @@ usersRouter.get("/:username/profile", optionalAuth, async (req: AuthRequest, res
 
   const isOwn = viewer?.id === targetUser.id;
 
+  const profileMovieFields = {
+    id: movies.id,
+    imdbId: movies.imdbId,
+    title: movies.title,
+    year: movies.year,
+    posterUrl: movies.posterUrl,
+    genres: movies.genres,
+    country: movies.country,
+    director: movies.director,
+    runtime: movies.runtime,
+  };
+
   const [
     watchedRows,
     watchlistRows,
     verdictRows,
     followCountRows,
     tasteScoreRow,
-    followRow,
     viewerWatchedRows,
   ] = await Promise.all([
-    // 1. Watched entries with movie
+    // 1. Watched entries with slim movie projection
     db
       .select({
         id: watchedEntries.id,
@@ -60,21 +71,21 @@ usersRouter.get("/:username/profile", optionalAuth, async (req: AuthRequest, res
         note: watchedEntries.note,
         position: watchedEntries.position,
         watchedAt: watchedEntries.watchedAt,
-        movie: movies,
+        movie: profileMovieFields,
       })
       .from(watchedEntries)
       .innerJoin(movies, eq(movies.id, watchedEntries.movieId))
       .where(eq(watchedEntries.userId, targetUser.id))
       .orderBy(asc(watchedEntries.position), asc(watchedEntries.watchedAt)),
 
-    // 2. Watchlist entries with movie
+    // 2. Watchlist entries with slim movie projection
     db
       .select({
         id: watchlistEntries.id,
         userId: watchlistEntries.userId,
         movieId: watchlistEntries.movieId,
         addedAt: watchlistEntries.addedAt,
-        movie: movies,
+        movie: profileMovieFields,
       })
       .from(watchlistEntries)
       .innerJoin(movies, eq(movies.id, watchlistEntries.movieId))
@@ -92,11 +103,15 @@ usersRouter.get("/:username/profile", optionalAuth, async (req: AuthRequest, res
       .where(eq(verdicts.toUserId, targetUser.id))
       .orderBy(desc(verdicts.createdAt)),
 
-    // 4. Follower & following count in a single query
+    // 4. Follower count, following count, and viewer follow status in a single query
     db
       .select({
         followers: sql<number>`COUNT(CASE WHEN ${follows.followeeId} = ${targetUser.id} THEN 1 END)`,
         following: sql<number>`COUNT(CASE WHEN ${follows.followerId} = ${targetUser.id} THEN 1 END)`,
+        isFollowing:
+          viewer && !isOwn
+            ? sql<boolean>`COALESCE(BOOL_OR(${follows.followerId} = ${viewer.id} AND ${follows.followeeId} = ${targetUser.id}), false)`
+            : sql<boolean>`false`,
       })
       .from(follows)
       .where(
@@ -113,21 +128,7 @@ usersRouter.get("/:username/profile", optionalAuth, async (req: AuthRequest, res
       .where(eq(tasteScores.userId, targetUser.id))
       .then((r) => r[0]),
 
-    // 6. Follow status (if viewer is logged in and not self)
-    viewer && !isOwn
-      ? db
-          .select()
-          .from(follows)
-          .where(
-            and(
-              eq(follows.followerId, viewer.id),
-              eq(follows.followeeId, targetUser.id),
-            ),
-          )
-          .then((r) => r[0])
-      : Promise.resolve(null),
-
-    // 7. Viewer ratings for taste match (if viewer is logged in and not self)
+    // 6. Viewer ratings for taste match (if viewer is logged in and not self)
     viewer && !isOwn
       ? db
           .select({ imdbId: movies.imdbId, rating: watchedEntries.rating })
@@ -168,6 +169,31 @@ usersRouter.get("/:username/profile", optionalAuth, async (req: AuthRequest, res
     tasteMatch = computeTasteMatch(viewerWatchedRows, targetFilms);
   }
 
+  const mapProfileMovie = (m: {
+    id: string;
+    imdbId: string;
+    title: string;
+    year: string | null;
+    posterUrl: string | null;
+    genres: string | null;
+    country: string | null;
+    director: string | null;
+    runtime: number | null;
+  }) => ({
+    ...m,
+    plot: null,
+    actors: null,
+    rated: null,
+    released: null,
+    writer: null,
+    language: null,
+    awards: null,
+    boxOffice: null,
+    production: null,
+    dvd: null,
+    website: null,
+  });
+
   const entries = watchedRows.map((r) => ({
     id: r.id,
     userId: r.userId,
@@ -176,7 +202,7 @@ usersRouter.get("/:username/profile", optionalAuth, async (req: AuthRequest, res
     note: r.note,
     position: r.position,
     watchedAt: r.watchedAt,
-    movie: r.movie,
+    movie: mapProfileMovie(r.movie),
   }));
 
   const watchlist = watchlistRows.map((r) => ({
@@ -184,7 +210,7 @@ usersRouter.get("/:username/profile", optionalAuth, async (req: AuthRequest, res
     userId: r.userId,
     movieId: r.movieId,
     addedAt: r.addedAt,
-    movie: r.movie,
+    movie: mapProfileMovie(r.movie),
   }));
 
   const formattedVerdicts = verdictRows.map((r) => ({
@@ -194,9 +220,12 @@ usersRouter.get("/:username/profile", optionalAuth, async (req: AuthRequest, res
 
   const followers = Number(followCountRows[0]?.followers || 0);
   const following = Number(followCountRows[0]?.following || 0);
+  const isFollowing = Boolean(followCountRows[0]?.isFollowing);
 
   if (!viewer) {
     res.setHeader("Cache-Control", "public, max-age=15, stale-while-revalidate=60");
+  } else {
+    res.setHeader("Cache-Control", "private, max-age=15, stale-while-revalidate=30");
   }
 
   res.json({
@@ -205,7 +234,7 @@ usersRouter.get("/:username/profile", optionalAuth, async (req: AuthRequest, res
     watchlist,
     tasteScore,
     verdicts: formattedVerdicts,
-    isFollowing: !!followRow,
+    isFollowing,
     followCounts: { followers, following },
     tasteMatch,
   });

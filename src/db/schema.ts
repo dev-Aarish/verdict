@@ -1,4 +1,4 @@
-import { pgTable, text, integer, timestamp, boolean, primaryKey } from "drizzle-orm/pg-core";
+import { pgTable, text, integer, timestamp, boolean, primaryKey, index } from "drizzle-orm/pg-core";
 
 export const users = pgTable("users", {
   id: text("id").primaryKey(),
@@ -34,60 +34,95 @@ export const movies = pgTable("movies", {
   website: text("website"),
 });
 
-export const watchedEntries = pgTable("watched_entries", {
-  id: text("id").primaryKey(),
-  userId: text("user_id")
-    .notNull()
-    .references(() => users.id),
-  movieId: text("movie_id")
-    .notNull()
-    .references(() => movies.id),
-  rating: integer("rating").notNull(),
-  watchedAt: timestamp("watched_at", { withTimezone: true }).defaultNow(),
-  note: text("note"),
-  position: integer("position").notNull().default(0),
-});
+export const watchedEntries = pgTable(
+  "watched_entries",
+  {
+    id: text("id").primaryKey(),
+    userId: text("user_id")
+      .notNull()
+      .references(() => users.id),
+    movieId: text("movie_id")
+      .notNull()
+      .references(() => movies.id),
+    rating: integer("rating").notNull(),
+    watchedAt: timestamp("watched_at", { withTimezone: true }).defaultNow(),
+    note: text("note"),
+    position: integer("position").notNull().default(0),
+  },
+  (table) => [
+    index("watched_entries_user_id_idx").on(table.userId),
+    index("watched_entries_movie_id_idx").on(table.movieId),
+    index("watched_entries_user_pos_idx").on(table.userId, table.position),
+  ],
+);
 
-export const watchlistEntries = pgTable("watchlist_entries", {
-  id: text("id").primaryKey(),
-  userId: text("user_id")
-    .notNull()
-    .references(() => users.id),
-  movieId: text("movie_id")
-    .notNull()
-    .references(() => movies.id),
-  addedAt: timestamp("added_at", { withTimezone: true }).defaultNow(),
-});
+export const watchlistEntries = pgTable(
+  "watchlist_entries",
+  {
+    id: text("id").primaryKey(),
+    userId: text("user_id")
+      .notNull()
+      .references(() => users.id),
+    movieId: text("movie_id")
+      .notNull()
+      .references(() => movies.id),
+    addedAt: timestamp("added_at", { withTimezone: true }).defaultNow(),
+  },
+  (table) => [
+    index("watchlist_entries_user_id_idx").on(table.userId),
+    index("watchlist_entries_movie_id_idx").on(table.movieId),
+  ],
+);
 
-export const verdicts = pgTable("verdicts", {
-  id: text("id").primaryKey(),
-  fromUserId: text("from_user_id")
-    .notNull()
-    .references(() => users.id),
-  toUserId: text("to_user_id")
-    .notNull()
-    .references(() => users.id),
-  score: integer("score").notNull(),
-  comment: text("comment"),
-  createdAt: timestamp("created_at", { withTimezone: true }).defaultNow(),
-});
+export const verdicts = pgTable(
+  "verdicts",
+  {
+    id: text("id").primaryKey(),
+    fromUserId: text("from_user_id")
+      .notNull()
+      .references(() => users.id),
+    toUserId: text("to_user_id")
+      .notNull()
+      .references(() => users.id),
+    score: integer("score").notNull(),
+    comment: text("comment"),
+    createdAt: timestamp("created_at", { withTimezone: true }).defaultNow(),
+  },
+  (table) => [
+    index("verdicts_to_user_id_idx").on(table.toUserId),
+    index("verdicts_from_user_id_idx").on(table.fromUserId),
+  ],
+);
 
-export const follows = pgTable("follows", {
-  followerId: text("follower_id")
-    .notNull()
-    .references(() => users.id),
-  followeeId: text("followee_id")
-    .notNull()
-    .references(() => users.id),
-});
+export const follows = pgTable(
+  "follows",
+  {
+    followerId: text("follower_id")
+      .notNull()
+      .references(() => users.id),
+    followeeId: text("followee_id")
+      .notNull()
+      .references(() => users.id),
+  },
+  (table) => [
+    index("follows_follower_id_idx").on(table.followerId),
+    index("follows_followee_id_idx").on(table.followeeId),
+  ],
+);
 
-export const sessions = pgTable("sessions", {
-  id: text("id").primaryKey(),
-  userId: text("user_id")
-    .notNull()
-    .references(() => users.id),
-  expiresAt: timestamp("expires_at", { withTimezone: true }).notNull(),
-});
+export const sessions = pgTable(
+  "sessions",
+  {
+    id: text("id").primaryKey(),
+    userId: text("user_id")
+      .notNull()
+      .references(() => users.id),
+    expiresAt: timestamp("expires_at", { withTimezone: true }).notNull(),
+  },
+  (table) => [
+    index("sessions_user_id_idx").on(table.userId),
+  ],
+);
 
 export const tasteScores = pgTable("taste_scores", {
   userId: text("user_id")

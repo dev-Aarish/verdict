@@ -8,6 +8,7 @@ import {
   TouchableOpacity,
   ActivityIndicator,
   Alert,
+  Platform,
 } from "react-native";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
@@ -58,6 +59,8 @@ export default function UserProfileScreen() {
     queryKey: ["fullProfile", username],
     queryFn: () => usersApi.getFullProfile(username as string),
     enabled: !!username,
+    staleTime: 1000 * 60 * 5,
+    gcTime: 1000 * 60 * 30,
   });
 
   const profileUser = profileData?.user;
@@ -292,6 +295,10 @@ export default function UserProfileScreen() {
               tintColor={Colors.brass}
             />
           }
+          initialNumToRender={6}
+          maxToRenderPerBatch={8}
+          windowSize={5}
+          removeClippedSubviews={Platform.OS !== "web"}
           renderItem={({ item }) => {
             if (!item.movie) return null;
             return (
@@ -321,6 +328,10 @@ export default function UserProfileScreen() {
         <FlatList
           data={verdicts}
           keyExtractor={(item) => item.id}
+          initialNumToRender={6}
+          maxToRenderPerBatch={8}
+          windowSize={5}
+          removeClippedSubviews={Platform.OS !== "web"}
           refreshControl={
             <RefreshControl
               refreshing={isRefetching}

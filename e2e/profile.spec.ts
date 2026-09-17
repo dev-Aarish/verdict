@@ -26,7 +26,7 @@ async function waitForHydration(page: import("@playwright/test").Page) {
  * on top of waitForHydration for any edge-case re-render that could wipe the
  * field.
  */
-async function fillStable(page: import("@playwright/test").Page, placeholder: string, value: string) {
+async function fillStable(page: import("@playwright/test").Page, placeholder: string | RegExp, value: string) {
   const input = page.getByPlaceholder(placeholder);
   await expect(async () => {
     await input.fill(value);

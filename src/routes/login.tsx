@@ -77,7 +77,7 @@ function LoginPage() {
                 value={email}
                 onChange={setEmail}
                 type="text"
-                placeholder="Email or Username"
+                placeholder="you@screening.room"
               />
               <Field
                 label="Password"

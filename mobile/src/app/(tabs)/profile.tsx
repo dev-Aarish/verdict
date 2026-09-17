@@ -7,6 +7,7 @@ import {
   StyleSheet,
   TouchableOpacity,
   ActivityIndicator,
+  Platform,
 } from "react-native";
 import { useRouter } from "expo-router";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
@@ -54,6 +55,8 @@ export default function ProfileScreen() {
     queryKey: ["fullProfile", username],
     queryFn: () => usersApi.getFullProfile(username),
     enabled: !!username,
+    staleTime: 1000 * 60 * 5,
+    gcTime: 1000 * 60 * 30,
   });
 
   const tasteScore = profileData?.tasteScore || null;
@@ -96,6 +99,15 @@ export default function ProfileScreen() {
           size="lg"
           style={styles.authGateBtn}
         />
+      </View>
+    );
+  }
+
+  if (isLoadingProfile && !profileData) {
+    return (
+      <View style={styles.loadingContainer}>
+        <ActivityIndicator size="large" color={Colors.brass} />
+        <Text style={styles.loadingText}>Opening vault...</Text>
       </View>
     );
   }
@@ -225,6 +237,10 @@ export default function ProfileScreen() {
         <FlatList
           data={watchedList}
           keyExtractor={(item) => item.id}
+          initialNumToRender={6}
+          maxToRenderPerBatch={8}
+          windowSize={5}
+          removeClippedSubviews={Platform.OS !== "web"}
           renderItem={({ item }) => {
             if (!item.movie) return null;
             return (
@@ -257,6 +273,10 @@ export default function ProfileScreen() {
         <FlatList
           data={verdicts}
           keyExtractor={(item) => item.id}
+          initialNumToRender={6}
+          maxToRenderPerBatch={8}
+          windowSize={5}
+          removeClippedSubviews={Platform.OS !== "web"}
           renderItem={({ item }) => (
             <VerdictCard
               item={{
@@ -474,6 +494,20 @@ const styles = StyleSheet.create({
   },
   emptyBtn: {
     marginTop: Spacing.md,
+  },
+  loadingContainer: {
+    flex: 1,
+    backgroundColor: Colors.ink,
+    alignItems: "center",
+    justifyContent: "center",
+    gap: Spacing.md,
+  },
+  loadingText: {
+    color: Colors.dust,
+    fontSize: 12,
+    fontWeight: "700",
+    letterSpacing: 1,
+    textTransform: "uppercase",
   },
 });
 

@@ -17,7 +17,7 @@ export interface TasteScoreResult {
 }
 
 export function computeDiversity(
-  allMovies: { genres: string | null; director: string | null; country: string | null }[],
+  allMovies: { genres?: string | null; director?: string | null; country?: string | null }[],
 ): number {
   const total = allMovies.length;
   if (total === 0) return 0;
@@ -92,7 +92,11 @@ export function computeConsistency(ratings: number[]): number {
 
 export async function computeTasteScoreFromEntries(
   userId: string,
-  entries: { rating: number; movieId: string; movie?: typeof movies.$inferSelect | null }[],
+  entries: {
+    rating: number;
+    movieId: string;
+    movie?: { genres?: string | null; director?: string | null; country?: string | null } | null;
+  }[],
 ): Promise<TasteScoreResult> {
   if (entries.length === 0) {
     const result: TasteScoreResult = {
@@ -120,7 +124,7 @@ export async function computeTasteScoreFromEntries(
   const movieIds = entries.map((e) => e.movieId);
   const allMovies = entries
     .map((e) => e.movie)
-    .filter(Boolean) as (typeof movies.$inferSelect)[];
+    .filter(Boolean) as { genres?: string | null; director?: string | null; country?: string | null }[];
 
   const diversity = computeDiversity(allMovies);
   const obscurity = await computeObscurity(userId, movieIds);

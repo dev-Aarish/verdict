@@ -51,6 +51,9 @@ export const Route = createFileRoute("/profile/$username/")({
     const page = Number(search?.page);
     return page && page > 1 ? { page } : {};
   },
+  staleTime: 30_000,
+  gcTime: 1000 * 60 * 5,
+  preloadStaleTime: 30_000,
   loaderDeps: () => ({}),
   loader: async ({ params }) => {
     try {
@@ -127,19 +130,24 @@ function ProfilePage() {
   const [avatarError, setAvatarError] = useState<string | null>(null);
   const PAGE_SIZE = 20;
 
+  // Keep local state in sync when loaderData updates (e.g. navigation or router.invalidate)
+  const [syncedData, setSyncedData] = useState(initialData);
+  if (initialData && initialData !== syncedData) {
+    setSyncedData(initialData);
+    setProfileUser(initialData.user);
+    setEntries(initialData.entries);
+    setWatchlist(initialData.watchlist);
+    setTasteScore(initialData.tasteScore);
+    setVerdicts(initialData.verdicts);
+    setIsFollowing(initialData.isFollowing);
+    setFollowCounts(initialData.followCounts);
+    setTasteMatch(initialData.tasteMatch);
+    setLoading(false);
+  }
+
   useEffect(() => {
-    if (initialData) {
-      setProfileUser(initialData.user);
-      setEntries(initialData.entries);
-      setWatchlist(initialData.watchlist);
-      setTasteScore(initialData.tasteScore);
-      setVerdicts(initialData.verdicts);
-      setIsFollowing(initialData.isFollowing);
-      setFollowCounts(initialData.followCounts);
-      setTasteMatch(initialData.tasteMatch);
-      setLoading(false);
-      return;
-    }
+    // Only fetch client-side if initialData was not provided by loader and there is no fatal error
+    if (initialData || loaderData?.error) return;
 
     setLoading(true);
     getUserProfileFn({ data: { username } })
@@ -155,7 +163,7 @@ function ProfilePage() {
       })
       .catch(() => {})
       .finally(() => setLoading(false));
-  }, [username, initialData]);
+  }, [username, initialData, loaderData?.error]);
 
   const handleSaveAbout = async () => {
     setAboutSaving(true);

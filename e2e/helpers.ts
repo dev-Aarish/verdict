@@ -34,7 +34,7 @@ export async function waitForHydration(page: Page) {
  * on top of waitForHydration for any edge-case re-render that could wipe the
  * field.
  */
-export async function fillStable(page: Page, placeholder: string, value: string) {
+export async function fillStable(page: Page, placeholder: string | RegExp, value: string) {
   const input = page.getByPlaceholder(placeholder);
   await expect(async () => {
     await input.fill(value);
