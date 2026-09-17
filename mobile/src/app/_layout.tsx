@@ -14,6 +14,21 @@ LogBox.ignoreLogs([
   "Can't perform a React state update on a component that hasn't mounted yet",
 ]);
 
+// Suppress known Expo Router / React 19 Fabric useLinking initial mount warning in terminal
+if (__DEV__) {
+  const originalConsoleError = console.error;
+  console.error = (...args: any[]) => {
+    const msg = typeof args[0] === "string" ? args[0] : "";
+    if (
+      msg.includes("Can't perform a React state update on a component that hasn't mounted yet") ||
+      msg.includes("warnAboutUpdateOnNotYetMountedFiberInDEV")
+    ) {
+      return;
+    }
+    originalConsoleError(...args);
+  };
+}
+
 // Prevent auto-hiding until RootNavigator has mounted
 SplashScreen.preventAutoHideAsync().catch(() => {});
 

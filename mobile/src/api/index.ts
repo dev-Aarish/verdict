@@ -49,6 +49,8 @@ export const authApi = {
   async logout(): Promise<void> {
     try {
       await apiClient.post("/auth/logout");
+    } catch {
+      // Ignored: network failure should not prevent local logout
     } finally {
       await removeAuthToken();
     }

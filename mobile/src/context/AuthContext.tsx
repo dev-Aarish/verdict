@@ -107,17 +107,15 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   };
 
   const logout = async () => {
-    setIsLoading(true);
-    try {
-      await authApi.logout();
-    } catch {
-      // Continue client cleanup even if network request fails
-    } finally {
-      setUser(null);
-      await removeAuthToken();
-      await removeCachedUser();
-      setIsLoading(false);
-    }
+    setUser(null);
+    setIsLoading(false);
+    // Fire backend logout in background so UI is never blocked
+    authApi.logout().catch(() => {});
+    // Concurrently clear local secure storage and cache
+    await Promise.all([
+      removeAuthToken(),
+      removeCachedUser(),
+    ]);
   };
 
   const refreshUser = async () => {

@@ -7,7 +7,6 @@ import {
   StyleSheet,
   TouchableOpacity,
   ActivityIndicator,
-  Alert,
 } from "react-native";
 import { useRouter } from "expo-router";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
@@ -30,6 +29,7 @@ import { VerdictCard } from "../../components/common/VerdictCard";
 import { Button } from "../../components/common/Button";
 import { ShareCardModal } from "../../components/common/ShareCardModal";
 import { AvatarPickerModal } from "../../components/common/AvatarPickerModal";
+import { LogoutModal } from "../../components/common/LogoutModal";
 
 export default function ProfileScreen() {
   const router = useRouter();
@@ -39,6 +39,8 @@ export default function ProfileScreen() {
   const [activeTab, setActiveTab] = useState<"watched" | "verdicts">("watched");
   const [shareModalVisible, setShareModalVisible] = useState<boolean>(false);
   const [avatarModalVisible, setAvatarModalVisible] = useState<boolean>(false);
+  const [logoutModalVisible, setLogoutModalVisible] = useState<boolean>(false);
+  const [isLoggingOut, setIsLoggingOut] = useState<boolean>(false);
 
   const username = user?.username || "";
 
@@ -69,20 +71,14 @@ export default function ProfileScreen() {
   };
 
   const handleLogout = () => {
-    Alert.alert("Sign Out", "Are you sure you want to log out of Verdict?", [
-      { text: "Cancel", style: "cancel" },
-      {
-        text: "Log Out",
-        style: "destructive",
-        onPress: async () => {
-          try {
-            Haptics.notificationAsync(Haptics.NotificationFeedbackType.Warning);
-          } catch {}
-          await logout();
-          router.replace("/(auth)/login");
-        },
-      },
-    ]);
+    setLogoutModalVisible(true);
+  };
+
+  const handleConfirmLogout = async () => {
+    setLogoutModalVisible(false);
+    queryClient.clear();
+    router.replace("/(auth)/login");
+    await logout();
   };
 
   if (!isAuthenticated || !user) {
@@ -305,6 +301,14 @@ export default function ProfileScreen() {
         username={user.username}
         currentAvatarUrl={user.avatarUrl || null}
         onSave={handleSaveAvatar}
+      />
+
+      {/* Logout Confirmation Modal */}
+      <LogoutModal
+        visible={logoutModalVisible}
+        onClose={() => setLogoutModalVisible(false)}
+        onConfirm={handleConfirmLogout}
+        isLoggingOut={isLoggingOut}
       />
     </View>
   );
