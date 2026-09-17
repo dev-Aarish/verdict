@@ -54,7 +54,7 @@ export function ClapperRefreshHeader({
 
   return (
     <Animated.View style={animStyle}>
-      <ClapperLoader size={size === "sm" ? 22 : 30} />
+      {refreshing && <ClapperLoader size={size === "sm" ? 22 : 30} />}
     </Animated.View>
   );
 }

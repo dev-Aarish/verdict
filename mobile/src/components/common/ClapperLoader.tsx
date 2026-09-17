@@ -104,7 +104,7 @@ export function ClapperLoader({
 
   const shouldReduceMotion = useReducedMotion();
 
-  // Single continuous normalized clock driver (0 -> 1 over 1150ms)
+  // Continuous normalized progress driver (0 -> 1 over 560ms)
   const progress = useSharedValue(0);
   const pulseOpacity = useSharedValue(1);
 
@@ -113,8 +113,8 @@ export function ClapperLoader({
       progress.value = 0;
       pulseOpacity.value = withRepeat(
         withSequence(
-          withTiming(0.45, { duration: 1000, easing: EASE_IN_OUT }),
-          withTiming(1.0, { duration: 1000, easing: EASE_IN_OUT })
+          withTiming(0.45, { duration: 900, easing: EASE_IN_OUT }),
+          withTiming(1.0, { duration: 900, easing: EASE_IN_OUT })
         ),
         -1,
         true
@@ -126,9 +126,12 @@ export function ClapperLoader({
 
     pulseOpacity.value = 1;
     progress.value = 0;
-    // Rock-solid single linear loop: cannot deadlock, drop step indices, or freeze
+    // Snappy continuous loop: withSequence resets to 0 instantly, avoiding Reanimated timing cache reuse
     progress.value = withRepeat(
-      withTiming(1, { duration: 1150, easing: Easing.linear }),
+      withSequence(
+        withTiming(1, { duration: 560, easing: Easing.linear }),
+        withTiming(0, { duration: 0 })
+      ),
       -1,
       false
     );
@@ -139,20 +142,17 @@ export function ClapperLoader({
     };
   }, [shouldReduceMotion]);
 
-  // Derived rotations & recoils calculated frame-by-frame on the UI thread
+  // Derived rotations & recoils calculated frame-by-frame on the UI thread (Zero dead-time)
   const stickAnimatedStyle = useAnimatedStyle(() => {
-    // 0 -> 0.12 (138ms): Rest closed (0°)
-    // 0.12 -> 0.40 (322ms): Swing open to apex (-40°)
-    // 0.40 -> 0.52 (138ms): Apex hold (-40°)
-    // 0.52 -> 0.59 (80ms): Snap SLAM down to 0°
-    // 0.59 -> 0.62 (35ms): Micro-rebound (-3°)
-    // 0.62 -> 0.65 (35ms): Settle back (0.8°)
-    // 0.65 -> 0.68 (35ms): Return to 0°
-    // 0.68 -> 1.0 (368ms): Rest closed (0°)
+    // 0.00 -> 0.44 (246ms): Swing up from 0° to -36°
+    // 0.44 -> 0.68 (134ms): Snap slam down to 0°
+    // 0.68 -> 0.76 (45ms): Micro-rebound to -2.5°
+    // 0.76 -> 0.84 (45ms): Settle to 0.5°
+    // 0.84 -> 1.00 (90ms): Immediate transition to 0° and next clap
     const rot = interpolate(
       progress.value,
-      [0, 0.12, 0.40, 0.52, 0.59, 0.62, 0.65, 0.68, 1.0],
-      [0, 0, -40, -40, 0, -3, 0.8, 0, 0],
+      [0, 0.44, 0.68, 0.76, 0.84, 1.0],
+      [0, -36, 0, -2.5, 0.5, 0],
       Extrapolation.CLAMP
     );
     return {
@@ -161,18 +161,18 @@ export function ClapperLoader({
   });
 
   const boardAnimatedStyle = useAnimatedStyle(() => {
-    // Impact recoil dip (starts at exact 0.59 slam contact point)
+    // Impact recoil dip on the exact slam frame (0.68)
     const recoilY = interpolate(
       progress.value,
-      [0, 0.59, 0.612, 0.642, 0.668, 0.702, 1.0],
-      [0, 0, 2.0, -1.0, 0.5, 0, 0],
+      [0, 0.68, 0.74, 0.82, 0.90, 1.0],
+      [0, 0, 1.8, -0.8, 0.3, 0],
       Extrapolation.CLAMP
     );
     // Rotational shudder on impact
     const shakeRot = interpolate(
       progress.value,
-      [0, 0.59, 0.612, 0.642, 0.668, 0.702, 1.0],
-      [0, 0, 1.5, -1.2, 0.6, 0, 0],
+      [0, 0.68, 0.74, 0.82, 0.90, 1.0],
+      [0, 0, 1.3, -1.0, 0.4, 0],
       Extrapolation.CLAMP
     );
     return {
