@@ -190,7 +190,6 @@ export default function FeedScreen() {
         subtitle="Now Playing & Popular Canon"
         icon={<Flame size={14} color={Colors.brassLight} />}
         movies={latestHits}
-        badgeLabel="HIT"
         direction="left"
       />
       <MovieCarouselSection
@@ -198,7 +197,6 @@ export default function FeedScreen() {
         subtitle="Anticipated & Forthcoming Releases"
         icon={<Calendar size={14} color={Colors.brassLight} />}
         movies={upcomingMovies}
-        badgeLabel="UPCOMING"
         direction="right"
       />
     </View>

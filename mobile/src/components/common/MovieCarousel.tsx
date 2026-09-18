@@ -27,13 +27,11 @@ interface MovieCarouselProps {
   subtitle: string;
   icon: React.ReactNode;
   movies: Movie[];
-  badgeLabel?: string;
   direction?: "left" | "right";
 }
 
-const CarouselCard: React.FC<{ movie: Movie; badgeLabel?: string; onPress: () => void }> = ({
+const CarouselCard: React.FC<{ movie: Movie; onPress: () => void }> = ({
   movie,
-  badgeLabel,
   onPress,
 }) => {
   const scale = useSharedValue(1);
@@ -76,11 +74,6 @@ const CarouselCard: React.FC<{ movie: Movie; badgeLabel?: string; onPress: () =>
           contentFit="cover"
           transition={250}
         />
-        {badgeLabel && (
-          <View style={styles.badge}>
-            <Text style={styles.badgeText}>{badgeLabel}</Text>
-          </View>
-        )}
       </View>
       <Text numberOfLines={1} style={styles.movieTitle}>
         {movie.title}
@@ -95,7 +88,6 @@ export const MovieCarouselSection: React.FC<MovieCarouselProps> = ({
   subtitle,
   icon,
   movies,
-  badgeLabel,
   direction = "left",
 }) => {
   const router = useRouter();
@@ -159,7 +151,6 @@ export const MovieCarouselSection: React.FC<MovieCarouselProps> = ({
             <CarouselCard
               key={`${item.imdbId || item.id}-${index}`}
               movie={item}
-              badgeLabel={badgeLabel}
               onPress={() => router.push(`/movie/${item.imdbId || item.id}`)}
             />
           ))}
@@ -221,23 +212,6 @@ const styles = StyleSheet.create({
   poster: {
     width: "100%",
     height: "100%",
-  },
-  badge: {
-    position: "absolute",
-    top: 6,
-    left: 6,
-    backgroundColor: "rgba(20, 21, 29, 0.9)",
-    paddingVertical: 2,
-    paddingHorizontal: 6,
-    borderRadius: 3,
-    borderWidth: 1,
-    borderColor: Colors.borderBrass,
-  },
-  badgeText: {
-    color: Colors.brassLight,
-    fontSize: 9,
-    fontWeight: "900",
-    letterSpacing: 0.8,
   },
   movieTitle: {
     fontSize: 12,
