@@ -45,6 +45,16 @@ function sleep(ms: number): Promise<void> {
   return new Promise((resolve) => setTimeout(resolve, ms));
 }
 
+/** Error subclass that carries the HTTP status code from the backend. */
+export class ApiError extends Error {
+  status: number;
+  constructor(message: string, status: number) {
+    super(message);
+    this.name = "ApiError";
+    this.status = status;
+  }
+}
+
 export async function apiFetch<T>(path: string, options?: RequestInit): Promise<T> {
   const url = `${getBackendUrl()}/api${path}`;
   const isServer = typeof window === "undefined";
@@ -83,7 +93,7 @@ export async function apiFetch<T>(path: string, options?: RequestInit): Promise<
 
     const body = await res.json().catch(() => ({}));
     if (!res.ok) {
-      throw new Error(body.error || `Request failed: ${res.status}`);
+      throw new ApiError(body.error || `Request failed: ${res.status}`, res.status);
     }
 
     return body as T;

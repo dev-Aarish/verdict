@@ -14,6 +14,7 @@ import {
 } from "@/api/movies";
 import { removeWatchlistFn } from "@/api/watchlist";
 import { updateProfileFn, getUserProfileFn, type UserProfileData } from "@/api/users";
+import { ApiError } from "@/api/client";
 import { type TasteBreakdown } from "@/api/taste-score";
 import { type TasteMatch } from "@/api/taste-match";
 import { followUserFn, unfollowUserFn } from "@/api/follows";
@@ -58,9 +59,11 @@ export const Route = createFileRoute("/profile/$username/")({
   loader: async ({ params }) => {
     try {
       const data = await getUserProfileFn({ data: { username: params.username } });
-      return { profileData: data, error: null };
+      return { profileData: data, error: null, errorStatus: null };
     } catch (e: unknown) {
-      return { profileData: null, error: e instanceof Error ? e.message : "Failed to load profile" };
+      const status = e instanceof ApiError ? e.status : 0;
+      const message = e instanceof Error ? e.message : "Failed to load profile";
+      return { profileData: null, error: message, errorStatus: status };
     }
   },
   head: ({ params }) => ({
@@ -91,8 +94,9 @@ function ProfilePage() {
   const { username } = Route.useParams();
   const search = Route.useSearch();
   const navigate = Route.useNavigate();
-  const loaderData = Route.useLoaderData() as { profileData: UserProfileData | null; error: string | null } | undefined;
+  const loaderData = Route.useLoaderData() as { profileData: UserProfileData | null; error: string | null; errorStatus: number | null } | undefined;
   const initialData = loaderData?.profileData;
+  const loaderIs404 = loaderData?.errorStatus === 404;
   const currentPage = search.page || 1;
   const { user, setUser } = useUser();
   const router = useRouter();
@@ -103,7 +107,9 @@ function ProfilePage() {
   const [tasteScore, setTasteScore] = useState<{ score: number; breakdown: TasteBreakdown } | null>(
     initialData?.tasteScore ?? null,
   );
-  const [loading, setLoading] = useState(!initialData && !loaderData?.error);
+  // Allow loading state for non-404 errors so client-side retry can attempt to recover
+  const [loading, setLoading] = useState(!initialData && !loaderIs404);
+  const [fetchError, setFetchError] = useState<string | null>(loaderIs404 ? null : (loaderData?.error ?? null));
   const [verdicts, setVerdicts] = useState<VerdictWithUser[] | null>(initialData?.verdicts ?? null);
   const [isFollowing, setIsFollowing] = useState(initialData?.isFollowing ?? false);
   const [followCounts, setFollowCounts] = useState<{ followers: number; following: number } | null>(
@@ -146,10 +152,13 @@ function ProfilePage() {
   }
 
   useEffect(() => {
-    // Only fetch client-side if initialData was not provided by loader and there is no fatal error
-    if (initialData || loaderData?.error) return;
+    // Only fetch client-side if initialData was not provided by loader.
+    // For 404 errors (user genuinely not found), don't retry.
+    // For other errors (network, 500, timeout), attempt client-side recovery.
+    if (initialData || loaderIs404) return;
 
     setLoading(true);
+    setFetchError(null);
     getUserProfileFn({ data: { username } })
       .then((data) => {
         setProfileUser(data.user);
@@ -160,10 +169,15 @@ function ProfilePage() {
         setIsFollowing(data.isFollowing);
         setFollowCounts(data.followCounts);
         setTasteMatch(data.tasteMatch);
+        setFetchError(null);
       })
-      .catch(() => {})
+      .catch((e) => {
+        const is404 = e instanceof ApiError && e.status === 404;
+        setFetchError(is404 ? null : (e instanceof Error ? e.message : "Failed to load profile"));
+        // For 404, profileUser stays null → shows not-found screen
+      })
       .finally(() => setLoading(false));
-  }, [username, initialData, loaderData?.error]);
+  }, [username, initialData, loaderIs404]);
 
   const handleSaveAbout = async () => {
     setAboutSaving(true);
@@ -400,6 +414,36 @@ function ProfilePage() {
   }
 
   if (!profileUser) {
+    // Transient error (network, 500, timeout) — show retry-able error screen
+    if (fetchError) {
+      return (
+        <ErrorScreen
+          variant="error"
+          code={500}
+          onRetry={() => {
+            setLoading(true);
+            setFetchError(null);
+            getUserProfileFn({ data: { username } })
+              .then((data) => {
+                setProfileUser(data.user);
+                setEntries(data.entries);
+                setWatchlist(data.watchlist);
+                setTasteScore(data.tasteScore);
+                setVerdicts(data.verdicts);
+                setIsFollowing(data.isFollowing);
+                setFollowCounts(data.followCounts);
+                setTasteMatch(data.tasteMatch);
+                setFetchError(null);
+              })
+              .catch((e) => {
+                setFetchError(e instanceof Error ? e.message : "Failed to load profile");
+              })
+              .finally(() => setLoading(false));
+          }}
+        />
+      );
+    }
+    // Genuine 404 — user doesn't exist
     return <ErrorScreen variant="not-found" code={404} path={`/profile/${username}`} />;
   }
 
