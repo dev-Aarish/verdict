@@ -60,10 +60,41 @@ export const authApi = {
   },
 };
 
+export interface SearchMoviesParams {
+  query?: string;
+  genreId?: number;
+  keywordId?: number;
+  page?: number;
+}
+
+export interface SearchMoviesResponse {
+  results: Movie[];
+  totalResults: number;
+  totalPages: number;
+  page: number;
+}
+
 // Movies API
 export const moviesApi = {
-  async search(query: string, genreId?: number): Promise<Movie[]> {
-    if (!query.trim() && !genreId) return [];
+  async search(
+    paramsOrQuery: string | SearchMoviesParams,
+    legacyGenreId?: number,
+    legacyPage: number = 1,
+  ): Promise<SearchMoviesResponse> {
+    const params: SearchMoviesParams =
+      typeof paramsOrQuery === "string"
+        ? { query: paramsOrQuery, genreId: legacyGenreId, page: legacyPage }
+        : paramsOrQuery;
+
+    const query = (params.query || "").trim();
+    const page = params.page || 1;
+    const genreId = params.genreId;
+    const keywordId = params.keywordId;
+
+    if (!query && !genreId && !keywordId) {
+      return { results: [], totalResults: 0, totalPages: 0, page: 1 };
+    }
+
     const res = await apiClient.get<{
       results?: Array<{
         imdbID?: string;
@@ -76,26 +107,36 @@ export const moviesApi = {
         imdbRating?: string | null;
         language?: string | null;
       }>;
-      movies?: Movie[];
+      totalResults?: number;
+      totalPages?: number;
+      page?: number;
     }>(`/movies/search`, {
-      params: { q: query, ...(genreId ? { genreId } : {}) },
+      params: {
+        q: query,
+        page,
+        ...(genreId ? { genreId } : {}),
+        ...(keywordId ? { keywordId } : {}),
+      },
     });
 
-    if (res.data.results && Array.isArray(res.data.results)) {
-      return res.data.results.map((r) => ({
-        id: r.imdbID || "",
-        imdbId: r.imdbID || "",
-        title: r.Title || "Unknown",
-        year: r.Year || "",
-        posterUrl: r.Poster && r.Poster !== "N/A" ? r.Poster : null,
-        plot: r.plot || null,
-        genres: r.genres || null,
-        imdbRating: r.imdbRating || null,
-        language: r.language || null,
-      }));
-    }
+    const mappedResults: Movie[] = (res.data.results || []).map((r) => ({
+      id: r.imdbID || "",
+      imdbId: r.imdbID || "",
+      title: r.Title || "Unknown",
+      year: r.Year || "",
+      posterUrl: r.Poster && r.Poster !== "N/A" ? r.Poster : null,
+      plot: r.plot || null,
+      genres: r.genres || null,
+      imdbRating: r.imdbRating || null,
+      language: r.language || null,
+    }));
 
-    return res.data.movies || [];
+    return {
+      results: mappedResults,
+      totalResults: res.data.totalResults ?? mappedResults.length,
+      totalPages: res.data.totalPages ?? 1,
+      page: res.data.page ?? page,
+    };
   },
 
   async getDetail(imdbId: string): Promise<MovieDetailResponse> {

@@ -152,10 +152,11 @@ export const TMDB_GENRES: Record<string, number> = {
 
 // Known cinematic keywords / niche categories in TMDb (keyword IDs)
 export const TMDB_CATEGORY_KEYWORDS: Record<string, number> = {
-  noir: 3170,
-  "film noir": 3170,
-  "neo-noir": 9976,
-  cyberpunk: 10084,
+  noir: 9807,
+  "film noir": 9807,
+  "neo-noir": 207268,
+  neonoir: 207268,
+  cyberpunk: 12190,
   cult: 9799,
   "cult classic": 9799,
   dystopia: 4565,
@@ -179,7 +180,7 @@ function matchGenreOrCategory(query: string): { genreId?: number; keywordId?: nu
     return { keywordId: TMDB_CATEGORY_KEYWORDS[normalized] };
   }
 
-  // Partial phrase matching
+  // Exact matching for "X movies" or "X films"
   for (const [key, id] of Object.entries(TMDB_GENRES)) {
     if (normalized === key || normalized === `${key} movies` || normalized === `${key} films`) {
       return { genreId: id };
@@ -198,21 +199,25 @@ function matchGenreOrCategory(query: string): { genreId?: number; keywordId?: nu
 /**
  * Search movies via TMDb with smart Genre/Category discovery support.
  * If the search query matches a genre or category/style (or if discover parameters are passed),
- * TMDb discover endpoint is utilized to surface canonical films rather than just literal title matches.
+ * TMDb discover endpoint is utilized exclusively to surface canonical films rather than literal title matches.
  */
 export async function searchTmdb(
   query: string,
   page: number,
   genreId?: number,
+  keywordId?: number,
 ): Promise<{ results: OmdbShapedSearchResult[]; totalResults: number; totalPages: number } | null> {
-  const categoryMatch = genreId ? { genreId } : matchGenreOrCategory(query);
+  const categoryMatch =
+    genreId || keywordId
+      ? { genreId, keywordId }
+      : matchGenreOrCategory(query);
 
   let rawItems: TmdbSearchItem[] = [];
   let totalResults = 0;
   let totalPages = 1;
 
   if (categoryMatch) {
-    // If it's a recognized genre or keyword, query TMDb /discover/movie for popular/highly rated films
+    // If it's a recognized genre or keyword, query TMDb /discover/movie for canonical films sorted by vote_count
     let discoverUrl = `/discover/movie?page=${page}&include_adult=false&sort_by=vote_count.desc`;
     if (categoryMatch.genreId) {
       discoverUrl += `&with_genres=${categoryMatch.genreId}`;
@@ -221,27 +226,10 @@ export async function searchTmdb(
       discoverUrl += `&with_keywords=${categoryMatch.keywordId}`;
     }
 
-    // Also run title search in parallel if it's not a generic word to ensure direct titles aren't missed
-    const [discoverData, titleData] = await Promise.all([
-      tmdbFetch(discoverUrl),
-      tmdbFetch(`/search/movie?query=${encodeURIComponent(query)}&page=${page}&include_adult=false`),
-    ]);
-
-    const titleResults = titleData?.results || [];
-    const discoverResults = discoverData?.results || [];
-
-    // Prioritize discover results for clear genre queries, and mix in title matches
-    const combined = [...discoverResults, ...titleResults];
-    const seen = new Set<number>();
-    for (const item of combined) {
-      if (item.id && !seen.has(item.id)) {
-        seen.add(item.id);
-        rawItems.push(item);
-      }
-    }
-
-    totalResults = Math.max(discoverData?.total_results || 0, titleData?.total_results || 0);
-    totalPages = Math.min(Math.max(discoverData?.total_pages || 1, titleData?.total_pages || 1), 500);
+    const discoverData = await tmdbFetch(discoverUrl);
+    rawItems = discoverData?.results || [];
+    totalResults = discoverData?.total_results || 0;
+    totalPages = Math.min(discoverData?.total_pages || 1, 500);
   } else {
     // Standard title search
     const data = await tmdbFetch(

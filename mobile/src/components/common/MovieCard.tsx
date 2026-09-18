@@ -28,6 +28,7 @@ interface MovieCardProps {
   userRating?: number | null;
   layout?: "grid" | "list";
   size?: "sm" | "md" | "lg" | "xl";
+  showRating?: boolean;
   style?: ViewStyle;
 }
 
@@ -39,6 +40,7 @@ export const MovieCard: React.FC<MovieCardProps> = ({
   userRating,
   layout = "list",
   size = "md",
+  showRating = true,
   style,
 }) => {
   const scale = useSharedValue(1);
@@ -101,17 +103,19 @@ export const MovieCard: React.FC<MovieCardProps> = ({
             transition={250}
           />
           {/* Top Rating Badge */}
-          {userRating !== undefined && userRating !== null ? (
-            <View style={styles.gridRatingBadge}>
-              <Star size={9} color={Colors.brassLight} fill={Colors.brassLight} style={{ marginRight: 2 }} />
-              <Text style={styles.gridRatingText}>{userRating}</Text>
-            </View>
-          ) : movie.imdbRating ? (
-            <View style={styles.gridScoreBadge}>
-              <Star size={9} color={Colors.brassLight} fill={Colors.brassLight} style={{ marginRight: 2 }} />
-              <Text style={styles.gridScoreText}>{movie.imdbRating}</Text>
-            </View>
-          ) : null}
+          {showRating && (
+            userRating !== undefined && userRating !== null ? (
+              <View style={styles.gridRatingBadge}>
+                <Star size={9} color={Colors.brassLight} fill={Colors.brassLight} style={{ marginRight: 2 }} />
+                <Text style={styles.gridRatingText}>{userRating}</Text>
+              </View>
+            ) : movie.imdbRating ? (
+              <View style={styles.gridScoreBadge}>
+                <Star size={9} color={Colors.brassLight} fill={Colors.brassLight} style={{ marginRight: 2 }} />
+                <Text style={styles.gridScoreText}>{movie.imdbRating}</Text>
+              </View>
+            ) : null
+          )}
 
           {/* Quick Log Button */}
           {onLogPress && userRating === undefined && (
@@ -226,7 +230,7 @@ export const MovieCard: React.FC<MovieCardProps> = ({
             </View>
           ) : null}
 
-          {movie.imdbRating ? (
+          {showRating && movie.imdbRating ? (
             <View style={styles.globalScorePill}>
               <Star size={9.5} color={Colors.brassLight} fill={Colors.brassLight} style={{ marginRight: 2.5 }} />
               <Text style={styles.globalScoreText}>{movie.imdbRating}</Text>
@@ -264,7 +268,7 @@ export const MovieCard: React.FC<MovieCardProps> = ({
 
         {/* Action Row: Personal Rating Badge or Quick Log CTA */}
         <View style={styles.listActionRow}>
-          {userRating !== undefined && userRating !== null ? (
+          {showRating && userRating !== undefined && userRating !== null ? (
             <View style={styles.userRatingBadge}>
               <Star size={11} color={Colors.brassLight} fill={Colors.brassLight} />
               <Text style={styles.userRatingLabel}>YOUR VERDICT:</Text>

@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from "react";
+import React, { useState, useEffect, useMemo } from "react";
 import {
   View,
   Text,
@@ -10,7 +10,7 @@ import {
   Keyboard,
 } from "react-native";
 import { useRouter } from "expo-router";
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { useInfiniteQuery, useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Search, Film, X, Clock, Trash2, Sparkles, Compass, Flame, Calendar } from "lucide-react-native";
 import * as Haptics from "expo-haptics";
 import { moviesApi } from "../../api";
@@ -28,17 +28,24 @@ import {
   clearRecentSearches,
 } from "../../utils/recentSearches";
 
-const CURATED_EXPLORATIONS = [
-  { label: "Film Noir", query: "Film Noir" },
-  { label: "Sci-Fi", query: "Sci-Fi" },
-  { label: "Psychological Thriller", query: "Psychological Thriller" },
-  { label: "Cyberpunk", query: "Cyberpunk" },
-  { label: "Horror", query: "Horror" },
-  { label: "Animation", query: "Animation" },
-  { label: "Neo-Noir", query: "Neo-Noir" },
-  { label: "Crime", query: "Crime" },
-  { label: "Mystery", query: "Mystery" },
-  { label: "Documentary", query: "Documentary" },
+interface CuratedExploration {
+  label: string;
+  query: string;
+  genreId?: number;
+  keywordId?: number;
+}
+
+const CURATED_EXPLORATIONS: CuratedExploration[] = [
+  { label: "Film Noir", query: "Film Noir", keywordId: 9807 },
+  { label: "Sci-Fi", query: "Sci-Fi", genreId: 878 },
+  { label: "Psychological Thriller", query: "Psychological Thriller", keywordId: 12565 },
+  { label: "Cyberpunk", query: "Cyberpunk", keywordId: 12190 },
+  { label: "Horror", query: "Horror", genreId: 27 },
+  { label: "Animation", query: "Animation", genreId: 16 },
+  { label: "Neo-Noir", query: "Neo-Noir", keywordId: 207268 },
+  { label: "Crime", query: "Crime", genreId: 80 },
+  { label: "Mystery", query: "Mystery", genreId: 9648 },
+  { label: "Documentary", query: "Documentary", genreId: 99 },
 ];
 
 export default function SearchScreen() {
@@ -48,6 +55,7 @@ export default function SearchScreen() {
 
   const [searchQuery, setSearchQuery] = useState("");
   const [debouncedQuery, setDebouncedQuery] = useState("");
+  const [selectedExploration, setSelectedExploration] = useState<CuratedExploration | null>(null);
   const [recentSearches, setRecentSearches] = useState<string[]>([]);
   const [selectedMovieForLog, setSelectedMovieForLog] = useState<Movie | null>(null);
 
@@ -67,17 +75,61 @@ export default function SearchScreen() {
     return () => clearTimeout(handler);
   }, [searchQuery]);
 
+  const activeGenreId = selectedExploration?.genreId;
+  const activeKeywordId = selectedExploration?.keywordId;
+  const isQueryActive = debouncedQuery.length >= 2 || !!activeGenreId || !!activeKeywordId;
+
+  // Infinite query for paginated search & discovery results
   const {
-    data: searchResults = [],
+    data,
     isLoading: isSearching,
-  } = useQuery({
-    queryKey: ["movieSearch", debouncedQuery],
-    queryFn: () => moviesApi.search(debouncedQuery),
-    enabled: debouncedQuery.length >= 2,
+    fetchNextPage,
+    hasNextPage,
+    isFetchingNextPage,
+  } = useInfiniteQuery({
+    queryKey: [
+      "movieSearch",
+      debouncedQuery,
+      activeGenreId ?? null,
+      activeKeywordId ?? null,
+    ],
+    queryFn: ({ pageParam = 1 }) =>
+      moviesApi.search({
+        query: debouncedQuery,
+        genreId: activeGenreId,
+        keywordId: activeKeywordId,
+        page: pageParam,
+      }),
+    initialPageParam: 1,
+    getNextPageParam: (lastPage) => {
+      if (lastPage.page < lastPage.totalPages) {
+        return lastPage.page + 1;
+      }
+      return undefined;
+    },
+    enabled: isQueryActive,
   });
 
+  const searchResults = useMemo(() => {
+    if (!data?.pages) return [];
+    const seen = new Set<string>();
+    const list: Movie[] = [];
+    for (const page of data.pages) {
+      for (const item of page.results) {
+        const id = item.imdbId || item.id;
+        if (id && !seen.has(id)) {
+          seen.add(id);
+          list.push(item);
+        }
+      }
+    }
+    return list;
+  }, [data]);
+
+  const totalResultsCount = data?.pages?.[0]?.totalResults ?? searchResults.length;
+
   // Fetch trending movies for zero-state
-  const { data: trendingMovies = [], isLoading: isTrendingLoading } = useQuery({
+  const { data: trendingMovies = [] } = useQuery({
     queryKey: ["trendingMoviesSearch"],
     queryFn: () => moviesApi.getTrending(),
     staleTime: 1000 * 60 * 10,
@@ -97,7 +149,7 @@ export default function SearchScreen() {
     enabled: isAuthenticated,
   });
 
-  const watchedMap = React.useMemo(() => {
+  const watchedMap = useMemo(() => {
     const map = new Map<string, number>();
     for (const entry of myWatched) {
       if (entry.movieId) {
@@ -132,11 +184,41 @@ export default function SearchScreen() {
     setSelectedMovieForLog(movie);
   };
 
-  const handleChipPress = (query: string) => {
+  const handleChipPress = (item: CuratedExploration) => {
     try {
       Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
     } catch {}
+    if (selectedExploration?.label === item.label) {
+      setSelectedExploration(null);
+      setSearchQuery("");
+      setDebouncedQuery("");
+    } else {
+      setSelectedExploration(item);
+      setSearchQuery(item.label);
+      setDebouncedQuery(item.label);
+    }
+  };
+
+  const handleQueryChange = (text: string) => {
+    setSearchQuery(text);
+    if (selectedExploration && text.trim().toLowerCase() !== selectedExploration.label.toLowerCase()) {
+      setSelectedExploration(null);
+    }
+  };
+
+  const handleClearQuery = () => {
+    setSearchQuery("");
+    setDebouncedQuery("");
+    setSelectedExploration(null);
+  };
+
+  const handleRecentPress = (query: string) => {
+    try {
+      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    } catch {}
+    setSelectedExploration(null);
     setSearchQuery(query);
+    setDebouncedQuery(query);
   };
 
   const handleRemoveRecent = async (query: string) => {
@@ -163,8 +245,6 @@ export default function SearchScreen() {
     await logMovieMutation.mutateAsync(params);
   };
 
-  const isQueryActive = debouncedQuery.length >= 2;
-
   const renderZeroState = () => {
     return (
       <View style={styles.zeroStateContainer}>
@@ -180,11 +260,11 @@ export default function SearchScreen() {
             contentContainerStyle={styles.chipsScrollContainer}
           >
             {CURATED_EXPLORATIONS.map((item) => {
-              const isSelected = searchQuery.toLowerCase() === item.query.toLowerCase();
+              const isSelected = selectedExploration?.label === item.label;
               return (
                 <Pressable
                   key={item.label}
-                  onPress={() => handleChipPress(item.query)}
+                  onPress={() => handleChipPress(item)}
                   style={[
                     styles.genreChip,
                     isSelected && styles.genreChipActive,
@@ -232,7 +312,7 @@ export default function SearchScreen() {
                 <View key={item} style={styles.recentChip}>
                   <TouchableOpacity
                     style={styles.recentChipTouch}
-                    onPress={() => handleChipPress(item)}
+                    onPress={() => handleRecentPress(item)}
                   >
                     <Text numberOfLines={1} style={styles.recentChipText}>
                       {item}
@@ -251,7 +331,7 @@ export default function SearchScreen() {
           </View>
         )}
 
-        {/* Trending in The Vault */}
+        {/* Trending in The Vault (Rating explicitly removed as requested) */}
         {trendingMovies.length > 0 && (
           <View style={styles.sectionBlock}>
             <View style={styles.sectionTitleRow}>
@@ -265,13 +345,12 @@ export default function SearchScreen() {
             >
               {trendingMovies.slice(0, 10).map((movie) => {
                 const id = movie.imdbId || movie.id;
-                const userRating = watchedMap.get(id);
                 return (
                   <MovieCard
                     key={id}
                     movie={movie}
                     layout="grid"
-                    userRating={userRating}
+                    showRating={false}
                     isLogged={watchedMap.has(id)}
                     onPress={() => handleMoviePress(movie)}
                     onLogPress={() => handleQuickLog(movie)}
@@ -302,6 +381,7 @@ export default function SearchScreen() {
                     key={id}
                     movie={movie}
                     layout="grid"
+                    showRating={false}
                     onPress={() => handleMoviePress(movie)}
                     style={styles.carouselCard}
                   />
@@ -354,16 +434,20 @@ export default function SearchScreen() {
   const renderHeader = () => {
     if (!isQueryActive || searchResults.length === 0) return null;
 
+    const queryLabel = selectedExploration
+      ? `${selectedExploration.label.toUpperCase()} CANON`
+      : `"${debouncedQuery}"`;
+
     return (
       <View style={styles.resultsHeaderRow}>
         <View style={styles.resultsHeaderLeft}>
           <Film size={12} color={Colors.brassLight} />
           <Text style={styles.resultsHeaderText}>
-            {searchResults.length} {searchResults.length === 1 ? "VAULT ARCHIVE FOUND" : "VAULT ARCHIVES FOUND"}
+            {totalResultsCount > 0 ? `${totalResultsCount} VAULT ARCHIVES` : "VAULT ARCHIVES"}
           </Text>
         </View>
         <Text style={styles.resultsQueryBadge} numberOfLines={1}>
-          "{debouncedQuery}"
+          {queryLabel}
         </Text>
       </View>
     );
@@ -376,7 +460,7 @@ export default function SearchScreen() {
         <Input
           placeholder="Search titles, directors, cinematic canon..."
           value={searchQuery}
-          onChangeText={setSearchQuery}
+          onChangeText={handleQueryChange}
           autoCapitalize="none"
           returnKeyType="search"
           wrapperStyle={styles.inputWrapper}
@@ -384,7 +468,7 @@ export default function SearchScreen() {
           rightIcon={
             searchQuery ? (
               <TouchableOpacity
-                onPress={() => setSearchQuery("")}
+                onPress={handleClearQuery}
                 hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
               >
                 <X size={16} color={Colors.dustLight} />
@@ -396,7 +480,7 @@ export default function SearchScreen() {
 
       <FlatList
         data={isQueryActive ? searchResults : []}
-        keyExtractor={(item) => item.imdbId || item.id}
+        keyExtractor={(item, index) => `${item.imdbId || item.id}-${index}`}
         renderItem={({ item }) => {
           const id = item.imdbId || item.id;
           const userRating = watchedMap.get(id);
@@ -414,6 +498,30 @@ export default function SearchScreen() {
         }}
         ListHeaderComponent={renderHeader}
         ListEmptyComponent={renderEmpty()}
+        ListFooterComponent={() => {
+          if (isFetchingNextPage) {
+            return (
+              <View style={styles.footerLoader}>
+                <ClapperLoader size="sm" />
+                <Text style={styles.footerLoaderText}>FETCHING MORE FROM THE CANON...</Text>
+              </View>
+            );
+          }
+          if (isQueryActive && searchResults.length >= 20 && !hasNextPage) {
+            return (
+              <View style={styles.endOfResults}>
+                <Text style={styles.endOfResultsText}>— END OF VAULT ARCHIVES —</Text>
+              </View>
+            );
+          }
+          return null;
+        }}
+        onEndReached={() => {
+          if (hasNextPage && !isFetchingNextPage) {
+            fetchNextPage();
+          }
+        }}
+        onEndReachedThreshold={0.5}
         contentContainerStyle={styles.listContent}
         showsVerticalScrollIndicator={false}
         keyboardShouldPersistTaps="handled"
@@ -635,6 +743,29 @@ const styles = StyleSheet.create({
     textAlign: "center",
     lineHeight: 18,
     maxWidth: 280,
+  },
+  footerLoader: {
+    paddingVertical: Spacing.lg,
+    alignItems: "center",
+    justifyContent: "center",
+    gap: 8,
+  },
+  footerLoaderText: {
+    fontSize: 10,
+    fontWeight: "800",
+    color: Colors.brassLight,
+    letterSpacing: 1.2,
+  },
+  endOfResults: {
+    paddingVertical: Spacing.xl,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  endOfResultsText: {
+    fontSize: 10,
+    fontWeight: "800",
+    color: Colors.dust,
+    letterSpacing: 1.5,
   },
 });
 
