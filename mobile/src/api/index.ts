@@ -62,8 +62,8 @@ export const authApi = {
 
 // Movies API
 export const moviesApi = {
-  async search(query: string): Promise<Movie[]> {
-    if (!query.trim()) return [];
+  async search(query: string, genreId?: number): Promise<Movie[]> {
+    if (!query.trim() && !genreId) return [];
     const res = await apiClient.get<{
       results?: Array<{
         imdbID?: string;
@@ -74,7 +74,7 @@ export const moviesApi = {
       }>;
       movies?: Movie[];
     }>(`/movies/search`, {
-      params: { q: query },
+      params: { q: query, ...(genreId ? { genreId } : {}) },
     });
 
     if (res.data.results && Array.isArray(res.data.results)) {

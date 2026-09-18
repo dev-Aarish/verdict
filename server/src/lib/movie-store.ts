@@ -90,23 +90,140 @@ export interface OmdbShapedSearchResult {
   releaseDate: string | null;
 }
 
+// TMDb official genre IDs and common cinephile category mappings
+export const TMDB_GENRES: Record<string, number> = {
+  action: 28,
+  adventure: 12,
+  animation: 16,
+  anime: 16,
+  comedy: 35,
+  crime: 80,
+  documentary: 99,
+  drama: 18,
+  family: 10751,
+  fantasy: 14,
+  history: 36,
+  historical: 36,
+  horror: 27,
+  music: 10402,
+  musical: 10402,
+  mystery: 9648,
+  romance: 10749,
+  romantic: 10749,
+  scifi: 878,
+  "sci-fi": 878,
+  "science fiction": 878,
+  thriller: 53,
+  war: 10752,
+  western: 37,
+};
+
+// Known cinematic keywords / niche categories in TMDb (keyword IDs)
+export const TMDB_CATEGORY_KEYWORDS: Record<string, number> = {
+  noir: 3170,
+  "film noir": 3170,
+  "neo-noir": 9976,
+  cyberpunk: 10084,
+  cult: 9799,
+  "cult classic": 9799,
+  dystopia: 4565,
+  dystopian: 4565,
+  arthouse: 187056,
+  indie: 10183,
+  "independent film": 10183,
+  psychological: 12565,
+  "psychological thriller": 12565,
+  superhero: 9715,
+};
+
+function matchGenreOrCategory(query: string): { genreId?: number; keywordId?: number } | null {
+  const normalized = query.trim().toLowerCase();
+  
+  if (TMDB_GENRES[normalized]) {
+    return { genreId: TMDB_GENRES[normalized] };
+  }
+
+  if (TMDB_CATEGORY_KEYWORDS[normalized]) {
+    return { keywordId: TMDB_CATEGORY_KEYWORDS[normalized] };
+  }
+
+  // Partial phrase matching
+  for (const [key, id] of Object.entries(TMDB_GENRES)) {
+    if (normalized === key || normalized === `${key} movies` || normalized === `${key} films`) {
+      return { genreId: id };
+    }
+  }
+
+  for (const [key, id] of Object.entries(TMDB_CATEGORY_KEYWORDS)) {
+    if (normalized === key || normalized === `${key} movies` || normalized === `${key} films`) {
+      return { keywordId: id };
+    }
+  }
+
+  return null;
+}
+
 /**
- * Search movies via TMDb, resolving each result's IMDb id so the rest of the
- * app can keep keying everything off imdbId. Returns results in the same
- * shape OMDb used to provide, so the client needs no changes.
+ * Search movies via TMDb with smart Genre/Category discovery support.
+ * If the search query matches a genre or category/style (or if discover parameters are passed),
+ * TMDb discover endpoint is utilized to surface canonical films rather than just literal title matches.
  */
 export async function searchTmdb(
   query: string,
   page: number,
+  genreId?: number,
 ): Promise<{ results: OmdbShapedSearchResult[]; totalResults: number; totalPages: number } | null> {
-  const data = await tmdbFetch(
-    `/search/movie?query=${encodeURIComponent(query)}&page=${page}&include_adult=false`,
-  );
-  if (!data?.results) return null;
+  const categoryMatch = genreId ? { genreId } : matchGenreOrCategory(query);
 
-  const items: TmdbSearchItem[] = data.results;
+  let rawItems: TmdbSearchItem[] = [];
+  let totalResults = 0;
+  let totalPages = 1;
+
+  if (categoryMatch) {
+    // If it's a recognized genre or keyword, query TMDb /discover/movie for popular/highly rated films
+    let discoverUrl = `/discover/movie?page=${page}&include_adult=false&sort_by=vote_count.desc`;
+    if (categoryMatch.genreId) {
+      discoverUrl += `&with_genres=${categoryMatch.genreId}`;
+    }
+    if (categoryMatch.keywordId) {
+      discoverUrl += `&with_keywords=${categoryMatch.keywordId}`;
+    }
+
+    // Also run title search in parallel if it's not a generic word to ensure direct titles aren't missed
+    const [discoverData, titleData] = await Promise.all([
+      tmdbFetch(discoverUrl),
+      tmdbFetch(`/search/movie?query=${encodeURIComponent(query)}&page=${page}&include_adult=false`),
+    ]);
+
+    const titleResults = titleData?.results || [];
+    const discoverResults = discoverData?.results || [];
+
+    // Prioritize discover results for clear genre queries, and mix in title matches
+    const combined = [...discoverResults, ...titleResults];
+    const seen = new Set<number>();
+    for (const item of combined) {
+      if (item.id && !seen.has(item.id)) {
+        seen.add(item.id);
+        rawItems.push(item);
+      }
+    }
+
+    totalResults = Math.max(discoverData?.total_results || 0, titleData?.total_results || 0);
+    totalPages = Math.min(Math.max(discoverData?.total_pages || 1, titleData?.total_pages || 1), 500);
+  } else {
+    // Standard title search
+    const data = await tmdbFetch(
+      `/search/movie?query=${encodeURIComponent(query)}&page=${page}&include_adult=false`,
+    );
+    if (!data?.results) return null;
+
+    rawItems = data.results;
+    totalResults = data.total_results || 0;
+    totalPages = Math.min(data.total_pages || 1, 500);
+  }
+
   const resolved = await Promise.all(
-    items.map(async (item) => {
+    rawItems.map(async (item) => {
       const ext = await tmdbFetch(`/movie/${item.id}/external_ids`);
       const imdbID = ext?.imdb_id;
       if (!imdbID) return null;
@@ -123,8 +240,8 @@ export async function searchTmdb(
 
   return {
     results: resolved.filter((r): r is OmdbShapedSearchResult => r !== null),
-    totalResults: data.total_results || 0,
-    totalPages: Math.min(data.total_pages || 1, 500),
+    totalResults,
+    totalPages,
   };
 }
 

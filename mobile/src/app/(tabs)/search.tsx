@@ -1,15 +1,18 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import {
   View,
   Text,
   FlatList,
+  ScrollView,
   StyleSheet,
   TouchableOpacity,
+  Pressable,
   Keyboard,
 } from "react-native";
 import { useRouter } from "expo-router";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { Search, Film, X } from "lucide-react-native";
+import { Search, Film, X, Clock, Trash2, Sparkles, Compass } from "lucide-react-native";
+import * as Haptics from "expo-haptics";
 import { moviesApi } from "../../api";
 import { useAuth } from "../../context/AuthContext";
 import { Colors, Radius, Spacing } from "../../constants/theme";
@@ -18,6 +21,25 @@ import { MovieCard } from "../../components/common/MovieCard";
 import { LogMovieModal } from "../../components/common/LogMovieModal";
 import { ClapperLoader } from "../../components/common/ClapperLoader";
 import { Movie } from "../../types";
+import {
+  getRecentSearches,
+  addRecentSearch,
+  removeRecentSearch,
+  clearRecentSearches,
+} from "../../utils/recentSearches";
+
+const CURATED_EXPLORATIONS = [
+  { label: "Film Noir", query: "Film Noir" },
+  { label: "Sci-Fi", query: "Sci-Fi" },
+  { label: "Psychological Thriller", query: "Psychological Thriller" },
+  { label: "Cyberpunk", query: "Cyberpunk" },
+  { label: "Horror", query: "Horror" },
+  { label: "Animation", query: "Animation" },
+  { label: "Neo-Noir", query: "Neo-Noir" },
+  { label: "Crime", query: "Crime" },
+  { label: "Mystery", query: "Mystery" },
+  { label: "Documentary", query: "Documentary" },
+];
 
 export default function SearchScreen() {
   const router = useRouter();
@@ -26,11 +48,21 @@ export default function SearchScreen() {
 
   const [searchQuery, setSearchQuery] = useState("");
   const [debouncedQuery, setDebouncedQuery] = useState("");
+  const [recentSearches, setRecentSearches] = useState<string[]>([]);
   const [selectedMovieForLog, setSelectedMovieForLog] = useState<Movie | null>(null);
+
+  // Load recent searches on mount
+  useEffect(() => {
+    getRecentSearches().then(setRecentSearches);
+  }, []);
 
   useEffect(() => {
     const handler = setTimeout(() => {
-      setDebouncedQuery(searchQuery.trim());
+      const trimmed = searchQuery.trim();
+      setDebouncedQuery(trimmed);
+      if (trimmed.length >= 2) {
+        addRecentSearch(trimmed).then(setRecentSearches);
+      }
     }, 350);
     return () => clearTimeout(handler);
   }, [searchQuery]);
@@ -58,6 +90,29 @@ export default function SearchScreen() {
     router.push(`/movie/${movie.imdbId || movie.id}`);
   };
 
+  const handleChipPress = (query: string) => {
+    try {
+      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    } catch {}
+    setSearchQuery(query);
+  };
+
+  const handleRemoveRecent = async (query: string) => {
+    try {
+      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    } catch {}
+    const updated = await removeRecentSearch(query);
+    setRecentSearches(updated);
+  };
+
+  const handleClearAllRecent = async () => {
+    try {
+      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+    } catch {}
+    await clearRecentSearches();
+    setRecentSearches([]);
+  };
+
   const handleLogSubmit = async (params: { imdbId: string; rating: number; review?: string }) => {
     if (!isAuthenticated) {
       router.push("/(auth)/login");
@@ -67,6 +122,104 @@ export default function SearchScreen() {
   };
 
   const isQueryActive = debouncedQuery.length >= 2;
+
+  const renderZeroState = () => {
+    return (
+      <View style={styles.zeroStateContainer}>
+        {/* Curated Cinematic Discovery */}
+        <View style={styles.sectionBlock}>
+          <View style={styles.sectionTitleRow}>
+            <Compass size={13} color={Colors.brass} />
+            <Text style={styles.sectionHeading}>CINEMATIC EXPLORATIONS</Text>
+          </View>
+          <ScrollView
+            horizontal
+            showsHorizontalScrollIndicator={false}
+            contentContainerStyle={styles.chipsScrollContainer}
+          >
+            {CURATED_EXPLORATIONS.map((item) => {
+              const isSelected = searchQuery.toLowerCase() === item.query.toLowerCase();
+              return (
+                <Pressable
+                  key={item.label}
+                  onPress={() => handleChipPress(item.query)}
+                  style={[
+                    styles.genreChip,
+                    isSelected && styles.genreChipActive,
+                  ]}
+                >
+                  <Sparkles
+                    size={11}
+                    color={isSelected ? Colors.ink : Colors.brass}
+                    style={{ marginRight: 4 }}
+                  />
+                  <Text
+                    style={[
+                      styles.genreChipText,
+                      isSelected && styles.genreChipTextActive,
+                    ]}
+                  >
+                    {item.label}
+                  </Text>
+                </Pressable>
+              );
+            })}
+          </ScrollView>
+        </View>
+
+        {/* Recent Search History */}
+        {recentSearches.length > 0 && (
+          <View style={styles.sectionBlock}>
+            <View style={styles.recentHeaderRow}>
+              <View style={styles.sectionTitleRow}>
+                <Clock size={13} color={Colors.dust} />
+                <Text style={styles.sectionHeading}>RECENT INQUIRIES</Text>
+              </View>
+              <TouchableOpacity
+                onPress={handleClearAllRecent}
+                hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+                style={styles.clearAllBtn}
+              >
+                <Trash2 size={11} color={Colors.dustLight} />
+                <Text style={styles.clearAllText}>Clear</Text>
+              </TouchableOpacity>
+            </View>
+
+            <View style={styles.recentGrid}>
+              {recentSearches.map((item) => (
+                <View key={item} style={styles.recentChip}>
+                  <TouchableOpacity
+                    style={styles.recentChipTouch}
+                    onPress={() => handleChipPress(item)}
+                  >
+                    <Text numberOfLines={1} style={styles.recentChipText}>
+                      {item}
+                    </Text>
+                  </TouchableOpacity>
+                  <TouchableOpacity
+                    onPress={() => handleRemoveRecent(item)}
+                    hitSlop={{ top: 6, bottom: 6, left: 6, right: 6 }}
+                    style={styles.recentRemoveBtn}
+                  >
+                    <X size={12} color={Colors.dust} />
+                  </TouchableOpacity>
+                </View>
+              ))}
+            </View>
+          </View>
+        )}
+
+        {/* Cinematic Vault Hero Intro */}
+        <View style={styles.vaultIntroCard}>
+          <Film size={32} color={Colors.brass} style={{ opacity: 0.8 }} />
+          <Text style={styles.vaultIntroTitle}>The Archive is Open</Text>
+          <Text style={styles.vaultIntroSubtitle}>
+            Search across millions of classic and contemporary films, directors, and canons to rate and shape your Taste Score.
+          </Text>
+        </View>
+      </View>
+    );
+  };
 
   const renderEmpty = () => {
     if (isSearching) {
@@ -80,25 +233,17 @@ export default function SearchScreen() {
     if (isQueryActive && searchResults.length === 0) {
       return (
         <View style={styles.emptyContainer}>
-          <Film size={44} color={Colors.dust} />
+          <Film size={40} color={Colors.dust} />
           <Text style={styles.emptyTitle}>Reel Not Found</Text>
           <Text style={styles.emptySubtitle}>
-            Try searching for a different title, director, or keyword.
+            No entries matched "{debouncedQuery}". Try refining the title or director name.
           </Text>
         </View>
       );
     }
 
     if (!isQueryActive) {
-      return (
-        <View style={styles.emptyContainer}>
-          <Film size={44} color={Colors.brass} style={{ opacity: 0.6 }} />
-          <Text style={styles.emptyTitle}>The Film Vault</Text>
-          <Text style={styles.emptySubtitle}>
-            Type at least 2 characters to search through cinema history and log your experience.
-          </Text>
-        </View>
-      );
+      return renderZeroState();
     }
 
     return null;
@@ -108,9 +253,9 @@ export default function SearchScreen() {
     if (!isQueryActive || searchResults.length === 0) return null;
 
     return (
-      <View style={styles.sectionTitleRow}>
-        <Film size={14} color={Colors.brassLight} />
-        <Text style={styles.sectionTitle}>
+      <View style={styles.resultsHeaderRow}>
+        <Film size={13} color={Colors.brassLight} />
+        <Text style={styles.resultsHeaderText}>
           {searchResults.length} VAULT ARCHIVES FOUND
         </Text>
       </View>
@@ -119,7 +264,7 @@ export default function SearchScreen() {
 
   return (
     <View style={styles.container}>
-      {/* Fixed Search Header */}
+      {/* Search Header */}
       <View style={styles.searchBarContainer}>
         <Input
           placeholder="Search titles, directors, cinematic canon..."
@@ -128,7 +273,7 @@ export default function SearchScreen() {
           autoCapitalize="none"
           returnKeyType="search"
           wrapperStyle={styles.inputWrapper}
-          leftIcon={<Search size={16} color={Colors.dust} />}
+          leftIcon={<Search size={16} color={Colors.brass} />}
           rightIcon={
             searchQuery ? (
               <TouchableOpacity
@@ -179,6 +324,7 @@ const styles = StyleSheet.create({
   searchBarContainer: {
     paddingHorizontal: Spacing.lg,
     paddingTop: Spacing.md,
+    paddingBottom: Spacing.xs,
     backgroundColor: Colors.ink,
   },
   inputWrapper: {
@@ -187,18 +333,19 @@ const styles = StyleSheet.create({
   listContent: {
     paddingHorizontal: Spacing.lg,
     paddingBottom: Spacing.xxxl,
-    paddingTop: Spacing.md,
+    paddingTop: Spacing.sm,
   },
-  sectionTitleRow: {
+  resultsHeaderRow: {
     flexDirection: "row",
     alignItems: "center",
     gap: 6,
     marginBottom: Spacing.sm,
+    marginTop: Spacing.xs,
   },
-  sectionTitle: {
+  resultsHeaderText: {
     fontSize: 10,
     fontWeight: "900",
-    color: Colors.dust,
+    color: Colors.brassLight,
     letterSpacing: 1.2,
   },
   cardWrapper: {
@@ -209,15 +356,132 @@ const styles = StyleSheet.create({
     alignItems: "center",
     gap: Spacing.md,
   },
-  loadingText: {
-    color: Colors.dustLight,
-    fontSize: 12,
+
+  // Zero-State styles
+  zeroStateContainer: {
+    paddingTop: Spacing.md,
+    gap: Spacing.xl,
   },
+  sectionBlock: {
+    gap: Spacing.sm,
+  },
+  sectionTitleRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 6,
+  },
+  sectionHeading: {
+    fontSize: 10,
+    fontWeight: "900",
+    color: Colors.dustLight,
+    letterSpacing: 1.2,
+  },
+  chipsScrollContainer: {
+    gap: 8,
+    paddingVertical: 2,
+  },
+  genreChip: {
+    flexDirection: "row",
+    alignItems: "center",
+    paddingVertical: 7,
+    paddingHorizontal: 12,
+    backgroundColor: Colors.velvetElevated,
+    borderWidth: 1,
+    borderColor: Colors.border,
+    borderRadius: Radius.sm,
+  },
+  genreChipActive: {
+    backgroundColor: Colors.brass,
+    borderColor: Colors.brassLight,
+  },
+  genreChipText: {
+    fontSize: 12,
+    fontWeight: "700",
+    color: Colors.paperDim,
+  },
+  genreChipTextActive: {
+    color: Colors.inkDark,
+    fontWeight: "800",
+  },
+  recentHeaderRow: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+  },
+  clearAllBtn: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 4,
+    paddingHorizontal: 6,
+    paddingVertical: 2,
+  },
+  clearAllText: {
+    fontSize: 11,
+    fontWeight: "700",
+    color: Colors.dustLight,
+  },
+  recentGrid: {
+    flexDirection: "row",
+    flexWrap: "wrap",
+    gap: 8,
+  },
+  recentChip: {
+    flexDirection: "row",
+    alignItems: "center",
+    backgroundColor: Colors.velvet,
+    borderWidth: 1,
+    borderColor: Colors.borderSubtle,
+    borderRadius: Radius.sm,
+    paddingLeft: Spacing.md,
+    paddingRight: 6,
+    paddingVertical: 6,
+    maxWidth: "100%",
+  },
+  recentChipTouch: {
+    marginRight: 6,
+    maxWidth: 200,
+  },
+  recentChipText: {
+    fontSize: 12,
+    color: Colors.paper,
+    fontWeight: "600",
+  },
+  recentRemoveBtn: {
+    padding: 2,
+  },
+
+  // Vault Intro Banner
+  vaultIntroCard: {
+    alignItems: "center",
+    padding: Spacing.xl,
+    backgroundColor: Colors.velvet,
+    borderRadius: Radius.sm,
+    borderWidth: 1,
+    borderColor: Colors.border,
+    marginTop: Spacing.xs,
+    gap: Spacing.xs,
+  },
+  vaultIntroTitle: {
+    color: Colors.paper,
+    fontSize: 16,
+    fontWeight: "800",
+    marginTop: 4,
+    letterSpacing: 0.2,
+  },
+  vaultIntroSubtitle: {
+    color: Colors.dust,
+    fontSize: 12,
+    textAlign: "center",
+    lineHeight: 18,
+    maxWidth: 290,
+  },
+
+  // Empty state when search returns 0 items
   emptyContainer: {
     alignItems: "center",
     padding: Spacing.xxxl,
     backgroundColor: Colors.velvet,
-    borderRadius: Radius.none,
+    borderRadius: Radius.sm,
     borderWidth: 1,
     borderColor: Colors.border,
     marginTop: Spacing.lg,
@@ -225,7 +489,7 @@ const styles = StyleSheet.create({
   },
   emptyTitle: {
     color: Colors.paper,
-    fontSize: 17,
+    fontSize: 16,
     fontWeight: "800",
     marginTop: 6,
   },
@@ -237,3 +501,4 @@ const styles = StyleSheet.create({
     maxWidth: 280,
   },
 });
+

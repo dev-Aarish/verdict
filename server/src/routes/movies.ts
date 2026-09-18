@@ -155,12 +155,13 @@ moviesRouter.get("/film/:imdbId", async (req: Request, res: Response) => {
   });
 });
 
-// GET /search?q=&page=
+// GET /search?q=&page=&genreId=
 moviesRouter.get("/search", async (req: Request, res: Response) => {
   const q = (req.query.q as string) || "";
   const page = parseInt(req.query.page as string, 10) || 1;
+  const genreId = req.query.genreId ? parseInt(req.query.genreId as string, 10) : undefined;
 
-  if (!q.trim()) {
+  if (!q.trim() && !genreId) {
     res.json({ results: [], totalResults: 0, totalPages: 0, page: 1, error: null });
     return;
   }
@@ -171,7 +172,7 @@ moviesRouter.get("/search", async (req: Request, res: Response) => {
     return;
   }
 
-  const result = await searchTmdb(q, page);
+  const result = await searchTmdb(q, page, genreId);
   if (!result) {
     res.json({
       results: [],
