@@ -11,7 +11,7 @@ import {
 } from "react-native";
 import { useRouter } from "expo-router";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { Search, Film, X, Clock, Trash2, Sparkles, Compass } from "lucide-react-native";
+import { Search, Film, X, Clock, Trash2, Sparkles, Compass, Flame, Calendar } from "lucide-react-native";
 import * as Haptics from "expo-haptics";
 import { moviesApi } from "../../api";
 import { useAuth } from "../../context/AuthContext";
@@ -74,6 +74,20 @@ export default function SearchScreen() {
     queryKey: ["movieSearch", debouncedQuery],
     queryFn: () => moviesApi.search(debouncedQuery),
     enabled: debouncedQuery.length >= 2,
+  });
+
+  // Fetch trending movies for zero-state
+  const { data: trendingMovies = [], isLoading: isTrendingLoading } = useQuery({
+    queryKey: ["trendingMoviesSearch"],
+    queryFn: () => moviesApi.getTrending(),
+    staleTime: 1000 * 60 * 10,
+  });
+
+  // Fetch upcoming movies for zero-state
+  const { data: upcomingMovies = [] } = useQuery({
+    queryKey: ["upcomingMoviesSearch"],
+    queryFn: () => moviesApi.getUpcoming(),
+    staleTime: 1000 * 60 * 10,
   });
 
   const logMovieMutation = useMutation({
@@ -209,12 +223,62 @@ export default function SearchScreen() {
           </View>
         )}
 
+        {/* Trending in The Vault */}
+        {trendingMovies.length > 0 && (
+          <View style={styles.sectionBlock}>
+            <View style={styles.sectionTitleRow}>
+              <Flame size={13} color={Colors.brass} />
+              <Text style={styles.sectionHeading}>TRENDING IN THE CANON</Text>
+            </View>
+            <ScrollView
+              horizontal
+              showsHorizontalScrollIndicator={false}
+              contentContainerStyle={styles.horizontalPosterScroll}
+            >
+              {trendingMovies.slice(0, 10).map((movie) => (
+                <MovieCard
+                  key={movie.imdbId || movie.id}
+                  movie={movie}
+                  layout="grid"
+                  onPress={() => handleMoviePress(movie)}
+                  style={styles.carouselCard}
+                />
+              ))}
+            </ScrollView>
+          </View>
+        )}
+
+        {/* Anticipated Upcoming Titles */}
+        {upcomingMovies.length > 0 && (
+          <View style={styles.sectionBlock}>
+            <View style={styles.sectionTitleRow}>
+              <Calendar size={13} color={Colors.dustLight} />
+              <Text style={styles.sectionHeading}>ANTICIPATED RELEASES</Text>
+            </View>
+            <ScrollView
+              horizontal
+              showsHorizontalScrollIndicator={false}
+              contentContainerStyle={styles.horizontalPosterScroll}
+            >
+              {upcomingMovies.slice(0, 10).map((movie) => (
+                <MovieCard
+                  key={movie.imdbId || movie.id}
+                  movie={movie}
+                  layout="grid"
+                  onPress={() => handleMoviePress(movie)}
+                  style={styles.carouselCard}
+                />
+              ))}
+            </ScrollView>
+          </View>
+        )}
+
         {/* Cinematic Vault Hero Intro */}
         <View style={styles.vaultIntroCard}>
-          <Film size={32} color={Colors.brass} style={{ opacity: 0.8 }} />
-          <Text style={styles.vaultIntroTitle}>The Archive is Open</Text>
+          <Film size={30} color={Colors.brass} style={{ opacity: 0.8 }} />
+          <Text style={styles.vaultIntroTitle}>The Vault is Open</Text>
           <Text style={styles.vaultIntroSubtitle}>
-            Search across millions of classic and contemporary films, directors, and canons to rate and shape your Taste Score.
+            Search across millions of classic and contemporary films, directors, and genres to rate and refine your Taste Score.
           </Text>
         </View>
       </View>
@@ -448,6 +512,16 @@ const styles = StyleSheet.create({
   },
   recentRemoveBtn: {
     padding: 2,
+  },
+
+  // Carousel & Posters
+  horizontalPosterScroll: {
+    gap: 12,
+    paddingVertical: 4,
+  },
+  carouselCard: {
+    width: 120,
+    marginBottom: 0,
   },
 
   // Vault Intro Banner
