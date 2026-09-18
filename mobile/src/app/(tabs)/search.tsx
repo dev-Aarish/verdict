@@ -90,6 +90,26 @@ export default function SearchScreen() {
     staleTime: 1000 * 60 * 10,
   });
 
+  // Fetch current user's watched entries for quick log states
+  const { data: myWatched = [] } = useQuery({
+    queryKey: ["myWatched"],
+    queryFn: () => moviesApi.getMyWatched(),
+    enabled: isAuthenticated,
+  });
+
+  const watchedMap = React.useMemo(() => {
+    const map = new Map<string, number>();
+    for (const entry of myWatched) {
+      if (entry.movieId) {
+        map.set(entry.movieId, entry.rating);
+      }
+      if (entry.movie?.imdbId) {
+        map.set(entry.movie.imdbId, entry.rating);
+      }
+    }
+    return map;
+  }, [myWatched]);
+
   const logMovieMutation = useMutation({
     mutationFn: moviesApi.logMovie,
     onSuccess: () => {
@@ -102,6 +122,14 @@ export default function SearchScreen() {
   const handleMoviePress = (movie: Movie) => {
     Keyboard.dismiss();
     router.push(`/movie/${movie.imdbId || movie.id}`);
+  };
+
+  const handleQuickLog = (movie: Movie) => {
+    if (!isAuthenticated) {
+      router.push("/(auth)/login");
+      return;
+    }
+    setSelectedMovieForLog(movie);
   };
 
   const handleChipPress = (query: string) => {
@@ -235,15 +263,22 @@ export default function SearchScreen() {
               showsHorizontalScrollIndicator={false}
               contentContainerStyle={styles.horizontalPosterScroll}
             >
-              {trendingMovies.slice(0, 10).map((movie) => (
-                <MovieCard
-                  key={movie.imdbId || movie.id}
-                  movie={movie}
-                  layout="grid"
-                  onPress={() => handleMoviePress(movie)}
-                  style={styles.carouselCard}
-                />
-              ))}
+              {trendingMovies.slice(0, 10).map((movie) => {
+                const id = movie.imdbId || movie.id;
+                const userRating = watchedMap.get(id);
+                return (
+                  <MovieCard
+                    key={id}
+                    movie={movie}
+                    layout="grid"
+                    userRating={userRating}
+                    isLogged={watchedMap.has(id)}
+                    onPress={() => handleMoviePress(movie)}
+                    onLogPress={() => handleQuickLog(movie)}
+                    style={styles.carouselCard}
+                  />
+                );
+              })}
             </ScrollView>
           </View>
         )}
@@ -260,15 +295,18 @@ export default function SearchScreen() {
               showsHorizontalScrollIndicator={false}
               contentContainerStyle={styles.horizontalPosterScroll}
             >
-              {upcomingMovies.slice(0, 10).map((movie) => (
-                <MovieCard
-                  key={movie.imdbId || movie.id}
-                  movie={movie}
-                  layout="grid"
-                  onPress={() => handleMoviePress(movie)}
-                  style={styles.carouselCard}
-                />
-              ))}
+              {upcomingMovies.slice(0, 10).map((movie) => {
+                const id = movie.imdbId || movie.id;
+                return (
+                  <MovieCard
+                    key={id}
+                    movie={movie}
+                    layout="grid"
+                    onPress={() => handleMoviePress(movie)}
+                    style={styles.carouselCard}
+                  />
+                );
+              })}
             </ScrollView>
           </View>
         )}
@@ -354,14 +392,21 @@ export default function SearchScreen() {
       <FlatList
         data={isQueryActive ? searchResults : []}
         keyExtractor={(item) => item.imdbId || item.id}
-        renderItem={({ item }) => (
-          <View style={styles.cardWrapper}>
-            <MovieCard
-              movie={item}
-              onPress={() => handleMoviePress(item)}
-            />
-          </View>
-        )}
+        renderItem={({ item }) => {
+          const id = item.imdbId || item.id;
+          const userRating = watchedMap.get(id);
+          return (
+            <View style={styles.cardWrapper}>
+              <MovieCard
+                movie={item}
+                userRating={userRating}
+                isLogged={watchedMap.has(id)}
+                onPress={() => handleMoviePress(item)}
+                onLogPress={() => handleQuickLog(item)}
+              />
+            </View>
+          );
+        }}
         ListHeaderComponent={renderHeader}
         ListEmptyComponent={renderEmpty()}
         contentContainerStyle={styles.listContent}

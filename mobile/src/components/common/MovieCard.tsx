@@ -5,9 +5,10 @@ import {
   StyleSheet,
   ViewStyle,
   Pressable,
+  TouchableOpacity,
 } from "react-native";
 import { Image } from "expo-image";
-import { Star } from "lucide-react-native";
+import { Star, Plus, Check } from "lucide-react-native";
 import Animated, {
   useSharedValue,
   useAnimatedStyle,
@@ -23,6 +24,8 @@ const AnimatedPressable = Animated.createAnimatedComponent(Pressable);
 interface MovieCardProps {
   movie: Movie;
   onPress?: () => void;
+  onLogPress?: () => void;
+  isLogged?: boolean;
   userRating?: number | null;
   layout?: "grid" | "list";
   size?: "sm" | "md" | "lg" | "xl";
@@ -32,6 +35,8 @@ interface MovieCardProps {
 export const MovieCard: React.FC<MovieCardProps> = ({
   movie,
   onPress,
+  onLogPress,
+  isLogged,
   userRating,
   layout = "list",
   size = "md",
@@ -54,6 +59,14 @@ export const MovieCard: React.FC<MovieCardProps> = ({
       Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
     } catch {}
     onPress();
+  };
+
+  const handleLogButtonPress = () => {
+    if (!onLogPress) return;
+    try {
+      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+    } catch {}
+    onLogPress();
   };
 
   const animatedStyle = useAnimatedStyle(() => ({
@@ -79,11 +92,23 @@ export const MovieCard: React.FC<MovieCardProps> = ({
           contentFit="cover"
           transition={250}
         />
-        {userRating !== undefined && userRating !== null && (
+        {userRating !== undefined && userRating !== null ? (
           <View style={styles.gridRatingBadge}>
             <Text style={styles.gridRatingText}>{userRating}★</Text>
           </View>
-        )}
+        ) : onLogPress ? (
+          <TouchableOpacity
+            onPress={handleLogButtonPress}
+            style={[styles.gridLogBadge, isLogged && styles.gridLogBadgeLogged]}
+            hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+          >
+            {isLogged ? (
+              <Check size={10} color={Colors.inkDark} />
+            ) : (
+              <Plus size={10} color={Colors.brassLight} />
+            )}
+          </TouchableOpacity>
+        ) : null}
         <View style={styles.gridContent}>
           <Text numberOfLines={1} style={styles.gridTitle}>
             {movie.title}
@@ -172,13 +197,32 @@ export const MovieCard: React.FC<MovieCardProps> = ({
           </View>
         )}
 
-        {userRating !== undefined && userRating !== null && (
-          <View style={styles.userRatingRow}>
-            <Star size={12} color={Colors.brass} fill={Colors.brass} />
-            <Text style={styles.userRatingLabel}>PERSONAL RATING:</Text>
-            <Text style={styles.userRatingText}>{userRating}/10</Text>
-          </View>
-        )}
+        <View style={styles.listActionRow}>
+          {userRating !== undefined && userRating !== null ? (
+            <View style={styles.userRatingRow}>
+              <Star size={12} color={Colors.brass} fill={Colors.brass} />
+              <Text style={styles.userRatingLabel}>PERSONAL RATING:</Text>
+              <Text style={styles.userRatingText}>{userRating}/10</Text>
+            </View>
+          ) : onLogPress ? (
+            <TouchableOpacity
+              onPress={handleLogButtonPress}
+              style={[styles.inlineLogButton, isLogged && styles.inlineLogButtonLogged]}
+            >
+              {isLogged ? (
+                <>
+                  <Check size={11} color={Colors.brassLight} />
+                  <Text style={styles.inlineLogButtonTextLogged}>LOGGED</Text>
+                </>
+              ) : (
+                <>
+                  <Plus size={11} color={Colors.inkDark} />
+                  <Text style={styles.inlineLogButtonText}>LOG REEL</Text>
+                </>
+              )}
+            </TouchableOpacity>
+          ) : null}
+        </View>
       </View>
     </AnimatedPressable>
   );
@@ -316,6 +360,22 @@ const styles = StyleSheet.create({
     fontSize: 10,
     fontWeight: "900",
   },
+  gridLogBadge: {
+    position: "absolute",
+    top: 6,
+    right: 6,
+    backgroundColor: Colors.inkDark,
+    padding: 5,
+    borderWidth: 1,
+    borderColor: Colors.brass,
+    borderRadius: Radius.xs || 2,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  gridLogBadgeLogged: {
+    backgroundColor: Colors.brass,
+    borderColor: Colors.brassLight,
+  },
   gridContent: {
     padding: Spacing.sm,
   },
@@ -328,5 +388,37 @@ const styles = StyleSheet.create({
     color: Colors.dust,
     fontSize: 11,
     marginTop: 1,
+  },
+  listActionRow: {
+    marginTop: 6,
+    flexDirection: "row",
+    alignItems: "center",
+  },
+  inlineLogButton: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 4,
+    backgroundColor: Colors.brass,
+    paddingVertical: 4,
+    paddingHorizontal: 9,
+    borderRadius: Radius.xs || 2,
+    alignSelf: "flex-start",
+  },
+  inlineLogButtonLogged: {
+    backgroundColor: "transparent",
+    borderWidth: 1,
+    borderColor: Colors.brass,
+  },
+  inlineLogButtonText: {
+    fontSize: 10,
+    fontWeight: "900",
+    color: Colors.inkDark,
+    letterSpacing: 0.6,
+  },
+  inlineLogButtonTextLogged: {
+    fontSize: 10,
+    fontWeight: "800",
+    color: Colors.brassLight,
+    letterSpacing: 0.6,
   },
 });
