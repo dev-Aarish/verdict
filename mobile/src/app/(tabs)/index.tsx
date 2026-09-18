@@ -8,7 +8,7 @@ import {
   TouchableOpacity,
 } from "react-native";
 import { useRouter } from "expo-router";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Film, Trophy, Compass, Plus, Sparkles, Flame, Calendar } from "lucide-react-native";
 import { feedApi, usersApi, moviesApi } from "../../api";
 import { useAuth } from "../../context/AuthContext";
@@ -27,6 +27,7 @@ import { FeedItem } from "../../types";
 
 export default function FeedScreen() {
   const router = useRouter();
+  const queryClient = useQueryClient();
   const { user, isAuthenticated } = useAuth();
 
   const {
@@ -42,6 +43,8 @@ export default function FeedScreen() {
   const { data: leaderboard = [] } = useQuery({
     queryKey: ["leaderboard"],
     queryFn: usersApi.getLeaderboard,
+    retry: 3,
+    retryDelay: (attempt) => Math.min(2000 * 2 ** attempt, 15000),
   });
 
   const { data: latestHits = [] } = useQuery({
@@ -54,6 +57,13 @@ export default function FeedScreen() {
     queryFn: moviesApi.getUpcoming,
   });
 
+
+  const handleRefresh = () => {
+    queryClient.invalidateQueries({ queryKey: ["feed"] });
+    queryClient.invalidateQueries({ queryKey: ["leaderboard"] });
+    queryClient.invalidateQueries({ queryKey: ["trendingMovies"] });
+    queryClient.invalidateQueries({ queryKey: ["upcomingMovies"] });
+  };
 
   const handlePressUser = (username: string) => {
     router.push(`/user/${username}`);
@@ -210,7 +220,7 @@ export default function FeedScreen() {
         refreshControl={
           <ClapperRefreshControl
             refreshing={isRefetching}
-            onRefresh={refetch}
+            onRefresh={handleRefresh}
           />
         }
       />

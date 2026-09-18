@@ -370,21 +370,17 @@ export const usersApi = {
   async getLeaderboard(): Promise<
     { user: User; tasteScore: TasteScoreBreakdown; rank: number }[]
   > {
-    try {
-      const res = await apiClient.get<any[]>("/feed/leaderboard");
-      return (res.data || []).map((item, index) => ({
-        user: item.user,
-        tasteScore: {
-          total: item.score ?? 0,
-          diversity: item.breakdown?.diversity ?? 0,
-          obscurity: item.breakdown?.obscurity ?? 0,
-          consistency: item.breakdown?.consistency ?? 0,
-        },
-        rank: index + 1,
-      }));
-    } catch {
-      return [];
-    }
+    const res = await apiClient.get<any[]>("/feed/leaderboard");
+    return (res.data || []).map((item, index) => ({
+      user: item.user,
+      tasteScore: {
+        total: item.score ?? 0,
+        diversity: item.breakdown?.diversity ?? 0,
+        obscurity: item.breakdown?.obscurity ?? 0,
+        consistency: item.breakdown?.consistency ?? 0,
+      },
+      rank: index + 1,
+    }));
   },
 
   async updateProfile(data: { bio?: string; avatarUrl?: string | null }): Promise<User> {
