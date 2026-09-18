@@ -207,12 +207,11 @@ moviesRouter.get("/trending", async (req: Request, res: Response) => {
     return;
   }
 
-  // Fallback: search for top critically acclaimed / popular hit films
-  const fallback = await searchTmdb("Dune", page);
+  // No TMDb results available — return empty rather than irrelevant search results
   res.json({
-    results: fallback?.results || [],
-    totalResults: fallback?.totalResults || 0,
-    totalPages: fallback?.totalPages || 1,
+    results: [],
+    totalResults: 0,
+    totalPages: 1,
     page,
   });
 });
@@ -232,12 +231,11 @@ moviesRouter.get("/upcoming", async (req: Request, res: Response) => {
     return;
   }
 
-  // Fallback: search for upcoming/anticipated films
-  const fallback = await searchTmdb("Avatar", page);
+  // No TMDb results available — return empty rather than irrelevant search results
   res.json({
-    results: fallback?.results || [],
-    totalResults: fallback?.totalResults || 0,
-    totalPages: fallback?.totalPages || 1,
+    results: [],
+    totalResults: 0,
+    totalPages: 1,
     page,
   });
 });

@@ -50,11 +50,15 @@ export default function FeedScreen() {
   const { data: latestHits = [] } = useQuery({
     queryKey: ["trendingMovies"],
     queryFn: moviesApi.getTrending,
+    retry: 2,
+    retryDelay: (attempt) => Math.min(2000 * 2 ** attempt, 10000),
   });
 
   const { data: upcomingMovies = [] } = useQuery({
     queryKey: ["upcomingMovies"],
     queryFn: moviesApi.getUpcoming,
+    retry: 2,
+    retryDelay: (attempt) => Math.min(2000 * 2 ** attempt, 10000),
   });
 
 
