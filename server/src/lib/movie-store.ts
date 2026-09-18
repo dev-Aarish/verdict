@@ -79,6 +79,11 @@ interface TmdbSearchItem {
   original_title?: string;
   release_date?: string;
   poster_path?: string | null;
+  overview?: string | null;
+  genre_ids?: number[];
+  vote_average?: number;
+  vote_count?: number;
+  original_language?: string;
 }
 
 export interface OmdbShapedSearchResult {
@@ -88,7 +93,34 @@ export interface OmdbShapedSearchResult {
   Poster: string;
   Type: string;
   releaseDate: string | null;
+  plot: string | null;
+  genres: string | null;
+  imdbRating: string | null;
+  voteCount: number | null;
+  language: string | null;
 }
+
+export const TMDB_GENRE_MAP: Record<number, string> = {
+  28: "Action",
+  12: "Adventure",
+  16: "Animation",
+  35: "Comedy",
+  80: "Crime",
+  99: "Documentary",
+  18: "Drama",
+  10751: "Family",
+  14: "Fantasy",
+  36: "History",
+  27: "Horror",
+  10402: "Music",
+  9648: "Mystery",
+  10749: "Romance",
+  878: "Sci-Fi",
+  10770: "TV Movie",
+  53: "Thriller",
+  10752: "War",
+  37: "Western",
+};
 
 // TMDb official genre IDs and common cinephile category mappings
 export const TMDB_GENRES: Record<string, number> = {
@@ -227,6 +259,15 @@ export async function searchTmdb(
       const ext = await tmdbFetch(`/movie/${item.id}/external_ids`);
       const imdbID = ext?.imdb_id;
       if (!imdbID) return null;
+
+      const genresStr =
+        item.genre_ids && item.genre_ids.length > 0
+          ? item.genre_ids
+              .map((id) => TMDB_GENRE_MAP[id])
+              .filter(Boolean)
+              .join(", ")
+          : null;
+
       return {
         imdbID,
         Title: item.title || item.original_title || "Unknown",
@@ -234,6 +275,14 @@ export async function searchTmdb(
         Poster: item.poster_path ? `${TMDB_IMAGE}${item.poster_path}` : "N/A",
         Type: "movie",
         releaseDate: item.release_date || null,
+        plot: item.overview && item.overview.trim() !== "" ? item.overview.trim() : null,
+        genres: genresStr,
+        imdbRating:
+          item.vote_average && item.vote_average > 0
+            ? item.vote_average.toFixed(1)
+            : null,
+        voteCount: item.vote_count || null,
+        language: item.original_language ? item.original_language.toUpperCase() : null,
       };
     }),
   );
@@ -279,6 +328,15 @@ export async function getTrendingTmdb(
       const ext = await tmdbFetch(`/movie/${item.id}/external_ids`);
       const imdbID = ext?.imdb_id;
       if (!imdbID) return null;
+
+      const genresStr =
+        item.genre_ids && item.genre_ids.length > 0
+          ? item.genre_ids
+              .map((id) => TMDB_GENRE_MAP[id])
+              .filter(Boolean)
+              .join(", ")
+          : null;
+
       return {
         imdbID,
         Title: item.title || item.original_title || "Unknown",
@@ -286,6 +344,14 @@ export async function getTrendingTmdb(
         Poster: item.poster_path ? `${TMDB_IMAGE}${item.poster_path}` : "N/A",
         Type: "movie",
         releaseDate: item.release_date || null,
+        plot: item.overview && item.overview.trim() !== "" ? item.overview.trim() : null,
+        genres: genresStr,
+        imdbRating:
+          item.vote_average && item.vote_average > 0
+            ? item.vote_average.toFixed(1)
+            : null,
+        voteCount: item.vote_count || null,
+        language: item.original_language ? item.original_language.toUpperCase() : null,
       };
     }),
   );
@@ -336,6 +402,15 @@ export async function getUpcomingTmdb(
       const ext = await tmdbFetch(`/movie/${item.id}/external_ids`);
       const imdbID = ext?.imdb_id;
       if (!imdbID) return null;
+
+      const genresStr =
+        item.genre_ids && item.genre_ids.length > 0
+          ? item.genre_ids
+              .map((id) => TMDB_GENRE_MAP[id])
+              .filter(Boolean)
+              .join(", ")
+          : null;
+
       return {
         imdbID,
         Title: item.title || item.original_title || "Unknown",
@@ -343,6 +418,14 @@ export async function getUpcomingTmdb(
         Poster: item.poster_path ? `${TMDB_IMAGE}${item.poster_path}` : "N/A",
         Type: "movie",
         releaseDate: item.release_date || null,
+        plot: item.overview && item.overview.trim() !== "" ? item.overview.trim() : null,
+        genres: genresStr,
+        imdbRating:
+          item.vote_average && item.vote_average > 0
+            ? item.vote_average.toFixed(1)
+            : null,
+        voteCount: item.vote_count || null,
+        language: item.original_language ? item.original_language.toUpperCase() : null,
       };
     }),
   );

@@ -71,6 +71,10 @@ export const moviesApi = {
         Year?: string;
         Poster?: string;
         Type?: string;
+        plot?: string | null;
+        genres?: string | null;
+        imdbRating?: string | null;
+        language?: string | null;
       }>;
       movies?: Movie[];
     }>(`/movies/search`, {
@@ -84,6 +88,10 @@ export const moviesApi = {
         title: r.Title || "Unknown",
         year: r.Year || "",
         posterUrl: r.Poster && r.Poster !== "N/A" ? r.Poster : null,
+        plot: r.plot || null,
+        genres: r.genres || null,
+        imdbRating: r.imdbRating || null,
+        language: r.language || null,
       }));
     }
 
@@ -138,6 +146,10 @@ export const moviesApi = {
         Year?: string;
         Poster?: string;
         releaseDate?: string;
+        plot?: string | null;
+        genres?: string | null;
+        imdbRating?: string | null;
+        language?: string | null;
       }>;
     }>("/movies/trending");
 
@@ -149,6 +161,10 @@ export const moviesApi = {
         year: r.Year || "",
         posterUrl: r.Poster && r.Poster !== "N/A" ? r.Poster : null,
         released: r.releaseDate || null,
+        plot: r.plot || null,
+        genres: r.genres || null,
+        imdbRating: r.imdbRating || null,
+        language: r.language || null,
       }));
     }
 
@@ -163,6 +179,10 @@ export const moviesApi = {
         Year?: string;
         Poster?: string;
         releaseDate?: string;
+        plot?: string | null;
+        genres?: string | null;
+        imdbRating?: string | null;
+        language?: string | null;
       }>;
     }>("/movies/upcoming");
 
@@ -174,6 +194,10 @@ export const moviesApi = {
         year: r.Year || "",
         posterUrl: r.Poster && r.Poster !== "N/A" ? r.Poster : null,
         released: r.releaseDate || null,
+        plot: r.plot || null,
+        genres: r.genres || null,
+        imdbRating: r.imdbRating || null,
+        language: r.language || null,
       }));
     }
 

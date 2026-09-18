@@ -356,9 +356,14 @@ export default function SearchScreen() {
 
     return (
       <View style={styles.resultsHeaderRow}>
-        <Film size={13} color={Colors.brassLight} />
-        <Text style={styles.resultsHeaderText}>
-          {searchResults.length} VAULT ARCHIVES FOUND
+        <View style={styles.resultsHeaderLeft}>
+          <Film size={12} color={Colors.brassLight} />
+          <Text style={styles.resultsHeaderText}>
+            {searchResults.length} {searchResults.length === 1 ? "VAULT ARCHIVE FOUND" : "VAULT ARCHIVES FOUND"}
+          </Text>
+        </View>
+        <Text style={styles.resultsQueryBadge} numberOfLines={1}>
+          "{debouncedQuery}"
         </Text>
       </View>
     );
@@ -447,9 +452,15 @@ const styles = StyleSheet.create({
   resultsHeaderRow: {
     flexDirection: "row",
     alignItems: "center",
-    gap: 6,
+    justifyContent: "space-between",
     marginBottom: Spacing.sm,
     marginTop: Spacing.xs,
+    paddingHorizontal: 2,
+  },
+  resultsHeaderLeft: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 6,
   },
   resultsHeaderText: {
     fontSize: 10,
@@ -457,8 +468,14 @@ const styles = StyleSheet.create({
     color: Colors.brassLight,
     letterSpacing: 1.2,
   },
+  resultsQueryBadge: {
+    fontSize: 11,
+    color: Colors.dustLight,
+    fontStyle: "italic",
+    maxWidth: 140,
+  },
   cardWrapper: {
-    marginBottom: Spacing.md,
+    marginBottom: 10,
   },
   loadingContainer: {
     padding: Spacing.xxxl,
