@@ -170,7 +170,7 @@ export function Stamp({
           {label}
         </Text>
       )}
-      {typeof children === "string" || typeof children === "number" ? (
+      {typeof children === "string" || typeof children === "number" || Array.isArray(children) || !React.isValidElement(children) ? (
         <Text
           style={[
             styles.valueText,

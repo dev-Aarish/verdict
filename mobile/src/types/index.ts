@@ -27,6 +27,30 @@ export interface Movie {
   boxOffice?: string | null;
   imdbRating?: string | null;
   imdbVotes?: string | null;
+  production?: string | null;
+  dvd?: string | null;
+  website?: string | null;
+}
+
+export interface FilmCommunityEntry {
+  user: User | null;
+  rating: number;
+  note: string | null;
+  watchedAt?: string | null;
+}
+
+export interface FilmStats {
+  total: number;
+  average: number | null;
+  freshCount: number;
+  freshPercent: number | null;
+  status: "fresh" | "rotten" | "mixed" | null;
+}
+
+export interface MovieDetailResponse {
+  movie: Movie;
+  community: FilmCommunityEntry[];
+  stats: FilmStats;
 }
 
 export function parseGenres(genres: any): string[] {

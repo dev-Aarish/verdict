@@ -8,6 +8,9 @@ import {
   FeedItem,
   TasteMatch,
   WatchlistEntry,
+  MovieDetailResponse,
+  FilmCommunityEntry,
+  FilmStats,
 } from "../types";
 
 // Auth API
@@ -87,9 +90,9 @@ export const moviesApi = {
     return res.data.movies || [];
   },
 
-  async getDetail(imdbId: string): Promise<Movie> {
-    const res = await apiClient.get<{ movie: Movie; stats?: any }>(`/movies/film/${imdbId}`);
-    return res.data.movie;
+  async getDetail(imdbId: string): Promise<MovieDetailResponse> {
+    const res = await apiClient.get<MovieDetailResponse>(`/movies/film/${imdbId}`);
+    return res.data;
   },
 
   async getMyWatched(): Promise<WatchedEntry[]> {

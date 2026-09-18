@@ -90,7 +90,7 @@ function RootNavigator() {
       <Stack.Screen
         name="movie/[id]"
         options={{
-          title: "THE PRINT",
+          headerShown: false,
           presentation: "card",
         }}
       />
