@@ -126,7 +126,7 @@ export default function ProfileScreen() {
       {/* Large Magazine Typography (Natural page flow, no sticky bar) */}
       <View style={[styles.heroTitles, { paddingTop: Math.max(insets.top, 16) + 4 }]}>
         <Text style={styles.heroEyebrow}>TASTE PROFILE</Text>
-        <Text style={styles.heroMainTitle}>Taste Dossier</Text>
+        <Text style={styles.heroMainTitle}>Your Profile</Text>
       </View>
 
       {/* Profile Info Bar */}

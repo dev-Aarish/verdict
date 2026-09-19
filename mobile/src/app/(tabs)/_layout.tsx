@@ -60,7 +60,7 @@ export default function TabLayout() {
       <Tabs.Screen
         name="watchlist"
         options={{
-          title: "Queue",
+          title: "Watchlist",
           tabBarIcon: ({ color, size }) => <Bookmark size={size} color={color} />,
         }}
       />

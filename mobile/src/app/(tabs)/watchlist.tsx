@@ -65,8 +65,8 @@ export default function WatchlistScreen() {
 
   const handleRemove = (entry: WatchlistEntry) => {
     Alert.alert(
-      "Remove Reel",
-      `Remove "${entry.movie?.title || "this film"}" from queue?`,
+      "Remove Film",
+      `Remove "${entry.movie?.title || "this film"}" from your watchlist?`,
       [
         { text: "Cancel", style: "cancel" },
         {
@@ -94,9 +94,9 @@ export default function WatchlistScreen() {
     return (
       <View style={[styles.authGateContainer, { paddingTop: insets.top }]}>
         <Bookmark size={48} color={Colors.dust} />
-        <Text style={styles.authGateTitle}>Screening Queue</Text>
+        <Text style={styles.authGateTitle}>Watchlist</Text>
         <Text style={styles.authGateSubtitle}>
-          Sign in to curate your cinematic queue and save upcoming screenings.
+          Sign in to curate your cinematic watchlist and save upcoming screenings.
         </Text>
         <Button
           title="Sign In"
@@ -121,7 +121,7 @@ export default function WatchlistScreen() {
     return (
       <View style={styles.emptyContainer}>
         <Bookmark size={44} color={Colors.dust} />
-        <Text style={styles.emptyTitle}>Queue Is Clear</Text>
+        <Text style={styles.emptyTitle}>Watchlist Is Empty</Text>
         <Text style={styles.emptySubtitle}>
           Browse the vault and tap "Save to Queue" to track your pending watches.
         </Text>
@@ -142,7 +142,7 @@ export default function WatchlistScreen() {
       {/* Large Magazine Typography (Natural page flow, no sticky bar) */}
       <View style={[styles.heroTitles, { paddingTop: Math.max(insets.top, 16) + 4 }]}>
         <Text style={styles.heroEyebrow}>SCREENING QUEUE</Text>
-        <Text style={styles.heroMainTitle}>Queue</Text>
+        <Text style={styles.heroMainTitle}>Watchlist</Text>
       </View>
     </View>
   );
