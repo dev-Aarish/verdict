@@ -8,7 +8,7 @@ import { computeTasteScore } from "./taste-score.js";
 
 export const feedRouter = Router();
 
-feedRouter.get("/verdicts", optionalAuth, async (req: AuthRequest, res: Response) => {
+async function handleFeedVerdicts(req: AuthRequest, res: Response) {
   const limit = Math.min(Number(req.query.limit) || 50, 100);
   const filter = (req.query.filter as string) || "all";
 
@@ -70,7 +70,10 @@ feedRouter.get("/verdicts", optionalAuth, async (req: AuthRequest, res: Response
   }));
 
   res.json({ verdicts: result });
-});
+}
+
+feedRouter.get("/", optionalAuth, handleFeedVerdicts);
+feedRouter.get("/verdicts", optionalAuth, handleFeedVerdicts);
 
 feedRouter.get("/leaderboard", async (_req: Request, res: Response) => {
   // Only rank real (non-test) users so test data never shows up on the board.

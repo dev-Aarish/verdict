@@ -65,7 +65,7 @@ async function tmdbFetch(path: string): Promise<any | null> {
     const url = new URL(`${TMDB_BASE}${path}`);
     url.searchParams.set("api_key", key);
     url.searchParams.set("language", "en-US");
-    const res = await fetch(url.toString());
+    const res = await fetch(url.toString(), { signal: AbortSignal.timeout(6000) });
     if (!res.ok) return null;
     return await res.json();
   } catch {
@@ -526,8 +526,12 @@ export async function fetchEnrichedDetail(imdbId: string): Promise<MovieDetailFi
   if (!tmdb) return null;
 
   if (!tmdb.awards) {
-    const omdb = await fetchOmdbDetail(imdbId);
-    if (omdb?.Awards && omdb.Awards !== "N/A") tmdb.awards = omdb.Awards;
+    try {
+      const omdb = await fetchOmdbDetail(imdbId);
+      if (omdb?.Awards && omdb.Awards !== "N/A") tmdb.awards = omdb.Awards;
+    } catch {
+      // OMDb is an optional fallback; ignore failures
+    }
   }
   return tmdb;
 }
@@ -540,21 +544,26 @@ export async function fetchOmdbDetail(imdbId: string): Promise<OmdbDetailResult 
   const key = config.omdbApiKey;
   if (!key) return null;
 
-  const url = new URL("https://www.omdbapi.com/");
-  url.searchParams.set("apikey", key);
-  url.searchParams.set("i", imdbId);
-  url.searchParams.set("type", "movie");
-  // OMDb defaults to a short one-sentence synopsis; we want the full plot.
-  url.searchParams.set("plot", "full");
+  try {
+    const url = new URL("https://www.omdbapi.com/");
+    url.searchParams.set("apikey", key);
+    url.searchParams.set("i", imdbId);
+    url.searchParams.set("type", "movie");
+    // OMDb defaults to a short one-sentence synopsis; we want the full plot.
+    url.searchParams.set("plot", "full");
 
-  const fetchRes = await fetch(url.toString());
-  const detail = (await fetchRes.json()) as OmdbDetailResult & {
-    Response?: string;
-    Error?: string;
-  };
+    const fetchRes = await fetch(url.toString(), { signal: AbortSignal.timeout(3500) });
+    if (!fetchRes.ok) return null;
+    const detail = (await fetchRes.json()) as OmdbDetailResult & {
+      Response?: string;
+      Error?: string;
+    };
 
-  if (detail.Response === "False") return null;
-  return detail;
+    if (detail.Response === "False") return null;
+    return detail;
+  } catch {
+    return null;
+  }
 }
 
 function parseRuntime(raw: string): number | null {

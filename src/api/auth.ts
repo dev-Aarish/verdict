@@ -1,4 +1,4 @@
-import { apiFetch } from "./client";
+import { apiFetch, setStoredToken } from "./client";
 
 export function getCurrentUserFn() {
   return apiFetch<any>("/auth/me");
@@ -29,6 +29,7 @@ export function googleAuthFn({ data }: { data: { credential: string } }) {
 }
 
 export function logoutFn() {
+  setStoredToken(null);
   return apiFetch<any>("/auth/logout", {
     method: "POST",
   });

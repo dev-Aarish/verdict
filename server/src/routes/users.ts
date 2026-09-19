@@ -20,8 +20,8 @@ export const usersRouter = Router();
 const MAX_ABOUT_LENGTH = 200;
 const MAX_AVATAR_URL_LENGTH = 512;
 
-// GET /:username/profile (optionalAuth) — consolidated profile data in a single request
-usersRouter.get("/:username/profile", optionalAuth, async (req: AuthRequest, res: Response) => {
+// GET /:username/profile & /profile/:username (optionalAuth) — consolidated profile data
+usersRouter.get(["/:username/profile", "/profile/:username"], optionalAuth, async (req: AuthRequest, res: Response) => {
   const username = req.params.username as string;
   const viewer = req.user;
 

@@ -5,7 +5,7 @@ import { v4 as uuidv4 } from "uuid";
 import * as jose from "jose";
 
 const scryptAsync = promisify(scrypt);
-import { eq, and, gt, or } from "drizzle-orm";
+import { eq, and, gt, or, sql } from "drizzle-orm";
 import { db } from "../db/index.js";
 import { users, sessions } from "../db/schema.js";
 import { config } from "../config.js";
@@ -71,7 +71,10 @@ authRouter.get("/me", async (req: Request, res: Response) => {
 
 // POST /signup
 authRouter.post("/signup", async (req: Request, res: Response) => {
-  const { username, email, password, bio } = req.body;
+  let { username, email, password, bio } = req.body;
+
+  username = (username || "").trim();
+  email = (email || "").trim().toLowerCase();
 
   if (!username || !email || !password) {
     res.status(400).json({ error: "Username, email, and password are required" });
@@ -86,7 +89,7 @@ authRouter.post("/signup", async (req: Request, res: Response) => {
   const existingEmail = await db
     .select()
     .from(users)
-    .where(eq(users.email, email))
+    .where(sql`LOWER(${users.email}) = LOWER(${email})`)
     .then((res) => res[0]);
 
   if (existingEmail) {
@@ -97,7 +100,7 @@ authRouter.post("/signup", async (req: Request, res: Response) => {
   const existingUsername = await db
     .select()
     .from(users)
-    .where(eq(users.username, username))
+    .where(sql`LOWER(${users.username}) = LOWER(${username})`)
     .then((res) => res[0]);
 
   if (existingUsername) {
@@ -150,7 +153,12 @@ authRouter.post("/login", async (req: Request, res: Response) => {
   const user = await db
     .select()
     .from(users)
-    .where(or(eq(users.email, loginInput), eq(users.username, loginInput)))
+    .where(
+      or(
+        sql`LOWER(${users.email}) = LOWER(${loginInput})`,
+        sql`LOWER(${users.username}) = LOWER(${loginInput})`
+      )
+    )
     .then((res) => res[0]);
 
   if (!user || !user.passwordHash) {
