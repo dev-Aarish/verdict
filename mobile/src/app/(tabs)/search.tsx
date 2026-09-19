@@ -11,7 +11,32 @@ import {
 } from "react-native";
 import { useRouter } from "expo-router";
 import { useInfiniteQuery, useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { Search, Film, X, Clock, Trash2, Sparkles, Compass, Flame, Calendar } from "lucide-react-native";
+import {
+  Search,
+  Film,
+  X,
+  Clock,
+  Trash2,
+  Sparkles,
+  Compass,
+  Flame,
+  Calendar,
+  Glasses,
+  Rocket,
+  Brain,
+  Cpu,
+  Skull,
+  Palette,
+  Moon,
+  Siren,
+  HelpCircle,
+  FileText,
+  Heart,
+  Smile,
+  Wand2,
+  Swords,
+  LucideIcon,
+} from "lucide-react-native";
 import * as Haptics from "expo-haptics";
 import { moviesApi } from "../../api";
 import { useAuth } from "../../context/AuthContext";
@@ -33,19 +58,24 @@ interface CuratedExploration {
   query: string;
   genreId?: number;
   keywordId?: number;
+  icon: LucideIcon;
 }
 
 const CURATED_EXPLORATIONS: CuratedExploration[] = [
-  { label: "Film Noir", query: "Film Noir", keywordId: 9807 },
-  { label: "Sci-Fi", query: "Sci-Fi", genreId: 878 },
-  { label: "Psychological Thriller", query: "Psychological Thriller", keywordId: 12565 },
-  { label: "Cyberpunk", query: "Cyberpunk", keywordId: 12190 },
-  { label: "Horror", query: "Horror", genreId: 27 },
-  { label: "Animation", query: "Animation", genreId: 16 },
-  { label: "Neo-Noir", query: "Neo-Noir", keywordId: 207268 },
-  { label: "Crime", query: "Crime", genreId: 80 },
-  { label: "Mystery", query: "Mystery", genreId: 9648 },
-  { label: "Documentary", query: "Documentary", genreId: 99 },
+  { label: "Film Noir", query: "Film Noir", keywordId: 9807, icon: Glasses },
+  { label: "Sci-Fi", query: "Sci-Fi", genreId: 878, icon: Rocket },
+  { label: "Psychological Thriller", query: "Psychological Thriller", keywordId: 12565, icon: Brain },
+  { label: "Cyberpunk", query: "Cyberpunk", keywordId: 12190, icon: Cpu },
+  { label: "Horror", query: "Horror", genreId: 27, icon: Skull },
+  { label: "Animation", query: "Animation", genreId: 16, icon: Palette },
+  { label: "Neo-Noir", query: "Neo-Noir", keywordId: 207268, icon: Moon },
+  { label: "Crime", query: "Crime", genreId: 80, icon: Siren },
+  { label: "Mystery", query: "Mystery", genreId: 9648, icon: HelpCircle },
+  { label: "Documentary", query: "Documentary", genreId: 99, icon: FileText },
+  { label: "Action", query: "Action", genreId: 28, icon: Swords },
+  { label: "Romance", query: "Romance", genreId: 10749, icon: Heart },
+  { label: "Comedy", query: "Comedy", genreId: 35, icon: Smile },
+  { label: "Fantasy", query: "Fantasy", genreId: 14, icon: Wand2 },
 ];
 
 export default function SearchScreen() {
@@ -261,6 +291,7 @@ export default function SearchScreen() {
           >
             {CURATED_EXPLORATIONS.map((item) => {
               const isSelected = selectedExploration?.label === item.label;
+              const ChipIcon = item.icon || Sparkles;
               return (
                 <Pressable
                   key={item.label}
@@ -270,7 +301,7 @@ export default function SearchScreen() {
                     isSelected && styles.genreChipActive,
                   ]}
                 >
-                  <Sparkles
+                  <ChipIcon
                     size={11}
                     color={isSelected ? Colors.ink : Colors.brass}
                     style={{ marginRight: 4 }}
