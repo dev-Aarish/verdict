@@ -4,8 +4,6 @@ import { eq } from "drizzle-orm";
 import { v4 as uuidv4 } from "uuid";
 import { config } from "../config.js";
 
-const TMDB_BASE = "https://api.themoviedb.org/3";
-const TMDB_IMAGE = "https://image.tmdb.org/t/p/w500";
 
 export interface OmdbDetailResult {
   imdbID: string;
@@ -58,229 +56,31 @@ type MovieModel = typeof movies.$inferSelect;
 // TMDb
 // ---------------------------------------------------------------------------
 
-async function tmdbFetch(path: string): Promise<any | null> {
-  const key = config.tmdbApiKey;
-  if (!key) return null;
-  try {
-    const url = new URL(`${TMDB_BASE}${path}`);
-    url.searchParams.set("api_key", key);
-    url.searchParams.set("language", "en-US");
-    const res = await fetch(url.toString(), { signal: AbortSignal.timeout(6000) });
-    if (!res.ok) return null;
-    return await res.json();
-  } catch {
-    return null;
-  }
-}
+export {
+  tmdbFetch,
+  TMDB_IMAGE,
+  TMDB_GENRE_MAP,
+  TMDB_GENRES,
+  TMDB_CATEGORY_KEYWORDS,
+  matchGenreOrCategory,
+  normalizeText,
+  searchTmdbPeopleCredits,
+  resolveTmdbItems,
+  searchTmdb,
+  type TmdbSearchItem,
+  type TmdbPersonResult,
+  type OmdbShapedSearchResult,
+  type PersonCreditCandidate,
+} from "./tmdb-search.js";
 
-interface TmdbSearchItem {
-  id: number;
-  title?: string;
-  original_title?: string;
-  release_date?: string;
-  poster_path?: string | null;
-  overview?: string | null;
-  genre_ids?: number[];
-  vote_average?: number;
-  vote_count?: number;
-  original_language?: string;
-}
-
-export interface OmdbShapedSearchResult {
-  imdbID: string;
-  Title: string;
-  Year: string;
-  Poster: string;
-  Type: string;
-  releaseDate: string | null;
-  plot: string | null;
-  genres: string | null;
-  imdbRating: string | null;
-  voteCount: number | null;
-  language: string | null;
-}
-
-export const TMDB_GENRE_MAP: Record<number, string> = {
-  28: "Action",
-  12: "Adventure",
-  16: "Animation",
-  35: "Comedy",
-  80: "Crime",
-  99: "Documentary",
-  18: "Drama",
-  10751: "Family",
-  14: "Fantasy",
-  36: "History",
-  27: "Horror",
-  10402: "Music",
-  9648: "Mystery",
-  10749: "Romance",
-  878: "Sci-Fi",
-  10770: "TV Movie",
-  53: "Thriller",
-  10752: "War",
-  37: "Western",
-};
-
-// TMDb official genre IDs and common cinephile category mappings
-export const TMDB_GENRES: Record<string, number> = {
-  action: 28,
-  adventure: 12,
-  animation: 16,
-  anime: 16,
-  comedy: 35,
-  crime: 80,
-  documentary: 99,
-  drama: 18,
-  family: 10751,
-  fantasy: 14,
-  history: 36,
-  historical: 36,
-  horror: 27,
-  music: 10402,
-  musical: 10402,
-  mystery: 9648,
-  romance: 10749,
-  romantic: 10749,
-  scifi: 878,
-  "sci-fi": 878,
-  "science fiction": 878,
-  thriller: 53,
-  war: 10752,
-  western: 37,
-};
-
-// Known cinematic keywords / niche categories in TMDb (keyword IDs)
-export const TMDB_CATEGORY_KEYWORDS: Record<string, number> = {
-  noir: 9807,
-  "film noir": 9807,
-  "neo-noir": 207268,
-  neonoir: 207268,
-  cyberpunk: 12190,
-  cult: 9799,
-  "cult classic": 9799,
-  dystopia: 4565,
-  dystopian: 4565,
-  arthouse: 187056,
-  indie: 10183,
-  "independent film": 10183,
-  psychological: 12565,
-  "psychological thriller": 12565,
-  superhero: 9715,
-};
-
-function matchGenreOrCategory(query: string): { genreId?: number; keywordId?: number } | null {
-  const normalized = query.trim().toLowerCase();
-  
-  if (TMDB_GENRES[normalized]) {
-    return { genreId: TMDB_GENRES[normalized] };
-  }
-
-  if (TMDB_CATEGORY_KEYWORDS[normalized]) {
-    return { keywordId: TMDB_CATEGORY_KEYWORDS[normalized] };
-  }
-
-  // Exact matching for "X movies" or "X films"
-  for (const [key, id] of Object.entries(TMDB_GENRES)) {
-    if (normalized === key || normalized === `${key} movies` || normalized === `${key} films`) {
-      return { genreId: id };
-    }
-  }
-
-  for (const [key, id] of Object.entries(TMDB_CATEGORY_KEYWORDS)) {
-    if (normalized === key || normalized === `${key} movies` || normalized === `${key} films`) {
-      return { keywordId: id };
-    }
-  }
-
-  return null;
-}
-
-/**
- * Search movies via TMDb with smart Genre/Category discovery support.
- * If the search query matches a genre or category/style (or if discover parameters are passed),
- * TMDb discover endpoint is utilized exclusively to surface canonical films rather than literal title matches.
- */
-export async function searchTmdb(
-  query: string,
-  page: number,
-  genreId?: number,
-  keywordId?: number,
-): Promise<{ results: OmdbShapedSearchResult[]; totalResults: number; totalPages: number } | null> {
-  const categoryMatch =
-    genreId || keywordId
-      ? { genreId, keywordId }
-      : matchGenreOrCategory(query);
-
-  let rawItems: TmdbSearchItem[] = [];
-  let totalResults = 0;
-  let totalPages = 1;
-
-  if (categoryMatch) {
-    // If it's a recognized genre or keyword, query TMDb /discover/movie for canonical films sorted by vote_count
-    let discoverUrl = `/discover/movie?page=${page}&include_adult=false&sort_by=vote_count.desc`;
-    if (categoryMatch.genreId) {
-      discoverUrl += `&with_genres=${categoryMatch.genreId}`;
-    }
-    if (categoryMatch.keywordId) {
-      discoverUrl += `&with_keywords=${categoryMatch.keywordId}`;
-    }
-
-    const discoverData = await tmdbFetch(discoverUrl);
-    rawItems = discoverData?.results || [];
-    totalResults = discoverData?.total_results || 0;
-    totalPages = Math.min(discoverData?.total_pages || 1, 500);
-  } else {
-    // Standard title search
-    const data = await tmdbFetch(
-      `/search/movie?query=${encodeURIComponent(query)}&page=${page}&include_adult=false`,
-    );
-    if (!data?.results) return null;
-
-    rawItems = data.results;
-    totalResults = data.total_results || 0;
-    totalPages = Math.min(data.total_pages || 1, 500);
-  }
-
-  const resolved = await Promise.all(
-    rawItems.map(async (item) => {
-      const ext = await tmdbFetch(`/movie/${item.id}/external_ids`);
-      const imdbID = ext?.imdb_id;
-      if (!imdbID) return null;
-
-      const genresStr =
-        item.genre_ids && item.genre_ids.length > 0
-          ? item.genre_ids
-              .map((id) => TMDB_GENRE_MAP[id])
-              .filter(Boolean)
-              .join(", ")
-          : null;
-
-      return {
-        imdbID,
-        Title: item.title || item.original_title || "Unknown",
-        Year: item.release_date ? item.release_date.slice(0, 4) : "",
-        Poster: item.poster_path ? `${TMDB_IMAGE}${item.poster_path}` : "N/A",
-        Type: "movie",
-        releaseDate: item.release_date || null,
-        plot: item.overview && item.overview.trim() !== "" ? item.overview.trim() : null,
-        genres: genresStr,
-        imdbRating:
-          item.vote_average && item.vote_average > 0
-            ? item.vote_average.toFixed(1)
-            : null,
-        voteCount: item.vote_count || null,
-        language: item.original_language ? item.original_language.toUpperCase() : null,
-      };
-    }),
-  );
-
-  return {
-    results: resolved.filter((r): r is OmdbShapedSearchResult => r !== null),
-    totalResults,
-    totalPages,
-  };
-}
+import {
+  tmdbFetch,
+  TMDB_IMAGE,
+  TMDB_GENRE_MAP,
+  resolveTmdbItems,
+  type TmdbSearchItem,
+  type OmdbShapedSearchResult,
+} from "./tmdb-search.js";
 
 export async function getTrendingTmdb(
   page: number = 1,

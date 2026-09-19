@@ -6,6 +6,26 @@ function getApiBaseUrl(): string {
     return process.env.EXPO_PUBLIC_API_URL;
   }
 
+  // In development mode (Expo Go / Simulators), automatically target your local backend on port 4000
+  if (__DEV__) {
+    const hostUri = Constants.expoConfig?.hostUri;
+    const debuggerHost =
+      hostUri ||
+      (Constants as any).manifest?.debuggerHost ||
+      (Constants as any).manifest2?.extra?.expoGo?.debuggerHost;
+    if (debuggerHost) {
+      const ip = debuggerHost.split(":")[0];
+      if (ip) {
+        return `http://${ip}:4000/api`;
+      }
+    }
+
+    if (Platform.OS === "android") {
+      return "http://10.0.2.2:4000/api";
+    }
+    return "http://localhost:4000/api";
+  }
+
   // Production Render Backend fallback
   return "https://verdict-api-cgu6.onrender.com/api";
 }
