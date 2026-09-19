@@ -6,17 +6,18 @@ import {
   RefreshControl,
   StyleSheet,
   TouchableOpacity,
+  Platform,
 } from "react-native";
 import { useRouter } from "expo-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { Film, Trophy, Compass, Plus, Sparkles, Flame, Calendar } from "lucide-react-native";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
+import { Film, Trophy, Compass, Plus, Flame, Calendar } from "lucide-react-native";
 import { feedApi, usersApi, moviesApi } from "../../api";
 import { useAuth } from "../../context/AuthContext";
 import { Colors, Radius, Spacing } from "../../constants/theme";
 import { VerdictCard } from "../../components/common/VerdictCard";
 import { Button } from "../../components/common/Button";
 import { Avatar } from "../../components/common/Avatar";
-import { Stamp } from "../../components/common/Stamp";
 import { ClapperLoader } from "../../components/common/ClapperLoader";
 import {
   ClapperRefreshControl,
@@ -27,6 +28,7 @@ import { FeedItem } from "../../types";
 
 export default function FeedScreen() {
   const router = useRouter();
+  const insets = useSafeAreaInsets();
   const queryClient = useQueryClient();
   const { user, isAuthenticated } = useAuth();
 
@@ -61,7 +63,6 @@ export default function FeedScreen() {
     retryDelay: (attempt) => Math.min(2000 * 2 ** attempt, 10000),
   });
 
-
   const handleRefresh = () => {
     queryClient.invalidateQueries({ queryKey: ["feed"] });
     queryClient.invalidateQueries({ queryKey: ["leaderboard"] });
@@ -80,6 +81,13 @@ export default function FeedScreen() {
   const renderHeader = () => (
     <View style={styles.headerContainer}>
       <ClapperRefreshHeader refreshing={isRefetching} />
+
+      {/* Large Magazine Typography (Natural page flow, no sticky bar) */}
+      <View style={[styles.heroTitles, { paddingTop: Math.max(insets.top, 16) + 4 }]}>
+        <Text style={styles.heroEyebrow}>VERDICT · THE SCREENING ROOM</Text>
+        <Text style={styles.heroMainTitle}>The Reel</Text>
+      </View>
+
       {/* Top Welcome / Auth state */}
       {!isAuthenticated && (
         <View style={styles.authBanner}>
@@ -235,13 +243,29 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: Colors.ink,
   },
+  heroTitles: {
+    gap: 2,
+    marginBottom: Spacing.lg,
+  },
+  heroEyebrow: {
+    fontSize: 9.5,
+    fontWeight: "800",
+    color: Colors.brass,
+    letterSpacing: 1.5,
+    fontFamily: Platform.OS === "ios" ? "Courier" : "monospace",
+  },
+  heroMainTitle: {
+    fontSize: 32,
+    fontWeight: "900",
+    color: Colors.paper,
+    letterSpacing: 0.5,
+  },
   footerContainer: {
     marginTop: Spacing.xl,
     paddingTop: Spacing.md,
     borderTopWidth: 1,
     borderTopColor: Colors.border,
   },
-
   listContent: {
     padding: Spacing.lg,
     paddingBottom: Spacing.xxxl,
@@ -391,4 +415,3 @@ const styles = StyleSheet.create({
     paddingHorizontal: Spacing.xl,
   },
 });
-

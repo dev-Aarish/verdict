@@ -7,9 +7,11 @@ import {
   StyleSheet,
   TouchableOpacity,
   Alert,
+  Platform,
 } from "react-native";
 import { useRouter } from "expo-router";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Bookmark, Check, Trash2, Plus } from "lucide-react-native";
 import * as Haptics from "expo-haptics";
 import { watchlistApi, moviesApi } from "../../api";
@@ -27,6 +29,7 @@ import { WatchlistEntry, Movie } from "../../types";
 
 export default function WatchlistScreen() {
   const router = useRouter();
+  const insets = useSafeAreaInsets();
   const queryClient = useQueryClient();
   const { isAuthenticated } = useAuth();
 
@@ -89,7 +92,7 @@ export default function WatchlistScreen() {
 
   if (!isAuthenticated) {
     return (
-      <View style={styles.authGateContainer}>
+      <View style={[styles.authGateContainer, { paddingTop: insets.top }]}>
         <Bookmark size={48} color={Colors.dust} />
         <Text style={styles.authGateTitle}>Screening Queue</Text>
         <Text style={styles.authGateSubtitle}>
@@ -133,6 +136,17 @@ export default function WatchlistScreen() {
     );
   };
 
+  const renderHeader = () => (
+    <View style={styles.headerArea}>
+      <ClapperRefreshHeader refreshing={isRefetching} />
+      {/* Large Magazine Typography (Natural page flow, no sticky bar) */}
+      <View style={[styles.heroTitles, { paddingTop: Math.max(insets.top, 16) + 4 }]}>
+        <Text style={styles.heroEyebrow}>SCREENING QUEUE</Text>
+        <Text style={styles.heroMainTitle}>Queue</Text>
+      </View>
+    </View>
+  );
+
   return (
     <View style={styles.container}>
       <FlatList
@@ -169,7 +183,7 @@ export default function WatchlistScreen() {
             </View>
           );
         }}
-        ListHeaderComponent={<ClapperRefreshHeader refreshing={isRefetching} />}
+        ListHeaderComponent={renderHeader}
         ListEmptyComponent={renderEmpty}
         contentContainerStyle={styles.listContent}
         showsVerticalScrollIndicator={false}
@@ -196,8 +210,28 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: Colors.ink,
   },
+  headerArea: {
+    marginBottom: Spacing.md,
+  },
+  heroTitles: {
+    gap: 2,
+    marginBottom: Spacing.md,
+  },
+  heroEyebrow: {
+    fontSize: 9.5,
+    fontWeight: "800",
+    color: Colors.brass,
+    letterSpacing: 1.5,
+    fontFamily: Platform.OS === "ios" ? "Courier" : "monospace",
+  },
+  heroMainTitle: {
+    fontSize: 32,
+    fontWeight: "900",
+    color: Colors.paper,
+    letterSpacing: 0.5,
+  },
   listContent: {
-    padding: Spacing.lg,
+    paddingHorizontal: Spacing.lg,
     paddingBottom: Spacing.xxxl,
   },
   authGateContainer: {
@@ -292,4 +326,3 @@ const styles = StyleSheet.create({
     paddingHorizontal: Spacing.xl,
   },
 });
-

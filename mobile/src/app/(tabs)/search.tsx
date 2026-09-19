@@ -8,9 +8,11 @@ import {
   TouchableOpacity,
   Pressable,
   Keyboard,
+  Platform,
 } from "react-native";
 import { useRouter } from "expo-router";
 import { useInfiniteQuery, useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 import {
   Search,
   Film,
@@ -80,6 +82,7 @@ const CURATED_EXPLORATIONS: CuratedExploration[] = [
 
 export default function SearchScreen() {
   const router = useRouter();
+  const insets = useSafeAreaInsets();
   const queryClient = useQueryClient();
   const { isAuthenticated } = useAuth();
 
@@ -362,7 +365,7 @@ export default function SearchScreen() {
           </View>
         )}
 
-        {/* Trending in The Vault (Rating explicitly removed as requested) */}
+        {/* Trending in The Vault */}
         {trendingMovies.length > 0 && (
           <View style={styles.sectionBlock}>
             <View style={styles.sectionTitleRow}>
@@ -463,52 +466,60 @@ export default function SearchScreen() {
   };
 
   const renderHeader = () => {
-    if (!isQueryActive || searchResults.length === 0) return null;
-
     const queryLabel = selectedExploration
       ? `${selectedExploration.label.toUpperCase()} CANON`
       : `"${debouncedQuery}"`;
 
     return (
-      <View style={styles.resultsHeaderRow}>
-        <View style={styles.resultsHeaderLeft}>
-          <Film size={12} color={Colors.brassLight} />
-          <Text style={styles.resultsHeaderText}>
-            {totalResultsCount > 0 ? `${totalResultsCount} VAULT ARCHIVES` : "VAULT ARCHIVES"}
-          </Text>
+      <View style={styles.headerArea}>
+        {/* Large Magazine Typography (Natural page flow, no sticky bar) */}
+        <View style={[styles.heroTitles, { paddingTop: Math.max(insets.top, 16) + 4 }]}>
+          <Text style={styles.heroEyebrow}>CANON & DISCOVERY</Text>
+          <Text style={styles.heroMainTitle}>The Vault</Text>
         </View>
-        <Text style={styles.resultsQueryBadge} numberOfLines={1}>
-          {queryLabel}
-        </Text>
+
+        {/* Search Header */}
+        <View style={styles.searchBarContainer}>
+          <Input
+            placeholder="Search titles, directors, cinematic canon..."
+            value={searchQuery}
+            onChangeText={handleQueryChange}
+            autoCapitalize="none"
+            returnKeyType="search"
+            wrapperStyle={styles.inputWrapper}
+            leftIcon={<Search size={16} color={Colors.brass} />}
+            rightIcon={
+              searchQuery ? (
+                <TouchableOpacity
+                  onPress={handleClearQuery}
+                  hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+                >
+                  <X size={16} color={Colors.dustLight} />
+                </TouchableOpacity>
+              ) : undefined
+            }
+          />
+        </View>
+
+        {isQueryActive && searchResults.length > 0 && (
+          <View style={styles.resultsHeaderRow}>
+            <View style={styles.resultsHeaderLeft}>
+              <Film size={12} color={Colors.brassLight} />
+              <Text style={styles.resultsHeaderText}>
+                {totalResultsCount > 0 ? `${totalResultsCount} VAULT ARCHIVES` : "VAULT ARCHIVES"}
+              </Text>
+            </View>
+            <Text style={styles.resultsQueryBadge} numberOfLines={1}>
+              {queryLabel}
+            </Text>
+          </View>
+        )}
       </View>
     );
   };
 
   return (
     <View style={styles.container}>
-      {/* Search Header */}
-      <View style={styles.searchBarContainer}>
-        <Input
-          placeholder="Search titles, directors, cinematic canon..."
-          value={searchQuery}
-          onChangeText={handleQueryChange}
-          autoCapitalize="none"
-          returnKeyType="search"
-          wrapperStyle={styles.inputWrapper}
-          leftIcon={<Search size={16} color={Colors.brass} />}
-          rightIcon={
-            searchQuery ? (
-              <TouchableOpacity
-                onPress={handleClearQuery}
-                hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
-              >
-                <X size={16} color={Colors.dustLight} />
-              </TouchableOpacity>
-            ) : undefined
-          }
-        />
-      </View>
-
       <FlatList
         data={isQueryActive ? searchResults : []}
         keyExtractor={(item, index) => `${item.imdbId || item.id}-${index}`}
@@ -574,11 +585,28 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: Colors.ink,
   },
+  headerArea: {
+    marginBottom: Spacing.xs,
+  },
+  heroTitles: {
+    gap: 2,
+    marginBottom: Spacing.md,
+  },
+  heroEyebrow: {
+    fontSize: 9.5,
+    fontWeight: "800",
+    color: Colors.brass,
+    letterSpacing: 1.5,
+    fontFamily: Platform.OS === "ios" ? "Courier" : "monospace",
+  },
+  heroMainTitle: {
+    fontSize: 32,
+    fontWeight: "900",
+    color: Colors.paper,
+    letterSpacing: 0.5,
+  },
   searchBarContainer: {
-    paddingHorizontal: Spacing.lg,
-    paddingTop: Spacing.md,
-    paddingBottom: Spacing.xs,
-    backgroundColor: Colors.ink,
+    marginBottom: Spacing.sm,
   },
   inputWrapper: {
     marginBottom: 0,
@@ -586,7 +614,6 @@ const styles = StyleSheet.create({
   listContent: {
     paddingHorizontal: Spacing.lg,
     paddingBottom: Spacing.xxxl,
-    paddingTop: Spacing.sm,
   },
   resultsHeaderRow: {
     flexDirection: "row",
@@ -799,4 +826,3 @@ const styles = StyleSheet.create({
     letterSpacing: 1.5,
   },
 });
-

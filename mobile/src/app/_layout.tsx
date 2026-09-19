@@ -97,7 +97,7 @@ function RootNavigator() {
       <Stack.Screen
         name="user/[username]"
         options={{
-          title: "TASTE DOSSIER",
+          headerShown: false,
           presentation: "card",
         }}
       />

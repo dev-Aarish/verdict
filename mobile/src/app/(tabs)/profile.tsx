@@ -10,6 +10,7 @@ import {
 } from "react-native";
 import { useRouter } from "expo-router";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 import {
   Share2,
   LogOut,
@@ -40,6 +41,7 @@ import { LogoutModal } from "../../components/common/LogoutModal";
 
 export default function ProfileScreen() {
   const router = useRouter();
+  const insets = useSafeAreaInsets();
   const queryClient = useQueryClient();
   const { user, isAuthenticated, logout, refreshUser } = useAuth();
 
@@ -92,7 +94,7 @@ export default function ProfileScreen() {
 
   if (!isAuthenticated || !user) {
     return (
-      <View style={styles.authGateContainer}>
+      <View style={[styles.authGateContainer, { paddingTop: insets.top }]}>
         <Film size={48} color={Colors.dust} />
         <Text style={styles.authGateTitle}>Taste Profile</Text>
         <Text style={styles.authGateSubtitle}>
@@ -120,6 +122,13 @@ export default function ProfileScreen() {
   const renderHeader = () => (
     <View style={styles.headerContainer}>
       <ClapperRefreshHeader refreshing={isRefetching || isLoadingProfile} />
+
+      {/* Large Magazine Typography (Natural page flow, no sticky bar) */}
+      <View style={[styles.heroTitles, { paddingTop: Math.max(insets.top, 16) + 4 }]}>
+        <Text style={styles.heroEyebrow}>TASTE PROFILE</Text>
+        <Text style={styles.heroMainTitle}>Taste Dossier</Text>
+      </View>
+
       {/* Profile Info Bar */}
       <View style={styles.profileCard}>
         <View style={styles.profileTopRow}>
@@ -341,6 +350,23 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: Colors.ink,
   },
+  heroTitles: {
+    gap: 2,
+    marginBottom: Spacing.md,
+  },
+  heroEyebrow: {
+    fontSize: 9.5,
+    fontWeight: "800",
+    color: Colors.brass,
+    letterSpacing: 1.5,
+    fontFamily: Platform.OS === "ios" ? "Courier" : "monospace",
+  },
+  heroMainTitle: {
+    fontSize: 32,
+    fontWeight: "900",
+    color: Colors.paper,
+    letterSpacing: 0.5,
+  },
   listContent: {
     padding: Spacing.lg,
     paddingBottom: Spacing.xxxl,
@@ -512,4 +538,3 @@ const styles = StyleSheet.create({
     textTransform: "uppercase",
   },
 });
-

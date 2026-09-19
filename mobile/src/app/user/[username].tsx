@@ -11,7 +11,9 @@ import {
 } from "react-native";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 import {
+  ArrowLeft,
   UserPlus,
   UserCheck,
   Gavel,
@@ -44,6 +46,7 @@ import { AvatarPickerModal } from "../../components/common/AvatarPickerModal";
 export default function UserProfileScreen() {
   const { username } = useLocalSearchParams<{ username: string }>();
   const router = useRouter();
+  const insets = useSafeAreaInsets();
   const queryClient = useQueryClient();
   const { user: currentUser, isAuthenticated, refreshUser } = useAuth();
 
@@ -125,7 +128,7 @@ export default function UserProfileScreen() {
 
   if (!profileUser) {
     return (
-      <View style={styles.errorContainer}>
+      <View style={[styles.errorContainer, { paddingTop: insets.top }]}>
         <View style={styles.errorIconBox}>
           <ShieldAlert size={36} color={Colors.marqueeRed} />
         </View>
@@ -141,6 +144,21 @@ export default function UserProfileScreen() {
   const renderHeader = () => (
     <View style={styles.headerContainer}>
       <ClapperRefreshHeader refreshing={isRefetching} />
+
+      {/* Large Magazine Typography (Natural page flow, no sticky bar) */}
+      <View style={[styles.heroTitles, { paddingTop: Math.max(insets.top, 16) + 4 }]}>
+        <TouchableOpacity
+          style={styles.backBtn}
+          onPress={() => router.back()}
+          activeOpacity={0.75}
+        >
+          <ArrowLeft size={16} color={Colors.brassLight} />
+          <Text style={styles.backBtnText}>Back</Text>
+        </TouchableOpacity>
+        <Text style={styles.heroEyebrow}>TASTE DOSSIER</Text>
+        <Text style={styles.heroMainTitle}>@{profileUser.username}</Text>
+      </View>
+
       {/* Profile Header Card */}
       <View style={styles.profileCard}>
         <View style={styles.cardHeaderAccent} />
@@ -393,6 +411,34 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: Colors.ink,
+  },
+  heroTitles: {
+    gap: 2,
+    marginBottom: Spacing.md,
+  },
+  backBtn: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 4,
+    marginBottom: Spacing.xs,
+  },
+  backBtnText: {
+    color: Colors.brassLight,
+    fontSize: 12,
+    fontWeight: "700",
+  },
+  heroEyebrow: {
+    fontSize: 9.5,
+    fontWeight: "800",
+    color: Colors.brass,
+    letterSpacing: 1.5,
+    fontFamily: Platform.OS === "ios" ? "Courier" : "monospace",
+  },
+  heroMainTitle: {
+    fontSize: 28,
+    fontWeight: "900",
+    color: Colors.paper,
+    letterSpacing: 0.2,
   },
   listContent: {
     padding: Spacing.lg,
