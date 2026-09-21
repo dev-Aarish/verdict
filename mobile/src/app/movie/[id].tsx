@@ -48,6 +48,7 @@ import { LogMovieModal } from "../../components/common/LogMovieModal";
 import {
   Movie,
   parseGenres,
+  formatRuntime,
   MovieDetailResponse,
   WatchlistEntry,
   WatchedEntry,
@@ -299,12 +300,12 @@ export default function MovieDetailScreen() {
                   <Text style={styles.ribbonText}>{movie.year}</Text>
                 </View>
               )}
-              {movie.runtime && (
+              {formatRuntime(movie.runtime) && (
                 <>
                   <Text style={styles.ribbonDot}>•</Text>
                   <View style={styles.ribbonItem}>
                     <Clock size={12} color={Colors.brassLight} />
-                    <Text style={styles.ribbonText}>{movie.runtime}</Text>
+                    <Text style={styles.ribbonText}>{formatRuntime(movie.runtime)}</Text>
                   </View>
                 </>
               )}

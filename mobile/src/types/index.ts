@@ -76,6 +76,49 @@ export function parseGenres(genres: any): string[] {
   return [];
 }
 
+export function formatRuntime(runtime: number | string | null | undefined): string | null {
+  if (runtime === null || runtime === undefined || runtime === "" || runtime === "N/A") {
+    return null;
+  }
+
+  let totalMinutes: number | null = null;
+
+  if (typeof runtime === "number") {
+    totalMinutes = runtime;
+  } else if (typeof runtime === "string") {
+    const trimmed = runtime.trim();
+    if (!trimmed || trimmed === "N/A") return null;
+
+    const hoursMatch = trimmed.match(/^(\d+)\s*(?:h|hr|hours?)(?:\s*(\d+)\s*(?:m|min|mins|minutes?)?)?$/i);
+    if (hoursMatch) {
+      const h = parseInt(hoursMatch[1], 10);
+      const m = hoursMatch[2] ? parseInt(hoursMatch[2], 10) : 0;
+      totalMinutes = h * 60 + m;
+    } else {
+      const numMatch = trimmed.match(/\d+/);
+      if (numMatch) {
+        totalMinutes = parseInt(numMatch[0], 10);
+      }
+    }
+  }
+
+  if (totalMinutes === null || isNaN(totalMinutes) || totalMinutes <= 0) {
+    return null;
+  }
+
+  const hours = Math.floor(totalMinutes / 60);
+  const mins = totalMinutes % 60;
+
+  if (hours === 0) {
+    return `${mins}m`;
+  }
+  if (mins === 0) {
+    return `${hours}h`;
+  }
+  return `${hours}h ${mins}m`;
+}
+
+
 export interface WatchedEntry {
   id: string;
   userId: string;
