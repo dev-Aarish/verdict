@@ -51,6 +51,8 @@ usersRouter.get(["/:username/profile", "/profile/:username"], optionalAuth, asyn
     country: movies.country,
     director: movies.director,
     runtime: movies.runtime,
+    boxOffice: movies.boxOffice,
+    awards: movies.awards,
   };
 
   const [
@@ -179,6 +181,8 @@ usersRouter.get(["/:username/profile", "/profile/:username"], optionalAuth, asyn
     country: string | null;
     director: string | null;
     runtime: number | null;
+    boxOffice?: string | null;
+    awards?: string | null;
   }) => ({
     ...m,
     plot: null,

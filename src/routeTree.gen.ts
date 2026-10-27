@@ -9,47 +9,27 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
-import { Route as SitemapDotxmlRouteImport } from './routes/sitemap[.]xml'
-import { Route as SignupRouteImport } from './routes/signup'
-import { Route as SearchRouteImport } from './routes/search'
-import { Route as LoginRouteImport } from './routes/login'
-import { Route as FeedRouteImport } from './routes/feed'
-import { Route as SplatRouteImport } from './routes/$'
 import { Route as IndexRouteImport } from './routes/index'
-import { Route as VerdictUsernameRouteImport } from './routes/verdict.$username'
-import { Route as ShareUsernameRouteImport } from './routes/share.$username'
-import { Route as ProfileUsernameRouteImport } from './routes/profile.$username'
-import { Route as OgSiteRouteImport } from './routes/og.site'
-import { Route as OgUsernameRouteImport } from './routes/og.$username'
+import { Route as SplatRouteImport } from './routes/$'
+import { Route as FeedRouteImport } from './routes/feed'
+import { Route as LoginRouteImport } from './routes/login'
+import { Route as SearchRouteImport } from './routes/search'
+import { Route as SignupRouteImport } from './routes/signup'
+import { Route as SitemapDotxmlRouteImport } from './routes/sitemap[.]xml'
 import { Route as FilmImdbIdRouteImport } from './routes/film.$imdbId'
-import { Route as ProfileUsernameIndexRouteImport } from './routes/profile.$username.index'
-import { Route as ProfileUsernameFollowingRouteImport } from './routes/profile.$username.following'
-import { Route as ProfileUsernameFollowersRouteImport } from './routes/profile.$username.followers'
+import { Route as OgUsernameRouteImport } from './routes/og.$username'
+import { Route as OgSiteRouteImport } from './routes/og.site'
+import { Route as ProfileUsernameRouteImport } from './routes/profile.$username'
+import { Route as ShareUsernameRouteImport } from './routes/share.$username'
+import { Route as VerdictUsernameRouteImport } from './routes/verdict.$username'
 import { Route as OgErrorCodeRouteImport } from './routes/og.error.$code'
+import { Route as ProfileUsernameIndexRouteImport } from './routes/profile.$username.index'
+import { Route as ProfileUsernameFollowersRouteImport } from './routes/profile.$username.followers'
+import { Route as ProfileUsernameFollowingRouteImport } from './routes/profile.$username.following'
 
-const SitemapDotxmlRoute = SitemapDotxmlRouteImport.update({
-  id: '/sitemap.xml',
-  path: '/sitemap.xml',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const SignupRoute = SignupRouteImport.update({
-  id: '/signup',
-  path: '/signup',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const SearchRoute = SearchRouteImport.update({
-  id: '/search',
-  path: '/search',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const LoginRoute = LoginRouteImport.update({
-  id: '/login',
-  path: '/login',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const FeedRoute = FeedRouteImport.update({
-  id: '/feed',
-  path: '/feed',
+const IndexRoute = IndexRouteImport.update({
+  id: '/',
+  path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
 const SplatRoute = SplatRouteImport.update({
@@ -57,34 +37,29 @@ const SplatRoute = SplatRouteImport.update({
   path: '/$',
   getParentRoute: () => rootRouteImport,
 } as any)
-const IndexRoute = IndexRouteImport.update({
-  id: '/',
-  path: '/',
+const FeedRoute = FeedRouteImport.update({
+  id: '/feed',
+  path: '/feed',
   getParentRoute: () => rootRouteImport,
 } as any)
-const VerdictUsernameRoute = VerdictUsernameRouteImport.update({
-  id: '/verdict/$username',
-  path: '/verdict/$username',
+const LoginRoute = LoginRouteImport.update({
+  id: '/login',
+  path: '/login',
   getParentRoute: () => rootRouteImport,
 } as any)
-const ShareUsernameRoute = ShareUsernameRouteImport.update({
-  id: '/share/$username',
-  path: '/share/$username',
+const SearchRoute = SearchRouteImport.update({
+  id: '/search',
+  path: '/search',
   getParentRoute: () => rootRouteImport,
 } as any)
-const ProfileUsernameRoute = ProfileUsernameRouteImport.update({
-  id: '/profile/$username',
-  path: '/profile/$username',
+const SignupRoute = SignupRouteImport.update({
+  id: '/signup',
+  path: '/signup',
   getParentRoute: () => rootRouteImport,
 } as any)
-const OgSiteRoute = OgSiteRouteImport.update({
-  id: '/og/site',
-  path: '/og/site',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const OgUsernameRoute = OgUsernameRouteImport.update({
-  id: '/og/$username',
-  path: '/og/$username',
+const SitemapDotxmlRoute = SitemapDotxmlRouteImport.update({
+  id: '/sitemap.xml',
+  path: '/sitemap.xml',
   getParentRoute: () => rootRouteImport,
 } as any)
 const FilmImdbIdRoute = FilmImdbIdRouteImport.update({
@@ -92,28 +67,53 @@ const FilmImdbIdRoute = FilmImdbIdRouteImport.update({
   path: '/film/$imdbId',
   getParentRoute: () => rootRouteImport,
 } as any)
+const OgUsernameRoute = OgUsernameRouteImport.update({
+  id: '/og/$username',
+  path: '/og/$username',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const OgSiteRoute = OgSiteRouteImport.update({
+  id: '/og/site',
+  path: '/og/site',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ProfileUsernameRoute = ProfileUsernameRouteImport.update({
+  id: '/profile/$username',
+  path: '/profile/$username',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ShareUsernameRoute = ShareUsernameRouteImport.update({
+  id: '/share/$username',
+  path: '/share/$username',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const VerdictUsernameRoute = VerdictUsernameRouteImport.update({
+  id: '/verdict/$username',
+  path: '/verdict/$username',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const OgErrorCodeRoute = OgErrorCodeRouteImport.update({
+  id: '/og/error/$code',
+  path: '/og/error/$code',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ProfileUsernameIndexRoute = ProfileUsernameIndexRouteImport.update({
   id: '/',
   path: '/',
   getParentRoute: () => ProfileUsernameRoute,
 } as any)
-const ProfileUsernameFollowingRoute =
-  ProfileUsernameFollowingRouteImport.update({
-    id: '/following',
-    path: '/following',
-    getParentRoute: () => ProfileUsernameRoute,
-  } as any)
 const ProfileUsernameFollowersRoute =
   ProfileUsernameFollowersRouteImport.update({
     id: '/followers',
     path: '/followers',
     getParentRoute: () => ProfileUsernameRoute,
   } as any)
-const OgErrorCodeRoute = OgErrorCodeRouteImport.update({
-  id: '/og/error/$code',
-  path: '/og/error/$code',
-  getParentRoute: () => rootRouteImport,
-} as any)
+const ProfileUsernameFollowingRoute =
+  ProfileUsernameFollowingRouteImport.update({
+    id: '/following',
+    path: '/following',
+    getParentRoute: () => ProfileUsernameRoute,
+  } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -250,39 +250,11 @@ export interface RootRouteChildren {
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
-    '/sitemap.xml': {
-      id: '/sitemap.xml'
-      path: '/sitemap.xml'
-      fullPath: '/sitemap.xml'
-      preLoaderRoute: typeof SitemapDotxmlRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/signup': {
-      id: '/signup'
-      path: '/signup'
-      fullPath: '/signup'
-      preLoaderRoute: typeof SignupRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/search': {
-      id: '/search'
-      path: '/search'
-      fullPath: '/search'
-      preLoaderRoute: typeof SearchRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/login': {
-      id: '/login'
-      path: '/login'
-      fullPath: '/login'
-      preLoaderRoute: typeof LoginRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/feed': {
-      id: '/feed'
-      path: '/feed'
-      fullPath: '/feed'
-      preLoaderRoute: typeof FeedRouteImport
+    '/': {
+      id: '/'
+      path: '/'
+      fullPath: '/'
+      preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/$': {
@@ -292,46 +264,39 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof SplatRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/': {
-      id: '/'
-      path: '/'
-      fullPath: '/'
-      preLoaderRoute: typeof IndexRouteImport
+    '/feed': {
+      id: '/feed'
+      path: '/feed'
+      fullPath: '/feed'
+      preLoaderRoute: typeof FeedRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/verdict/$username': {
-      id: '/verdict/$username'
-      path: '/verdict/$username'
-      fullPath: '/verdict/$username'
-      preLoaderRoute: typeof VerdictUsernameRouteImport
+    '/login': {
+      id: '/login'
+      path: '/login'
+      fullPath: '/login'
+      preLoaderRoute: typeof LoginRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/share/$username': {
-      id: '/share/$username'
-      path: '/share/$username'
-      fullPath: '/share/$username'
-      preLoaderRoute: typeof ShareUsernameRouteImport
+    '/search': {
+      id: '/search'
+      path: '/search'
+      fullPath: '/search'
+      preLoaderRoute: typeof SearchRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/profile/$username': {
-      id: '/profile/$username'
-      path: '/profile/$username'
-      fullPath: '/profile/$username'
-      preLoaderRoute: typeof ProfileUsernameRouteImport
+    '/signup': {
+      id: '/signup'
+      path: '/signup'
+      fullPath: '/signup'
+      preLoaderRoute: typeof SignupRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/og/site': {
-      id: '/og/site'
-      path: '/og/site'
-      fullPath: '/og/site'
-      preLoaderRoute: typeof OgSiteRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/og/$username': {
-      id: '/og/$username'
-      path: '/og/$username'
-      fullPath: '/og/$username'
-      preLoaderRoute: typeof OgUsernameRouteImport
+    '/sitemap.xml': {
+      id: '/sitemap.xml'
+      path: '/sitemap.xml'
+      fullPath: '/sitemap.xml'
+      preLoaderRoute: typeof SitemapDotxmlRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/film/$imdbId': {
@@ -341,18 +306,53 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof FilmImdbIdRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/og/$username': {
+      id: '/og/$username'
+      path: '/og/$username'
+      fullPath: '/og/$username'
+      preLoaderRoute: typeof OgUsernameRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/og/site': {
+      id: '/og/site'
+      path: '/og/site'
+      fullPath: '/og/site'
+      preLoaderRoute: typeof OgSiteRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/profile/$username': {
+      id: '/profile/$username'
+      path: '/profile/$username'
+      fullPath: '/profile/$username'
+      preLoaderRoute: typeof ProfileUsernameRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/share/$username': {
+      id: '/share/$username'
+      path: '/share/$username'
+      fullPath: '/share/$username'
+      preLoaderRoute: typeof ShareUsernameRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/verdict/$username': {
+      id: '/verdict/$username'
+      path: '/verdict/$username'
+      fullPath: '/verdict/$username'
+      preLoaderRoute: typeof VerdictUsernameRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/og/error/$code': {
+      id: '/og/error/$code'
+      path: '/og/error/$code'
+      fullPath: '/og/error/$code'
+      preLoaderRoute: typeof OgErrorCodeRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/profile/$username/': {
       id: '/profile/$username/'
       path: '/'
       fullPath: '/profile/$username/'
       preLoaderRoute: typeof ProfileUsernameIndexRouteImport
-      parentRoute: typeof ProfileUsernameRoute
-    }
-    '/profile/$username/following': {
-      id: '/profile/$username/following'
-      path: '/following'
-      fullPath: '/profile/$username/following'
-      preLoaderRoute: typeof ProfileUsernameFollowingRouteImport
       parentRoute: typeof ProfileUsernameRoute
     }
     '/profile/$username/followers': {
@@ -362,12 +362,12 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ProfileUsernameFollowersRouteImport
       parentRoute: typeof ProfileUsernameRoute
     }
-    '/og/error/$code': {
-      id: '/og/error/$code'
-      path: '/og/error/$code'
-      fullPath: '/og/error/$code'
-      preLoaderRoute: typeof OgErrorCodeRouteImport
-      parentRoute: typeof rootRouteImport
+    '/profile/$username/following': {
+      id: '/profile/$username/following'
+      path: '/following'
+      fullPath: '/profile/$username/following'
+      preLoaderRoute: typeof ProfileUsernameFollowingRouteImport
+      parentRoute: typeof ProfileUsernameRoute
     }
   }
 }

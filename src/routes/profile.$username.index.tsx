@@ -4,6 +4,7 @@ import { Stamp } from "@/components/Stamp";
 import { TopBar } from "@/components/TopBar";
 import { TasteMatchCard } from "@/components/TasteMatchCard";
 import { GenreRadar } from "@/components/GenreRadar";
+import { ScoreBreakdownModal } from "@/components/ScoreBreakdownModal";
 import { computeGenreDna } from "@/lib/genre-dna";
 import { formatRuntime } from "@/lib/utils";
 import {
@@ -41,7 +42,7 @@ import { WatchedEntryDialog } from "@/components/WatchedEntryDialog";
 import { AvatarPickerDialog } from "@/components/AvatarPickerDialog";
 import { avatarUrlFor } from "@/lib/avatar";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
-import { ArrowDown, ArrowUp, Pencil } from "lucide-react";
+import { ArrowDown, ArrowUp, Pencil, Info } from "lucide-react";
 
 type ProfileSearch = {
   page?: number;
@@ -134,6 +135,7 @@ function ProfilePage() {
   const [avatarOpen, setAvatarOpen] = useState(false);
   const [avatarSaving, setAvatarSaving] = useState(false);
   const [avatarError, setAvatarError] = useState<string | null>(null);
+  const [showBreakdown, setShowBreakdown] = useState(false);
   const PAGE_SIZE = 20;
 
   // Keep local state in sync when loaderData updates (e.g. navigation or router.invalidate)
@@ -645,8 +647,27 @@ function ProfilePage() {
                 <GenreRadar dna={dna} size={190} />
               </div>
             </div>
+            <div className="mt-4 flex justify-center">
+              <button
+                type="button"
+                onClick={() => setShowBreakdown(true)}
+                className="group inline-flex items-center gap-1.5 text-xs text-dust hover:text-brass transition-colors focus:outline-none focus:ring-1 focus:ring-brass/50 rounded-sm px-2 py-1"
+                aria-label="View score breakdown and parameter formulas"
+              >
+                <span>How are these calculated?</span>
+                <Info className="h-3.5 w-3.5 text-dust group-hover:text-brass transition-colors" />
+              </button>
+            </div>
           </div>
         )}
+
+        <ScoreBreakdownModal
+          open={showBreakdown}
+          onOpenChange={setShowBreakdown}
+          tasteScore={tasteScore}
+          dna={dna}
+          username={username}
+        />
 
         {!isOwn && (
           <div className="mt-8 flex justify-center">

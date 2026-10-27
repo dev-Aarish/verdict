@@ -17,76 +17,174 @@ export interface TasteScoreResult {
 }
 
 export function computeDiversity(
-  allMovies: { genres?: string | null; director?: string | null; country?: string | null }[],
+  allMovies: {
+    genres?: string | null;
+    director?: string | null;
+    country?: string | null;
+    year?: string | null;
+  }[],
 ): number {
   const total = allMovies.length;
   if (total === 0) return 0;
+  if (total === 1) return 30; // A single film has baseline diversity, not 100%
 
-  const allGenres = allMovies.flatMap((m) =>
-    (m.genres || "")
+  // 1. Genre distribution & entropy (40% weight)
+  const genreCounts: Record<string, number> = {};
+  let totalGenreTags = 0;
+  for (const m of allMovies) {
+    const tags = (m.genres || "")
       .split(",")
       .map((g) => g.trim().toLowerCase())
-      .filter(Boolean),
-  );
-  const uniqueGenres = new Set(allGenres);
+      .filter(Boolean);
+    for (const tag of tags) {
+      genreCounts[tag] = (genreCounts[tag] || 0) + 1;
+      totalGenreTags++;
+    }
+  }
 
+  let genreEntropy = 0;
+  if (totalGenreTags > 0) {
+    for (const tag in genreCounts) {
+      const p = genreCounts[tag] / totalGenreTags;
+      genreEntropy -= p * Math.log(p);
+    }
+  }
+  // Max entropy across ~16 common genres is ln(16) ≈ 2.77
+  const maxPossibleEntropy = Math.log(16);
+  const genreSpread = Math.min(
+    100,
+    Math.round(
+      (genreEntropy / maxPossibleEntropy) *
+        100 *
+        Math.min(1, Object.keys(genreCounts).length / 5),
+    ),
+  );
+
+  // 2. Director variety (30% weight)
   const uniqueDirectors = new Set(
     allMovies.map((m) => m.director?.trim().toLowerCase()).filter(Boolean),
   );
+  const directorRatio = uniqueDirectors.size / total;
+  const directorScore = Math.min(100, Math.round(directorRatio * 100));
 
-  const allCountries = allMovies.flatMap((m) =>
-    (m.country || "")
-      .split(",")
-      .map((c) => c.trim().toLowerCase())
-      .filter(Boolean),
+  // 3. Era / Decade breadth (15% weight)
+  const uniqueDecades = new Set(
+    allMovies
+      .map((m) => {
+        const yr = parseInt(m.year || "", 10);
+        return Number.isFinite(yr) && yr > 1900 ? Math.floor(yr / 10) * 10 : null;
+      })
+      .filter((d): d is number => d !== null),
   );
-  const uniqueCountries = new Set(allCountries);
+  const decadeScore = Math.min(
+    100,
+    Math.round((uniqueDecades.size / Math.min(Math.max(total, 2), 6)) * 100),
+  );
 
-  const cap = Math.min(total, 20);
+  // 4. Country / International breadth (15% weight)
+  const uniqueCountries = new Set(
+    allMovies.flatMap((m) =>
+      (m.country || "")
+        .split(",")
+        .map((c) => c.trim().toLowerCase())
+        .filter(Boolean),
+    ),
+  );
+  const countryScore = Math.min(
+    100,
+    Math.round((uniqueCountries.size / Math.min(Math.max(total, 2), 5)) * 100),
+  );
 
-  const genreScore = Math.min(uniqueGenres.size / Math.min(cap, 8), 1) * 100;
-  const directorScore = Math.min(uniqueDirectors.size / Math.min(cap, 6), 1) * 100;
-  const countryScore = Math.min(uniqueCountries.size / Math.min(cap, 5), 1) * 100;
-
-  return Math.round(genreScore * 0.5 + directorScore * 0.3 + countryScore * 0.2);
+  return Math.round(
+    genreSpread * 0.4 + directorScore * 0.3 + decadeScore * 0.15 + countryScore * 0.15,
+  );
 }
 
-export async function computeObscurity(userId: string, movieIds: string[]): Promise<number> {
-  if (movieIds.length === 0) return 0;
+export function parseBoxOffice(bo: string | null | undefined): number {
+  if (!bo) return 0;
+  const num = parseInt(bo.replace(/[^0-9]/g, ""), 10);
+  return Number.isFinite(num) ? num : 0;
+}
 
-  const [totalUsers, watcherCounts] = await Promise.all([
-    db
-      .select({ count: sql<number>`COUNT(DISTINCT ${watchedEntries.userId})` })
-      .from(watchedEntries)
-      .then((r) => Number(r[0].count)),
-    db
-      .select({
-        movieId: watchedEntries.movieId,
-        count: sql<number>`COUNT(DISTINCT ${watchedEntries.userId})`,
-      })
-      .from(watchedEntries)
-      .where(inArray(watchedEntries.movieId, movieIds))
-      .groupBy(watchedEntries.movieId),
-  ]);
+export function parseAwardsCount(awards: string | null | undefined): number {
+  if (!awards) return 0;
+  let count = 0;
+  const wins = awards.match(/(\d+)\s+win/i);
+  const noms = awards.match(/(\d+)\s+nom/i);
+  const oscar = awards.match(/won\s+(\d+)\s+oscar/i);
+  if (wins) count += parseInt(wins[1], 10);
+  if (noms) count += parseInt(noms[1], 10) * 0.5;
+  if (oscar) count += parseInt(oscar[1], 10) * 10;
+  return count;
+}
 
-  if (totalUsers <= 1) return 100;
+export async function computeObscurity(
+  userId: string,
+  movieList: {
+    id: string;
+    boxOffice?: string | null;
+    awards?: string | null;
+    country?: string | null;
+  }[],
+): Promise<number> {
+  if (movieList.length === 0) return 0;
+
+  const movieIds = movieList.map((m) => m.id);
+
+  // Platform watcher counts for these movies
+  const watcherCounts = await db
+    .select({
+      movieId: watchedEntries.movieId,
+      count: sql<number>`COUNT(DISTINCT ${watchedEntries.userId})`,
+    })
+    .from(watchedEntries)
+    .where(inArray(watchedEntries.movieId, movieIds))
+    .groupBy(watchedEntries.movieId);
 
   const countMap = new Map(watcherCounts.map((r) => [r.movieId, Number(r.count)]));
 
-  const obscuritySum = movieIds.reduce((sum, mid) => {
-    const watchers = countMap.get(mid) || 1;
-    return sum + (1 - (watchers - 1) / (totalUsers - 1));
-  }, 0);
+  const obscurityScores = movieList.map((m) => {
+    const bo = parseBoxOffice(m.boxOffice);
+    const awardsScore = parseAwardsCount(m.awards);
+    const isForeign = m.country ? !m.country.toLowerCase().includes("united states") : false;
 
-  return Math.round((obscuritySum / movieIds.length) * 100);
+    // Real-world commercial footprint:
+    // >$300M => 10, >$100M => 25, >$40M => 45, >$10M => 65, >$1M => 80, small/niche => 92
+    let boScore: number;
+    if (bo > 300_000_000) boScore = 10;
+    else if (bo > 100_000_000) boScore = 25;
+    else if (bo > 40_000_000) boScore = 45;
+    else if (bo > 10_000_000) boScore = 65;
+    else if (bo > 1_000_000) boScore = 80;
+    else boScore = 92;
+
+    // Awards discount: highly awarded cultural staples are well known
+    const awardsDiscount = Math.min(25, Math.round(awardsScore * 0.3));
+    let realWorldObscurity = Math.max(
+      10,
+      Math.min(98, boScore - awardsDiscount + (isForeign ? 8 : 0)),
+    );
+
+    // Platform rarity modifier: if multiple Verdict members have watched it, it's popular in community
+    const watchers = countMap.get(m.id) || 1;
+    if (watchers > 5) {
+      realWorldObscurity = Math.max(10, realWorldObscurity - Math.min(20, (watchers - 1) * 3));
+    }
+
+    return realWorldObscurity;
+  });
+
+  return Math.round(obscurityScores.reduce((a, b) => a + b, 0) / obscurityScores.length);
 }
 
 export function computeConsistency(ratings: number[]): number {
   if (ratings.length === 0) return 0;
+  if (ratings.length === 1) return 100;
+
   const mean = ratings.reduce((a, b) => a + b, 0) / ratings.length;
   const variance = ratings.reduce((acc, r) => acc + (r - mean) ** 2, 0) / ratings.length;
   const stddev = Math.sqrt(variance);
-  const maxStddev = 4.5;
+  const maxStddev = 4.2;
   return Math.round(Math.max(0, 1 - stddev / maxStddev) * 100);
 }
 
@@ -95,7 +193,15 @@ export async function computeTasteScoreFromEntries(
   entries: {
     rating: number;
     movieId: string;
-    movie?: { genres?: string | null; director?: string | null; country?: string | null } | null;
+    movie?: {
+      id?: string;
+      genres?: string | null;
+      director?: string | null;
+      country?: string | null;
+      year?: string | null;
+      boxOffice?: string | null;
+      awards?: string | null;
+    } | null;
   }[],
 ): Promise<TasteScoreResult> {
   if (entries.length === 0) {
@@ -121,13 +227,25 @@ export async function computeTasteScoreFromEntries(
     return result;
   }
 
-  const movieIds = entries.map((e) => e.movieId);
   const allMovies = entries
     .map((e) => e.movie)
-    .filter(Boolean) as { genres?: string | null; director?: string | null; country?: string | null }[];
+    .filter(Boolean) as {
+    id: string;
+    genres?: string | null;
+    director?: string | null;
+    country?: string | null;
+    year?: string | null;
+    boxOffice?: string | null;
+    awards?: string | null;
+  }[];
 
   const diversity = computeDiversity(allMovies);
-  const obscurity = await computeObscurity(userId, movieIds);
+  const obscurity = await computeObscurity(userId, allMovies.map((m, i) => ({
+    id: m.id || entries[i].movieId,
+    boxOffice: m.boxOffice,
+    awards: m.awards,
+    country: m.country,
+  })));
   const consistency = computeConsistency(entries.map((e) => e.rating));
 
   const breakdown: TasteBreakdown = { diversity, obscurity, consistency };
