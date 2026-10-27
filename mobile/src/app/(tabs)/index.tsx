@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useEffect } from "react";
 import {
   View,
   Text,
@@ -12,7 +12,7 @@ import { useRouter } from "expo-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Film, Trophy, Compass, Plus, Flame, Calendar } from "lucide-react-native";
-import { feedApi, usersApi, moviesApi } from "../../api";
+import { feedApi, usersApi, moviesApi, prewarmBackend } from "../../api";
 import { useAuth } from "../../context/AuthContext";
 import { Colors, Radius, Spacing } from "../../constants/theme";
 import { VerdictCard } from "../../components/common/VerdictCard";
@@ -20,7 +20,7 @@ import { Button } from "../../components/common/Button";
 import { Avatar } from "../../components/common/Avatar";
 import { ClapperLoader } from "../../components/common/ClapperLoader";
 import {
-  ClapperRefreshControl,
+  ClapperFlatList,
   ClapperRefreshHeader,
 } from "../../components/common/ClapperRefreshControl";
 import { MovieCarouselSection } from "../../components/common/MovieCarousel";
@@ -30,7 +30,11 @@ export default function FeedScreen() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
   const queryClient = useQueryClient();
-  const { user, isAuthenticated } = useAuth();
+  const { user, isAuthenticated, isReady } = useAuth();
+
+  useEffect(() => {
+    prewarmBackend();
+  }, []);
 
   const {
     data: feed = [],
@@ -63,11 +67,13 @@ export default function FeedScreen() {
     retryDelay: (attempt) => Math.min(2000 * 2 ** attempt, 10000),
   });
 
-  const handleRefresh = () => {
-    queryClient.invalidateQueries({ queryKey: ["feed"] });
-    queryClient.invalidateQueries({ queryKey: ["leaderboard"] });
-    queryClient.invalidateQueries({ queryKey: ["trendingMovies"] });
-    queryClient.invalidateQueries({ queryKey: ["upcomingMovies"] });
+  const handleRefresh = async () => {
+    await Promise.all([
+      refetch(),
+      queryClient.invalidateQueries({ queryKey: ["leaderboard"] }),
+      queryClient.invalidateQueries({ queryKey: ["trendingMovies"] }),
+      queryClient.invalidateQueries({ queryKey: ["upcomingMovies"] }),
+    ]);
   };
 
   const handlePressUser = (username: string) => {
@@ -89,7 +95,7 @@ export default function FeedScreen() {
       </View>
 
       {/* Top Welcome / Auth state */}
-      {!isAuthenticated && (
+      {isReady && !isAuthenticated && (
         <View style={styles.authBanner}>
           <View style={styles.authBannerContent}>
             <Text style={styles.authBannerTitle}>THE SCREENING ROOM</Text>
@@ -212,7 +218,7 @@ export default function FeedScreen() {
 
   return (
     <View style={styles.container}>
-      <FlatList
+      <ClapperFlatList
         data={feed}
         keyExtractor={(item) => item.id}
         renderItem={({ item }) => (
@@ -227,12 +233,8 @@ export default function FeedScreen() {
         ListEmptyComponent={renderEmpty}
         contentContainerStyle={styles.listContent}
         showsVerticalScrollIndicator={false}
-        refreshControl={
-          <ClapperRefreshControl
-            refreshing={isRefetching}
-            onRefresh={handleRefresh}
-          />
-        }
+        refreshing={isRefetching}
+        onRefresh={handleRefresh}
       />
     </View>
   );

@@ -50,3 +50,5 @@ data/
 /playwright-report/
 /blob-report/
 /.playwright/
+
+.agents/

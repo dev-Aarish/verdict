@@ -1,5 +1,6 @@
 import { useUser } from "@/lib/user-context";
 import { googleAuthFn } from "@/api/auth";
+import { setCachedUser } from "@/api/client";
 import { useNavigate } from "@tanstack/react-router";
 import { useState, useEffect, useRef } from "react";
 
@@ -79,6 +80,7 @@ export function GoogleSignInButton() {
     try {
       const { user } = await googleAuthFn({ data: { credential: response.credential } });
       setUser(user);
+      setCachedUser(user);
       navigate({ to: "/profile/$username", params: { username: user.username } });
     } catch (err) {
       alert(err instanceof Error ? err.message : "Sign in failed");

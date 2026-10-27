@@ -1,0 +1,16 @@
+name: Backend Keep-Alive
+on:
+  schedule:
+    # Ping every 12 minutes (Render free tier spins down after 15 minutes of zero traffic)
+    - cron: '*/12 * * * *'
+  workflow_dispatch:
+
+jobs:
+  ping:
+    name: Ping Verdict Render Backend
+    runs-on: ubuntu-latest
+    steps:
+      - name: Send keep-alive health ping
+        run: |
+          echo "Pinging Verdict backend on Render to prevent cold start..."
+          curl -s -f --max-time 15 "https://verdict-api-cgu6.onrender.com/api/health" || true

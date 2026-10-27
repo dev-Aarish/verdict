@@ -37,7 +37,7 @@ import { Button } from "../../components/common/Button";
 import { Badge } from "../../components/common/Badge";
 import { ClapperLoader } from "../../components/common/ClapperLoader";
 import {
-  ClapperRefreshControl,
+  ClapperFlatList,
   ClapperRefreshHeader,
 } from "../../components/common/ClapperRefreshControl";
 import { LeaveVerdictModal } from "../../components/common/LeaveVerdictModal";
@@ -307,19 +307,15 @@ export default function UserProfileScreen() {
   return (
     <View style={styles.container}>
       {activeTab === "watched" ? (
-        <FlatList
+        <ClapperFlatList
           data={watchedList}
           keyExtractor={(item) => item.id}
-          refreshControl={
-            <ClapperRefreshControl
-              refreshing={isRefetching}
-              onRefresh={refetch}
-            />
-          }
           initialNumToRender={6}
           maxToRenderPerBatch={8}
           windowSize={5}
           removeClippedSubviews={Platform.OS !== "web"}
+          refreshing={isRefetching}
+          onRefresh={refetch}
           renderItem={({ item }) => {
             if (!item.movie) return null;
             return (
@@ -346,19 +342,15 @@ export default function UserProfileScreen() {
           }
         />
       ) : (
-        <FlatList
+        <ClapperFlatList
           data={verdicts}
           keyExtractor={(item) => item.id}
           initialNumToRender={6}
           maxToRenderPerBatch={8}
           windowSize={5}
           removeClippedSubviews={Platform.OS !== "web"}
-          refreshControl={
-            <ClapperRefreshControl
-              refreshing={isRefetching}
-              onRefresh={refetch}
-            />
-          }
+          refreshing={isRefetching}
+          onRefresh={refetch}
           renderItem={({ item }) => (
             <VerdictCard
               item={{

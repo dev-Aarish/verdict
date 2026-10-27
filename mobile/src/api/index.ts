@@ -1,4 +1,5 @@
-import { apiClient, setAuthToken, removeAuthToken } from "./client";
+import { apiClient, setAuthToken, removeAuthToken, prewarmBackend } from "./client";
+export { prewarmBackend } from "./client";
 import {
   User,
   Movie,

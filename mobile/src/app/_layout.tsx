@@ -1,11 +1,12 @@
 import React, { useEffect } from "react";
 import { LogBox } from "react-native";
+import { GestureHandlerRootView } from "react-native-gesture-handler";
 import { Stack } from "expo-router";
 import { StatusBar } from "expo-status-bar";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { SafeAreaProvider } from "react-native-safe-area-context";
 import * as SplashScreen from "expo-splash-screen";
-import { AuthProvider } from "../context/AuthContext";
+import { AuthProvider, useAuth } from "../context/AuthContext";
 import { Colors } from "../constants/theme";
 
 LogBox.ignoreLogs([
@@ -44,13 +45,20 @@ const queryClient = new QueryClient({
 });
 
 function RootNavigator() {
+  const { isReady } = useAuth();
+
   useEffect(() => {
-    // Safely hide splash screen once root component is mounted
-    const timer = setTimeout(() => {
+    if (isReady) {
       SplashScreen.hideAsync().catch(() => {});
-    }, 50);
-    return () => clearTimeout(timer);
-  }, []);
+    }
+
+    // Safety fallback so splash screen is never stuck
+    const fallbackTimer = setTimeout(() => {
+      SplashScreen.hideAsync().catch(() => {});
+    }, 1500);
+
+    return () => clearTimeout(fallbackTimer);
+  }, [isReady]);
 
   return (
     <Stack
@@ -107,13 +115,15 @@ function RootNavigator() {
 
 export default function RootLayout() {
   return (
-    <SafeAreaProvider>
-      <QueryClientProvider client={queryClient}>
-        <AuthProvider>
-          <StatusBar style="light" />
-          <RootNavigator />
-        </AuthProvider>
-      </QueryClientProvider>
-    </SafeAreaProvider>
+    <GestureHandlerRootView style={{ flex: 1 }}>
+      <SafeAreaProvider>
+        <QueryClientProvider client={queryClient}>
+          <AuthProvider>
+            <StatusBar style="light" />
+            <RootNavigator />
+          </AuthProvider>
+        </QueryClientProvider>
+      </SafeAreaProvider>
+    </GestureHandlerRootView>
   );
 }

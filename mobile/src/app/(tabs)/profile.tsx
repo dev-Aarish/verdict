@@ -31,7 +31,7 @@ import { Button } from "../../components/common/Button";
 import { Stamp } from "../../components/common/Stamp";
 import { ClapperLoader } from "../../components/common/ClapperLoader";
 import {
-  ClapperRefreshControl,
+  ClapperFlatList,
   ClapperRefreshHeader,
 } from "../../components/common/ClapperRefreshControl";
 import { LogMovieModal } from "../../components/common/LogMovieModal";
@@ -249,7 +249,7 @@ export default function ProfileScreen() {
   return (
     <View style={styles.container}>
       {activeTab === "watched" ? (
-        <FlatList
+        <ClapperFlatList
           data={watchedList}
           keyExtractor={(item) => item.id}
           initialNumToRender={6}
@@ -275,15 +275,11 @@ export default function ProfileScreen() {
           ListEmptyComponent={renderEmpty}
           contentContainerStyle={styles.listContent}
           showsVerticalScrollIndicator={false}
-          refreshControl={
-            <ClapperRefreshControl
-              refreshing={isRefetching || isLoadingProfile}
-              onRefresh={handleRefresh}
-            />
-          }
+          refreshing={isRefetching || isLoadingProfile}
+          onRefresh={handleRefresh}
         />
       ) : (
-        <FlatList
+        <ClapperFlatList
           data={verdicts}
           keyExtractor={(item) => item.id}
           initialNumToRender={6}
@@ -308,12 +304,8 @@ export default function ProfileScreen() {
           ListEmptyComponent={renderEmpty}
           contentContainerStyle={styles.listContent}
           showsVerticalScrollIndicator={false}
-          refreshControl={
-            <ClapperRefreshControl
-              refreshing={isRefetching || isLoadingProfile}
-              onRefresh={handleRefresh}
-            />
-          }
+          refreshing={isRefetching || isLoadingProfile}
+          onRefresh={handleRefresh}
         />
       )}
 

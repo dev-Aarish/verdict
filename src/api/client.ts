@@ -4,10 +4,11 @@
 // - Local dev: both unset → http://localhost:4000 (the local `npm run dev:api` server)
 const LOCAL_API_URL = "http://localhost:4000";
 
-const SSR_FETCH_TIMEOUT_MS = 15_000;
-const SSR_FETCH_RETRIES = 2;
-const SSR_RETRY_BACKOFF_MS = [300, 800];
+const SSR_FETCH_TIMEOUT_MS = 2_500; // Cap SSR at 2.5s so SSR never blocks initial page load
+const SSR_FETCH_RETRIES = 1;
+const SSR_RETRY_BACKOFF_MS = [300];
 const TOKEN_KEY = "verdict_auth_token";
+const USER_KEY = "verdict_cached_user";
 
 export function getStoredToken(): string | null {
   if (typeof window === "undefined") return null;
@@ -23,8 +24,31 @@ export function setStoredToken(token: string | null): void {
   try {
     if (token) {
       localStorage.setItem(TOKEN_KEY, token);
+      document.cookie = `verdict_session=${encodeURIComponent(token)}; path=/; max-age=2592000; SameSite=Lax; Secure`;
     } else {
       localStorage.removeItem(TOKEN_KEY);
+      document.cookie = "verdict_session=; path=/; max-age=0; SameSite=Lax; Secure";
+    }
+  } catch {}
+}
+
+export function getCachedUser<T = any>(): T | null {
+  if (typeof window === "undefined") return null;
+  try {
+    const raw = localStorage.getItem(USER_KEY);
+    return raw ? JSON.parse(raw) : null;
+  } catch {
+    return null;
+  }
+}
+
+export function setCachedUser(user: any | null): void {
+  if (typeof window === "undefined") return;
+  try {
+    if (user) {
+      localStorage.setItem(USER_KEY, JSON.stringify(user));
+    } else {
+      localStorage.removeItem(USER_KEY);
     }
   } catch {}
 }
@@ -87,6 +111,17 @@ export async function apiFetch<T>(path: string, options?: RequestInit): Promise<
     const cookie = await getServerRequestCookie();
     if (cookie) {
       headers["cookie"] = cookie;
+      // Extract verdict_session if present to set Authorization header
+      const sessionMatch = cookie.match(/verdict_session=([^;]+)/);
+      if (sessionMatch && sessionMatch[1] && !headers["Authorization"] && !headers["authorization"]) {
+        headers["Authorization"] = `Bearer ${decodeURIComponent(sessionMatch[1].trim())}`;
+      }
+    }
+
+    // Fast-path for anonymous SSR /auth/me: if no session cookie or token is present,
+    // don't waste 500ms-2.5s waiting for backend to return { user: null }.
+    if (path === "/auth/me" && !cookie && !headers["Authorization"] && !headers["authorization"]) {
+      return { user: null } as T;
     }
   } else {
     credentials = "include";
@@ -121,12 +156,18 @@ export async function apiFetch<T>(path: string, options?: RequestInit): Promise<
     if (!res.ok) {
       if (res.status === 401 && !isServer) {
         setStoredToken(null);
+        setCachedUser(null);
       }
       throw new ApiError(body.error || `Request failed: ${res.status}`, res.status);
     }
 
-    if (!isServer && body && (body.token || body.sessionId)) {
-      setStoredToken(body.token || body.sessionId);
+    if (!isServer && body) {
+      if (body.token || body.sessionId) {
+        setStoredToken(body.token || body.sessionId);
+      }
+      if (body.user !== undefined) {
+        setCachedUser(body.user);
+      }
     }
 
     return body as T;

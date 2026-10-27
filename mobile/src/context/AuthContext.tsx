@@ -25,7 +25,7 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [user, setUser] = useState<User | null>(null);
   const [isLoading, setIsLoading] = useState<boolean>(false);
-  const [isReady, setIsReady] = useState<boolean>(true);
+  const [isReady, setIsReady] = useState<boolean>(false);
 
   useEffect(() => {
     let isMounted = true;
@@ -42,7 +42,12 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
         if (cachedUser) {
           setUser(cachedUser);
+        } else if (!token) {
+          setUser(null);
         }
+
+        // Local credentials resolved: mark ready immediately so splash screen can dismiss
+        setIsReady(true);
 
         if (token) {
           // Revalidate session asynchronously in background without blocking UI
@@ -75,6 +80,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       } catch {
         if (isMounted) {
           setUser(null);
+          setIsReady(true);
         }
       }
     })();

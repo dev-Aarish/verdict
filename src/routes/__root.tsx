@@ -13,6 +13,7 @@ import appCss from "../styles.css?url";
 import { absoluteUrl } from "../lib/site-url";
 import { reportLovableError } from "../lib/lovable-error-reporting";
 import { getCurrentUserFn } from "@/api/auth";
+import { getCachedUser, setCachedUser, getStoredToken, setStoredToken } from "@/api/client";
 import { UserContext } from "@/lib/user-context";
 import { ErrorScreen } from "@/components/ErrorScreen";
 
@@ -134,17 +135,27 @@ function RootShell({ children }: { children: ReactNode }) {
 function RootComponent() {
   const { queryClient } = Route.useRouteContext();
   const { user: initialUser } = Route.useLoaderData();
-  const [user, setUser] = useState(initialUser);
+  const [user, setUser] = useState<UserSafe | null>(() => {
+    if (initialUser) return initialUser;
+    return getCachedUser<UserSafe>();
+  });
 
   useEffect(() => {
-    // Re-verify the session from the browser (sends the auth cookie) after
-    // hydration in case initialUser needs refreshing.
+    // Re-verify the session in background without blocking initial paint
     getCurrentUserFn()
       .then(({ user: freshUser }) => {
-        if (JSON.stringify(freshUser) !== JSON.stringify(initialUser)) setUser(freshUser);
+        if (freshUser) {
+          setUser(freshUser);
+          setCachedUser(freshUser);
+        } else if (getStoredToken()) {
+          // Token expired or invalid on server
+          setUser(null);
+          setCachedUser(null);
+          setStoredToken(null);
+        }
       })
       .catch(() => {});
-  }, [initialUser]);
+  }, []);
 
   return (
     <QueryClientProvider client={queryClient}>

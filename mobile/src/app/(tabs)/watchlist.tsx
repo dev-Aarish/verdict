@@ -22,7 +22,7 @@ import { Button } from "../../components/common/Button";
 import { LogMovieModal } from "../../components/common/LogMovieModal";
 import { ClapperLoader } from "../../components/common/ClapperLoader";
 import {
-  ClapperRefreshControl,
+  ClapperFlatList,
   ClapperRefreshHeader,
 } from "../../components/common/ClapperRefreshControl";
 import { WatchlistEntry, Movie } from "../../types";
@@ -149,7 +149,7 @@ export default function WatchlistScreen() {
 
   return (
     <View style={styles.container}>
-      <FlatList
+      <ClapperFlatList
         data={watchlist}
         keyExtractor={(item) => item.id}
         renderItem={({ item }) => {
@@ -187,12 +187,8 @@ export default function WatchlistScreen() {
         ListEmptyComponent={renderEmpty}
         contentContainerStyle={styles.listContent}
         showsVerticalScrollIndicator={false}
-        refreshControl={
-          <ClapperRefreshControl
-            refreshing={isRefetching}
-            onRefresh={refetch}
-          />
-        }
+        refreshing={isRefetching}
+        onRefresh={refetch}
       />
 
       <LogMovieModal

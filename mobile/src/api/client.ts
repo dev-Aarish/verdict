@@ -114,12 +114,24 @@ export async function removeCachedUser(): Promise<void> {
   }
 }
 
+let isPrewarmed = false;
+
+/**
+ * Lightweight, non-blocking ping to wake Render backend from cold sleep.
+ */
+export function prewarmBackend(): void {
+  if (isPrewarmed) return;
+  isPrewarmed = true;
+  const healthUrl = `${API_BASE_URL.replace(/\/api$/, "")}/api/health`;
+  fetch(healthUrl, { method: "GET" }).catch(() => {});
+}
+
 export const apiClient = axios.create({
   baseURL: API_BASE_URL,
   headers: {
     "Content-Type": "application/json",
   },
-  timeout: 10000,
+  timeout: 35000, // 35s to comfortably accommodate cold backend wakeups
 });
 
 apiClient.interceptors.request.use(async (config) => {
@@ -133,7 +145,25 @@ apiClient.interceptors.request.use(async (config) => {
 
 apiClient.interceptors.response.use(
   (response) => response,
-  (error: AxiosError) => {
+  async (error: AxiosError) => {
+    const config = error.config as any;
+
+    // Retry once for server cold starts (502, 503, 504, timeout or network error)
+    if (config && !config._isRetry) {
+      const status = error.response?.status;
+      const isNetworkOrTimeout =
+        error.code === "ECONNABORTED" ||
+        !error.response ||
+        (status && [502, 503, 504].includes(status));
+
+      if (isNetworkOrTimeout && (config.method || "get").toLowerCase() === "get") {
+        config._isRetry = true;
+        // Wait 1.5s and retry request
+        await new Promise((resolve) => setTimeout(resolve, 1500));
+        return apiClient(config);
+      }
+    }
+
     // Standardize error message
     const data = error.response?.data as { error?: string; message?: string } | undefined;
     const msg = data?.error || data?.message || error.message || "An unexpected error occurred";

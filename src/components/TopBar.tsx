@@ -1,6 +1,7 @@
 import { Link, useLocation } from "@tanstack/react-router";
 import { Logo } from "@/components/Logo";
 import { logoutFn } from "@/api/auth";
+import { getStoredToken } from "@/api/client";
 import { useUser } from "@/lib/user-context";
 import { avatarUrlFor } from "@/lib/avatar";
 import { cn } from "@/lib/utils";
@@ -13,6 +14,9 @@ export function TopBar() {
   const { user, setUser } = useUser();
   const location = useLocation();
   const pathname = location.pathname;
+
+  const hasStoredToken = typeof window !== "undefined" && !!getStoredToken();
+  const isHydratingAuth = !user && hasStoredToken;
 
   const handleLogout = async () => {
     try {
@@ -36,7 +40,7 @@ export function TopBar() {
             </span>
           </Link>
 
-          {/* Desktop navigation — unchanged */}
+          {/* Desktop navigation */}
           <nav className="hidden items-center gap-5 md:flex">
             <Link to="/feed" className="text-caption hover:text-brass transition-colors">
               Feed
@@ -62,6 +66,8 @@ export function TopBar() {
                   Sign out
                 </button>
               </>
+            ) : isHydratingAuth ? (
+              <div className="h-6 w-24 animate-pulse rounded bg-border/40" />
             ) : (
               <>
                 <Link to="/login" className="text-caption hover:text-brass transition-colors">
@@ -90,6 +96,8 @@ export function TopBar() {
                   <img src={avatarUrl} alt={user.username} className="h-full w-full object-cover" />
                 )}
               </Link>
+            ) : isHydratingAuth ? (
+              <div className="h-8 w-8 animate-pulse rounded-full bg-border/40" />
             ) : (
               <Link
                 to="/signup"
@@ -140,6 +148,17 @@ export function TopBar() {
                 <LogOut className="h-5 w-5" />
                 <span>Sign out</span>
               </button>
+            </>
+          ) : isHydratingAuth ? (
+            <>
+              <div className={cn(NAV_ITEM_CLS, "opacity-40 animate-pulse")}>
+                <div className="h-5 w-5 rounded bg-border/40" />
+                <span className="h-2 w-8 rounded bg-border/40 mt-1" />
+              </div>
+              <div className={cn(NAV_ITEM_CLS, "opacity-40 animate-pulse")}>
+                <div className="h-5 w-5 rounded bg-border/40" />
+                <span className="h-2 w-8 rounded bg-border/40 mt-1" />
+              </div>
             </>
           ) : (
             <>

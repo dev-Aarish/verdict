@@ -5,6 +5,7 @@ import { TopBar } from "@/components/TopBar";
 import { Logo } from "@/components/Logo";
 import { Stamp } from "@/components/Stamp";
 import { loginFn } from "@/api/auth";
+import { setCachedUser } from "@/api/client";
 import { GoogleSignInButton } from "@/components/GoogleSignInButton";
 
 export const Route = createFileRoute("/login")({
@@ -64,6 +65,7 @@ function LoginPage() {
                     data: { email, password },
                   });
                   setUser(user);
+                  setCachedUser(user);
                   navigate({ to: "/profile/$username", params: { username: user.username } });
                 } catch (err) {
                   alert(err instanceof Error ? err.message : "Login failed");

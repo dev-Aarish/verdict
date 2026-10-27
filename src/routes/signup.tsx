@@ -5,6 +5,7 @@ import { TopBar } from "@/components/TopBar";
 import { Logo } from "@/components/Logo";
 import { Stamp } from "@/components/Stamp";
 import { signupFn } from "@/api/auth";
+import { setCachedUser } from "@/api/client";
 import { GoogleSignInButton } from "@/components/GoogleSignInButton";
 
 export const Route = createFileRoute("/signup")({
@@ -75,6 +76,7 @@ function SignupPage() {
                     },
                   });
                   setUser(result.user);
+                  setCachedUser(result.user);
                   navigate({
                     to: "/profile/$username",
                     params: { username },
