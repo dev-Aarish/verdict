@@ -167,6 +167,13 @@ apiClient.interceptors.response.use(
     // Standardize error message
     const data = error.response?.data as { error?: string; message?: string } | undefined;
     const msg = data?.error || data?.message || error.message || "An unexpected error occurred";
+
+    // Auto-clear invalid/expired session tokens on 401 so the app doesn't get stuck in a zombie state
+    if (error.response?.status === 401) {
+      removeAuthToken().catch(() => {});
+      removeCachedUser().catch(() => {});
+    }
+
     return Promise.reject(new Error(msg));
   }
 );

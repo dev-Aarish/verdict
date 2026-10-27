@@ -539,7 +539,7 @@ export default function SearchScreen() {
           );
         }}
         ListHeaderComponent={renderHeader}
-        ListEmptyComponent={renderEmpty()}
+        ListEmptyComponent={renderEmpty() ?? undefined}
         ListFooterComponent={() => {
           if (isFetchingNextPage) {
             return (

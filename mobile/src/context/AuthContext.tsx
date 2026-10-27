@@ -66,7 +66,11 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
               if (
                 msg.includes("401") ||
                 msg.includes("unauthorized") ||
-                msg.includes("invalid token")
+                msg.includes("invalid") ||
+                msg.includes("session") ||
+                msg.includes("expired") ||
+                msg.includes("token") ||
+                msg.includes("not authenticated")
               ) {
                 setUser(null);
                 await removeAuthToken();

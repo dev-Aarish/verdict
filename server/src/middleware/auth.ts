@@ -5,7 +5,7 @@ import { eq, and, gt } from "drizzle-orm";
 import { config } from "../config.js";
 
 export const COOKIE_NAME = "auth_session";
-export const SESSION_DURATION_MS = 72 * 60 * 60 * 1000; // 72 hours
+export const SESSION_DURATION_MS = 30 * 24 * 60 * 60 * 1000; // 30 days
 const REFRESH_THRESHOLD_MS = 15 * 60 * 1000; // 15 minutes throttle for sliding updates
 const CACHE_TTL_MS = 5 * 60 * 1000; // 5 minutes in-memory cache
 

@@ -64,111 +64,96 @@ export const Button: React.FC<ButtonProps> = ({
   }));
 
   const getContainerStyle = (): ViewStyle => {
-    let base: ViewStyle = {
+    let sizeStyle: ViewStyle;
+    if (size === "sm") {
+      sizeStyle = { paddingVertical: 8, paddingHorizontal: 14, minHeight: 38 };
+    } else if (size === "lg") {
+      sizeStyle = { paddingVertical: 14, paddingHorizontal: 24, minHeight: 52 };
+    } else {
+      sizeStyle = { paddingVertical: 11, paddingHorizontal: 18, minHeight: 46 };
+    }
+
+    let variantStyle: ViewStyle = {};
+    switch (variant) {
+      case "primary":
+      case "gold":
+      case "brass":
+        variantStyle = {
+          backgroundColor: Colors.brass,
+          borderWidth: 1.5,
+          borderColor: Colors.brassLight,
+        };
+        break;
+      case "secondary":
+        variantStyle = {
+          backgroundColor: Colors.velvetElevated,
+          borderWidth: 1,
+          borderColor: Colors.border,
+        };
+        break;
+      case "outline":
+        variantStyle = {
+          backgroundColor: "transparent",
+          borderWidth: 1.5,
+          borderColor: Colors.borderBrass,
+        };
+        break;
+      case "danger":
+        variantStyle = {
+          backgroundColor: Colors.marqueeRed,
+          borderWidth: 1,
+          borderColor: Colors.marqueeRedLight,
+        };
+        break;
+      case "ghost":
+        variantStyle = {
+          backgroundColor: "transparent",
+        };
+        break;
+    }
+
+    return {
       flexDirection: "row",
       alignItems: "center",
       justifyContent: "center",
       borderRadius: Radius.none,
       gap: Spacing.sm,
       minHeight: 44, // 44pt minimum touch target
+      ...sizeStyle,
+      ...variantStyle,
+      ...(disabled || loading ? { opacity: 0.5 } : {}),
     };
-
-    // Size
-    if (size === "sm") {
-      base = {
-        ...base,
-        paddingVertical: 8,
-        paddingHorizontal: 14,
-        minHeight: 38,
-      };
-    } else if (size === "lg") {
-      base = {
-        ...base,
-        paddingVertical: 14,
-        paddingHorizontal: 24,
-        minHeight: 52,
-      };
-    } else {
-      base = {
-        ...base,
-        paddingVertical: 11,
-        paddingHorizontal: 18,
-        minHeight: 46,
-      };
-    }
-
-    // Variant
-    switch (variant) {
-      case "primary":
-      case "gold":
-      case "brass":
-        base.backgroundColor = Colors.brass;
-        base.borderWidth = 1.5;
-        base.borderColor = Colors.brassLight;
-        break;
-      case "secondary":
-        base.backgroundColor = Colors.velvetElevated;
-        base.borderWidth = 1;
-        base.borderColor = Colors.border;
-        break;
-      case "outline":
-        base.backgroundColor = "transparent";
-        base.borderWidth = 1.5;
-        base.borderColor = Colors.borderBrass;
-        break;
-      case "danger":
-        base.backgroundColor = Colors.marqueeRed;
-        base.borderWidth = 1;
-        base.borderColor = Colors.marqueeRedLight;
-        break;
-      case "ghost":
-        base.backgroundColor = "transparent";
-        break;
-    }
-
-    if (disabled || loading) {
-      base.opacity = 0.5;
-    }
-
-    return base;
   };
 
   const getTextStyle = (): TextStyle => {
-    let base: TextStyle = {
-      fontWeight: "700",
-      letterSpacing: 0.8,
-      textTransform: "uppercase",
-    };
+    const fontSize = size === "sm" ? 11 : size === "lg" ? 14 : 12;
 
-    if (size === "sm") {
-      base.fontSize = 11;
-    } else if (size === "lg") {
-      base.fontSize = 14;
-    } else {
-      base.fontSize = 12;
-    }
-
+    let color = Colors.paper;
     switch (variant) {
       case "primary":
       case "gold":
       case "brass":
-        base.color = Colors.inkDark;
+        color = Colors.inkDark;
         break;
       case "danger":
-        base.color = Colors.paper;
-        break;
       case "secondary":
-        base.color = Colors.paper;
+        color = Colors.paper;
         break;
       case "outline":
-        base.color = Colors.brass;
+        color = Colors.brass;
         break;
       case "ghost":
-        base.color = Colors.dust;
+        color = Colors.dust;
         break;
     }
 
-    return base;
+    return {
+      fontWeight: "700",
+      letterSpacing: 0.8,
+      textTransform: "uppercase",
+      fontSize,
+      color,
+    };
   };
 
   return (

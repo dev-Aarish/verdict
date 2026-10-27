@@ -32,7 +32,10 @@
           "backgroundColor": "#09090b"
         }
       ],
-      "expo-sharing"
+      "expo-sharing",
+      "expo-font",
+      "expo-image",
+      "expo-status-bar"
     ],
     "web": {
       "favicon": "./assets/favicon.png"

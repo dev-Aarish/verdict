@@ -1,7 +1,7 @@
 import { Router, Request, Response } from "express";
 import { db } from "../db/index.js";
 import { movies, users, watchlistEntries } from "../db/schema.js";
-import { eq, and, inArray, desc } from "drizzle-orm";
+import { eq, and, or, inArray, desc } from "drizzle-orm";
 import { v4 as uuidv4 } from "uuid";
 import { requireAuth, AuthRequest } from "../middleware/auth.js";
 import { findOrCreateMovie } from "../lib/movie-store.js";
@@ -23,10 +23,14 @@ async function loadWatchlistEntries(userId: string) {
   const movieList = await db
     .select()
     .from(movies)
-    .where(inArray(movies.id, movieIds))
+    .where(or(inArray(movies.id, movieIds), inArray(movies.imdbId, movieIds)))
     .then((r) => r);
 
-  const movieMap = new Map(movieList.map((m) => [m.id, m]));
+  const movieMap = new Map();
+  for (const m of movieList) {
+    movieMap.set(m.id, m);
+    if (m.imdbId) movieMap.set(m.imdbId, m);
+  }
 
   return entries.map((entry) => ({
     ...entry,
@@ -73,15 +77,20 @@ watchlistRouter.delete("/:entryId", requireAuth, async (req: AuthRequest, res: R
   const entry = await db
     .select()
     .from(watchlistEntries)
-    .where(eq(watchlistEntries.id, entryId))
+    .where(
+      and(
+        eq(watchlistEntries.userId, userId),
+        or(eq(watchlistEntries.id, entryId), eq(watchlistEntries.movieId, entryId))
+      )
+    )
     .then((r) => r[0]);
 
-  if (!entry || entry.userId !== userId) {
-    res.status(403).json({ error: "Not authorized" });
+  if (!entry) {
+    res.status(404).json({ error: "Watchlist entry not found" });
     return;
   }
 
-  await db.delete(watchlistEntries).where(eq(watchlistEntries.id, entryId));
+  await db.delete(watchlistEntries).where(eq(watchlistEntries.id, entry.id));
   res.json({ success: true });
 });
 

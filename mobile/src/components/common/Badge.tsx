@@ -18,58 +18,45 @@ export const Badge: React.FC<BadgeProps> = ({
   style,
 }) => {
   const getContainerStyle = (): ViewStyle => {
-    let base: ViewStyle = {
+    const sizeStyle: ViewStyle =
+      size === "sm"
+        ? { paddingVertical: 2, paddingHorizontal: 6, borderWidth: 1 }
+        : { paddingVertical: 4, paddingHorizontal: 9, borderWidth: 1 };
+
+    let variantStyle: ViewStyle;
+    switch (variant) {
+      case "brass":
+      case "gold":
+      case "primary":
+        variantStyle = { backgroundColor: Colors.brassSubtle, borderColor: Colors.brass };
+        break;
+      case "red":
+      case "rose":
+        variantStyle = { backgroundColor: Colors.marqueeRedSubtle, borderColor: Colors.marqueeRed };
+        break;
+      case "emerald":
+        variantStyle = { backgroundColor: Colors.emeraldSubtle, borderColor: Colors.emerald };
+        break;
+      case "purple":
+        variantStyle = { backgroundColor: Colors.purpleSubtle, borderColor: Colors.purple };
+        break;
+      case "outline":
+        variantStyle = { backgroundColor: "transparent", borderColor: Colors.border };
+        break;
+      default:
+        variantStyle = { backgroundColor: Colors.velvetElevated, borderColor: Colors.borderSubtle };
+        break;
+    }
+
+    return {
       flexDirection: "row",
       alignItems: "center",
       alignSelf: "flex-start",
       borderRadius: Radius.none,
       gap: 4,
+      ...sizeStyle,
+      ...variantStyle,
     };
-
-    if (size === "sm") {
-      base.paddingVertical = 2;
-      base.paddingHorizontal = 6;
-      base.borderWidth = 1;
-    } else {
-      base.paddingVertical = 4;
-      base.paddingHorizontal = 9;
-      base.borderWidth = 1;
-    }
-
-    switch (variant) {
-      case "brass":
-      case "gold":
-        base.backgroundColor = Colors.brassSubtle;
-        base.borderColor = Colors.brass;
-        break;
-      case "red":
-      case "rose":
-        base.backgroundColor = Colors.marqueeRedSubtle;
-        base.borderColor = Colors.marqueeRed;
-        break;
-      case "emerald":
-        base.backgroundColor = Colors.emeraldSubtle;
-        base.borderColor = Colors.emerald;
-        break;
-      case "purple":
-        base.backgroundColor = Colors.purpleSubtle;
-        base.borderColor = Colors.purple;
-        break;
-      case "primary":
-        base.backgroundColor = Colors.brassSubtle;
-        base.borderColor = Colors.brass;
-        break;
-      case "outline":
-        base.backgroundColor = "transparent";
-        base.borderColor = Colors.border;
-        break;
-      default:
-        base.backgroundColor = Colors.velvetElevated;
-        base.borderColor = Colors.borderSubtle;
-        break;
-    }
-
-    return base;
   };
 
   const getTextStyle = (): TextStyle => {

@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useCallback } from "react";
 import {
   View,
   Text,
@@ -9,10 +9,10 @@ import {
   Alert,
   Platform,
 } from "react-native";
-import { useRouter } from "expo-router";
+import { useRouter, useFocusEffect } from "expo-router";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { Bookmark, Check, Trash2, Plus } from "lucide-react-native";
+import { Bookmark, Check, Trash2, Plus, AlertCircle } from "lucide-react-native";
 import * as Haptics from "expo-haptics";
 import { watchlistApi, moviesApi } from "../../api";
 import { useAuth } from "../../context/AuthContext";
@@ -31,7 +31,7 @@ export default function WatchlistScreen() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
   const queryClient = useQueryClient();
-  const { isAuthenticated } = useAuth();
+  const { user, isAuthenticated, isReady, logout } = useAuth();
 
   const [selectedMovieForLog, setSelectedMovieForLog] = useState<Movie | null>(null);
 
@@ -39,15 +39,28 @@ export default function WatchlistScreen() {
     data: watchlist = [],
     isLoading,
     isRefetching,
+    isFetching,
+    isError,
+    error,
     refetch,
   } = useQuery<WatchlistEntry[]>({
-    queryKey: ["watchlist"],
+    queryKey: ["watchlist", user?.id],
     queryFn: watchlistApi.getWatchlist,
-    enabled: isAuthenticated,
+    enabled: isReady && isAuthenticated,
+    staleTime: 1000 * 30, // 30s stale time so tab switches re-sync cleanly
   });
 
+  // Re-sync watchlist whenever the user navigates to this tab
+  useFocusEffect(
+    useCallback(() => {
+      if (isAuthenticated) {
+        refetch();
+      }
+    }, [isAuthenticated, refetch])
+  );
+
   const removeMutation = useMutation({
-    mutationFn: (movieId: string) => watchlistApi.removeFromWatchlist(movieId),
+    mutationFn: (entryId: string) => watchlistApi.removeFromWatchlist(entryId),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["watchlist"] });
     },
@@ -76,7 +89,7 @@ export default function WatchlistScreen() {
             try {
               Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
             } catch {}
-            await removeMutation.mutateAsync(entry.movieId || entry.movie?.id || entry.id);
+            await removeMutation.mutateAsync(entry.id);
           },
         },
       ]
@@ -86,11 +99,16 @@ export default function WatchlistScreen() {
   const handleLogSubmit = async (params: { imdbId: string; rating: number; review?: string }) => {
     await logMovieMutation.mutateAsync(params);
     if (selectedMovieForLog) {
-      await removeMutation.mutateAsync(selectedMovieForLog.id);
+      const entry = watchlist.find(
+        (e) => e.movie?.id === selectedMovieForLog.id || e.movieId === selectedMovieForLog.id
+      );
+      if (entry) {
+        await removeMutation.mutateAsync(entry.id);
+      }
     }
   };
 
-  if (!isAuthenticated) {
+  if (isReady && !isAuthenticated) {
     return (
       <View style={[styles.authGateContainer, { paddingTop: insets.top }]}>
         <Bookmark size={48} color={Colors.dust} />
@@ -110,10 +128,56 @@ export default function WatchlistScreen() {
   }
 
   const renderEmpty = () => {
-    if (isLoading) {
+    if (isLoading || (isFetching && watchlist.length === 0)) {
       return (
         <View style={styles.loadingContainer}>
           <ClapperLoader size="lg" />
+        </View>
+      );
+    }
+
+    if (isError && watchlist.length === 0) {
+      const errorMsg = error instanceof Error ? error.message : "Unable to load your watchlist from the screening room.";
+      const isAuthError =
+        errorMsg.toLowerCase().includes("session") ||
+        errorMsg.toLowerCase().includes("unauthorized") ||
+        errorMsg.toLowerCase().includes("not authenticated") ||
+        errorMsg.toLowerCase().includes("401");
+
+      if (isAuthError) {
+        return (
+          <View style={styles.emptyContainer}>
+            <Bookmark size={44} color={Colors.dust} />
+            <Text style={styles.emptyTitle}>Session Expired</Text>
+            <Text style={styles.emptySubtitle}>
+              Your sign-in session has expired. Please sign in again to view your watchlist.
+            </Text>
+            <Button
+              title="Sign In Again"
+              variant="primary"
+              onPress={async () => {
+                await logout();
+                router.push("/(auth)/login");
+              }}
+              style={styles.emptyBtn}
+            />
+          </View>
+        );
+      }
+
+      return (
+        <View style={styles.emptyContainer}>
+          <AlertCircle size={44} color={Colors.marqueeRedLight} />
+          <Text style={styles.emptyTitle}>Could Not Load Watchlist</Text>
+          <Text style={styles.emptySubtitle}>{errorMsg}</Text>
+          <Button
+            title="Try Again"
+            variant="primary"
+            onPress={() => {
+              refetch();
+            }}
+            style={styles.emptyBtn}
+          />
         </View>
       );
     }

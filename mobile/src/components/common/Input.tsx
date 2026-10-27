@@ -34,7 +34,7 @@ export const Input: React.FC<InputProps> = ({
   ...props
 }) => {
   const [isFocused, setIsFocused] = useState(false);
-  const inputRef = useRef<TextInput>(null);
+  const inputRef = useRef<any>(null);
   const isMultiline = props.multiline;
 
   const flattenedStyle = StyleSheet.flatten(style) || {};

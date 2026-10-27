@@ -32,7 +32,7 @@ export const ShareCardModal: React.FC<ShareCardModalProps> = ({
   score,
   onClose,
 }) => {
-  const cardRef = useRef<View>(null);
+  const cardRef = useRef<any>(null);
   const [isSharing, setIsSharing] = useState<boolean>(false);
 
   if (!user) return null;

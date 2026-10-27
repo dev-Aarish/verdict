@@ -47,39 +47,50 @@ export const Card: React.FC<CardProps> = ({
   }));
 
   const getContainerStyle = (): ViewStyle => {
-    let base: ViewStyle = {
+    let variantStyle: ViewStyle;
+
+    switch (variant) {
+      case "elevated":
+        variantStyle = {
+          backgroundColor: Colors.velvetElevated,
+          borderColor: "rgba(197, 165, 114, 0.3)",
+        };
+        break;
+      case "brass":
+        variantStyle = {
+          backgroundColor: Colors.velvetElevated,
+          borderColor: Colors.brass,
+          borderWidth: 1.5,
+        };
+        break;
+      case "glass":
+        variantStyle = {
+          backgroundColor: "rgba(28, 29, 38, 0.85)",
+          borderColor: "rgba(197, 165, 114, 0.25)",
+        };
+        break;
+      case "subtle":
+        variantStyle = {
+          backgroundColor: Colors.velvetSubtle,
+          borderColor: Colors.borderSubtle,
+        };
+        break;
+      default:
+        variantStyle = {
+          backgroundColor: Colors.velvet,
+          borderColor: Colors.border,
+        };
+        break;
+    }
+
+    return {
       borderRadius: Radius.none,
       padding: Spacing.lg,
       borderWidth: 1,
       borderColor: Colors.border,
       backgroundColor: Colors.velvet,
+      ...variantStyle,
     };
-
-    switch (variant) {
-      case "elevated":
-        base.backgroundColor = Colors.velvetElevated;
-        base.borderColor = "rgba(197, 165, 114, 0.3)";
-        break;
-      case "brass":
-        base.backgroundColor = Colors.velvetElevated;
-        base.borderColor = Colors.brass;
-        base.borderWidth = 1.5;
-        break;
-      case "glass":
-        base.backgroundColor = "rgba(28, 29, 38, 0.85)";
-        base.borderColor = "rgba(197, 165, 114, 0.25)";
-        break;
-      case "subtle":
-        base.backgroundColor = Colors.velvetSubtle;
-        base.borderColor = Colors.borderSubtle;
-        break;
-      default:
-        base.backgroundColor = Colors.velvet;
-        base.borderColor = Colors.border;
-        break;
-    }
-
-    return base;
   };
 
   if (onPress) {

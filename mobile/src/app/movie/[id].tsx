@@ -62,7 +62,7 @@ export default function MovieDetailScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const router = useRouter();
   const queryClient = useQueryClient();
-  const { isAuthenticated } = useAuth();
+  const { user, isAuthenticated } = useAuth();
 
   const [logModalVisible, setLogModalVisible] = useState(false);
 
@@ -83,7 +83,7 @@ export default function MovieDetailScreen() {
 
   // 2. Query user's current Watchlist entries if authenticated
   const { data: watchlistEntries } = useQuery<WatchlistEntry[]>({
-    queryKey: ["watchlist"],
+    queryKey: ["watchlist", user?.id],
     queryFn: watchlistApi.getWatchlist,
     enabled: isAuthenticated,
   });
