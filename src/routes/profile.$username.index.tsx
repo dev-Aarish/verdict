@@ -20,7 +20,7 @@ import { type TasteBreakdown } from "@/api/taste-score";
 import { type TasteMatch } from "@/api/taste-match";
 import { followUserFn, unfollowUserFn } from "@/api/follows";
 import { useUser } from "@/lib/user-context";
-import { useState, useCallback, useEffect, useMemo } from "react";
+import { useState, useCallback, useEffect, useMemo, useRef } from "react";
 import type {
   User,
   WatchedEntryWithMovie,
@@ -44,14 +44,22 @@ import { avatarUrlFor } from "@/lib/avatar";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { ArrowDown, ArrowUp, Pencil, Info } from "lucide-react";
 
+type SortMode = "custom" | "rating-desc" | "rating-asc" | "title-asc" | "recent";
+
 type ProfileSearch = {
   page?: number;
+  sort?: SortMode;
 };
 
 export const Route = createFileRoute("/profile/$username/")({
   validateSearch: (search: Record<string, unknown>): ProfileSearch => {
     const page = Number(search?.page);
-    return page && page > 1 ? { page } : {};
+    const validSorts: SortMode[] = ["custom", "rating-desc", "rating-asc", "title-asc", "recent"];
+    const sort = validSorts.includes(search?.sort as SortMode) ? (search.sort as SortMode) : undefined;
+    return {
+      ...(page && page > 1 ? { page } : {}),
+      ...(sort && sort !== "custom" ? { sort } : {}),
+    };
   },
   staleTime: 30_000,
   gcTime: 1000 * 60 * 5,
@@ -79,8 +87,6 @@ export const Route = createFileRoute("/profile/$username/")({
   component: ProfilePage,
 });
 
-type SortMode = "custom" | "rating-desc" | "rating-asc" | "title-asc" | "recent";
-
 const MAX_ABOUT_LENGTH = 200;
 
 const SORT_OPTIONS: { value: SortMode; label: string }[] = [
@@ -99,6 +105,7 @@ function ProfilePage() {
   const initialData = loaderData?.profileData;
   const loaderIs404 = loaderData?.errorStatus === 404;
   const currentPage = search.page || 1;
+  const sortMode: SortMode = search.sort ?? "custom";
   const { user, setUser } = useUser();
   const router = useRouter();
   const isOwn = user?.username === username;
@@ -127,7 +134,6 @@ function ProfilePage() {
   const [editNote, setEditNote] = useState("");
   const [editing, setEditing] = useState(false);
   const [editError, setEditError] = useState<string | null>(null);
-  const [sortMode, setSortMode] = useState<SortMode>("custom");
   const [editingAbout, setEditingAbout] = useState(false);
   const [aboutDraft, setAboutDraft] = useState("");
   const [aboutSaving, setAboutSaving] = useState(false);
@@ -378,10 +384,25 @@ function ProfilePage() {
     }
   };
 
+  const isPaginatingRef = useRef(false);
+
   const goToPage = useCallback((page: number) => {
-    navigate({ search: (prev: ProfileSearch) => ({ ...prev, page }) });
-    window.scrollTo({ top: 0, behavior: "smooth" });
+    isPaginatingRef.current = true;
+    navigate({
+      search: (prev: ProfileSearch) => ({ ...prev, page }),
+      resetScroll: false,
+    });
+    document.getElementById("watched-films-section")?.scrollIntoView({ behavior: "smooth", block: "start" });
   }, [navigate]);
+
+  useEffect(() => {
+    if (isPaginatingRef.current) {
+      isPaginatingRef.current = false;
+      requestAnimationFrame(() => {
+        document.getElementById("watched-films-section")?.scrollIntoView({ behavior: "smooth", block: "start" });
+      });
+    }
+  }, [currentPage]);
 
   const filmCount = entries?.length || 0;
   const dna = entries && entries.length > 0 ? computeGenreDna(entries) : null;
@@ -727,7 +748,7 @@ function ProfilePage() {
           </section>
         )}
 
-        <section className="hairline mt-10 pt-8">
+        <section id="watched-films-section" className="hairline mt-10 pt-8 scroll-mt-20 md:scroll-mt-24">
           <div className="flex flex-wrap items-center justify-between gap-3 mb-6">
             <h2 className="text-card-title text-paper">Watched Films</h2>
             <div className="flex items-center gap-4">
@@ -740,10 +761,13 @@ function ProfilePage() {
                     data-testid="sort-select"
                     value={sortMode}
                     onChange={(e) => {
-                      setSortMode(e.target.value as SortMode);
-                      if (currentPage > 1) {
-                        navigate({ search: (prev: ProfileSearch) => ({ ...prev, page: undefined }) });
-                      }
+                      const newSort = e.target.value as SortMode;
+                      navigate({
+                        search: (_prev: ProfileSearch) => ({
+                          ...(newSort !== "custom" ? { sort: newSort } : {}),
+                        }),
+                        resetScroll: false,
+                      });
                     }}
                     className="bg-transparent border border-dust/30 px-2 py-1.5 text-caption text-brass text-xs cursor-pointer outline-none hover:border-brass/60"
                   >
