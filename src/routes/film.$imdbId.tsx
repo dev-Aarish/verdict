@@ -276,76 +276,74 @@ function FilmPage() {
                   : "Worth your time? Add to watchlist"}
               </button>
             )}
-
-            {castList.length > 0 && (
-              <div className="mt-8">
-                <p className="text-caption text-dust mb-3 tracking-widest uppercase font-mono text-xs">
-                  Cast
-                </p>
-                <div className="grid grid-cols-2 gap-2.5 sm:grid-cols-3 lg:grid-cols-4">
-                  {castList.map((actor, idx) => {
-                    const initials = actor.name
-                      .split(" ")
-                      .filter(Boolean)
-                      .map((p) => p[0])
-                      .slice(0, 2)
-                      .join("")
-                      .toUpperCase();
-
-                    return (
-                      <div
-                        key={`${actor.name}-${idx}`}
-                        className="flex items-center gap-2.5 rounded border border-dust/20 bg-velvet/40 p-2 transition-colors hover:border-dust/40"
-                      >
-                        <div className="relative flex h-10 w-10 shrink-0 items-center justify-center overflow-hidden rounded-full bg-dust/15 ring-1 ring-white/10">
-                          {actor.profileUrl ? (
-                            <>
-                              <img
-                                src={actor.profileUrl}
-                                alt={actor.name}
-                                className="h-full w-full object-cover"
-                                loading="lazy"
-                                onError={(e) => {
-                                  e.currentTarget.style.display = "none";
-                                  const fallback =
-                                    e.currentTarget.parentElement?.querySelector(".initials-fallback");
-                                  if (fallback) (fallback as HTMLElement).style.display = "flex";
-                                }}
-                              />
-                              <span className="initials-fallback hidden text-[11px] font-mono uppercase text-dust">
-                                {initials}
-                              </span>
-                            </>
-                          ) : (
-                            <span className="text-[11px] font-mono uppercase text-dust">
-                              {initials}
-                            </span>
-                          )}
-                        </div>
-                        <div className="min-w-0 flex-1">
-                          <p
-                            className="truncate text-xs font-medium text-paper leading-tight"
-                            title={actor.name}
-                          >
-                            {actor.name}
-                          </p>
-                          {actor.character && (
-                            <p
-                              className="truncate text-[11px] text-dust/70 leading-tight mt-0.5"
-                              title={actor.character}
-                            >
-                              {actor.character}
-                            </p>
-                          )}
-                        </div>
-                      </div>
-                    );
-                  })}
-                </div>
-              </div>
-            )}
           </div>
         </div>
+
+        {castList.length > 0 && (
+          <section className="hairline mt-12 pt-8">
+            <h2 className="text-card-title text-paper mb-6">Cast</h2>
+            <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4">
+              {castList.map((actor, idx) => {
+                const initials = actor.name
+                  .split(" ")
+                  .filter(Boolean)
+                  .map((p) => p[0])
+                  .slice(0, 2)
+                  .join("")
+                  .toUpperCase();
+
+                return (
+                  <div
+                    key={`${actor.name}-${idx}`}
+                    className="flex items-center gap-3.5 rounded border border-dust/20 bg-velvet/40 p-3 transition-colors hover:border-dust/40 hover:bg-velvet/60"
+                  >
+                    <div className="relative flex h-13 w-13 shrink-0 items-center justify-center overflow-hidden rounded-full bg-dust/15 ring-1 ring-white/10 sm:h-14 sm:w-14">
+                      {actor.profileUrl ? (
+                        <>
+                          <img
+                            src={actor.profileUrl}
+                            alt={actor.name}
+                            className="h-full w-full object-cover"
+                            loading="lazy"
+                            onError={(e) => {
+                              e.currentTarget.style.display = "none";
+                              const fallback =
+                                e.currentTarget.parentElement?.querySelector(".initials-fallback");
+                              if (fallback) (fallback as HTMLElement).style.display = "flex";
+                            }}
+                          />
+                          <span className="initials-fallback hidden text-xs font-mono uppercase text-dust/80 font-medium">
+                            {initials}
+                          </span>
+                        </>
+                      ) : (
+                        <span className="text-xs font-mono uppercase text-dust/80 font-medium">
+                          {initials}
+                        </span>
+                      )}
+                    </div>
+                    <div className="min-w-0 flex-1">
+                      <p
+                        className="truncate text-sm font-medium text-paper leading-snug"
+                        title={actor.name}
+                      >
+                        {actor.name}
+                      </p>
+                      {actor.character && (
+                        <p
+                          className="truncate text-xs text-dust/70 leading-snug mt-0.5"
+                          title={actor.character}
+                        >
+                          {actor.character}
+                        </p>
+                      )}
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </section>
+        )}
 
         {(() => {
           const facts = [
