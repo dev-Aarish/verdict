@@ -8,7 +8,7 @@ import { addToWatchlistFn, removeWatchlistFn, getCurrentUserWatchlistFn } from "
 import { useUser } from "@/lib/user-context";
 import { dicebearAvatar } from "@/lib/avatar";
 import { formatRuntime } from "@/lib/utils";
-import type { FilmPage } from "@/lib/types";
+import type { FilmPage, CastMember } from "@/lib/types";
 
 export const Route = createFileRoute("/film/$imdbId")({
   head: ({ params }) => ({
@@ -32,6 +32,60 @@ function FilmPage() {
   const [loading, setLoading] = useState(true);
   const [watchlistEntryId, setWatchlistEntryId] = useState<string | null>(null);
   const [watchlistBusy, setWatchlistBusy] = useState(false);
+  const [enrichedCast, setEnrichedCast] = useState<CastMember[] | null>(null);
+
+  useEffect(() => {
+    setEnrichedCast(null);
+  }, [imdbId]);
+
+  useEffect(() => {
+    if (!data?.movie) return;
+    const movie = data.movie;
+    let existingCast: CastMember[] = [];
+    if (movie.castJson) {
+      try {
+        existingCast = JSON.parse(movie.castJson);
+      } catch {}
+    }
+    const hasPhotos = existingCast.some((c) => Boolean(c.profileUrl));
+    if (hasPhotos || !movie.imdbId) return;
+
+    let cancelled = false;
+    const fetchTmdbCast = async () => {
+      try {
+        const apiKey = import.meta.env.VITE_TMDB_API_KEY || "ba475a72459a1a0b4d772f3a8a257a26";
+        const findRes = await fetch(
+          `https://api.themoviedb.org/3/find/${movie.imdbId}?external_source=imdb_id&api_key=${apiKey}`,
+        );
+        if (!findRes.ok) return;
+        const findData = await findRes.json();
+        const tmdbId = findData.movie_results?.[0]?.id;
+        if (!tmdbId || cancelled) return;
+
+        const creditsRes = await fetch(
+          `https://api.themoviedb.org/3/movie/${tmdbId}/credits?api_key=${apiKey}`,
+        );
+        if (!creditsRes.ok || cancelled) return;
+        const creditsData = await creditsRes.json();
+
+        if (Array.isArray(creditsData.cast) && creditsData.cast.length > 0 && !cancelled) {
+          const formatted: CastMember[] = creditsData.cast.slice(0, 16).map((c: any) => ({
+            name: c.name,
+            character: c.character || null,
+            profileUrl: c.profile_path ? `https://image.tmdb.org/t/p/w185${c.profile_path}` : null,
+          }));
+          setEnrichedCast(formatted);
+        }
+      } catch (err) {
+        console.error("Failed to load TMDb cast", err);
+      }
+    };
+
+    fetchTmdbCast();
+    return () => {
+      cancelled = true;
+    };
+  }, [data]);
 
   useEffect(() => {
     setLoading(true);
@@ -117,10 +171,26 @@ function FilmPage() {
     .split(",")
     .map((g) => g.trim())
     .filter(Boolean);
-  const cast = (movie.actors || "")
-    .split(",")
-    .map((a) => a.trim())
-    .filter(Boolean);
+  const castList: CastMember[] = (() => {
+    if (enrichedCast && enrichedCast.length > 0) {
+      return enrichedCast;
+    }
+    if (movie.castJson) {
+      try {
+        const parsed = JSON.parse(movie.castJson);
+        if (Array.isArray(parsed) && parsed.length > 0) {
+          return parsed;
+        }
+      } catch {
+        // Fallback to comma-separated actors string
+      }
+    }
+    return (movie.actors || "")
+      .split(",")
+      .map((a) => a.trim())
+      .filter(Boolean)
+      .map((name) => ({ name }));
+  })();
 
   return (
     <div className="min-h-screen">
@@ -207,18 +277,70 @@ function FilmPage() {
               </button>
             )}
 
-            {cast.length > 0 && (
-              <div className="mt-6">
-                <p className="text-caption text-dust mb-2">Cast</p>
-                <div className="flex flex-wrap gap-2">
-                  {cast.map((actor) => (
-                    <span
-                      key={actor}
-                      className="border border-dust/30 px-3 py-1 text-caption text-paper/80 text-xs"
-                    >
-                      {actor}
-                    </span>
-                  ))}
+            {castList.length > 0 && (
+              <div className="mt-8">
+                <p className="text-caption text-dust mb-3 tracking-widest uppercase font-mono text-xs">
+                  Cast
+                </p>
+                <div className="grid grid-cols-2 gap-2.5 sm:grid-cols-3 lg:grid-cols-4">
+                  {castList.map((actor, idx) => {
+                    const initials = actor.name
+                      .split(" ")
+                      .filter(Boolean)
+                      .map((p) => p[0])
+                      .slice(0, 2)
+                      .join("")
+                      .toUpperCase();
+
+                    return (
+                      <div
+                        key={`${actor.name}-${idx}`}
+                        className="flex items-center gap-2.5 rounded border border-dust/20 bg-velvet/40 p-2 transition-colors hover:border-dust/40"
+                      >
+                        <div className="relative flex h-10 w-10 shrink-0 items-center justify-center overflow-hidden rounded-full bg-dust/15 ring-1 ring-white/10">
+                          {actor.profileUrl ? (
+                            <>
+                              <img
+                                src={actor.profileUrl}
+                                alt={actor.name}
+                                className="h-full w-full object-cover"
+                                loading="lazy"
+                                onError={(e) => {
+                                  e.currentTarget.style.display = "none";
+                                  const fallback =
+                                    e.currentTarget.parentElement?.querySelector(".initials-fallback");
+                                  if (fallback) (fallback as HTMLElement).style.display = "flex";
+                                }}
+                              />
+                              <span className="initials-fallback hidden text-[11px] font-mono uppercase text-dust">
+                                {initials}
+                              </span>
+                            </>
+                          ) : (
+                            <span className="text-[11px] font-mono uppercase text-dust">
+                              {initials}
+                            </span>
+                          )}
+                        </div>
+                        <div className="min-w-0 flex-1">
+                          <p
+                            className="truncate text-xs font-medium text-paper leading-tight"
+                            title={actor.name}
+                          >
+                            {actor.name}
+                          </p>
+                          {actor.character && (
+                            <p
+                              className="truncate text-[11px] text-dust/70 leading-tight mt-0.5"
+                              title={actor.character}
+                            >
+                              {actor.character}
+                            </p>
+                          )}
+                        </div>
+                      </div>
+                    );
+                  })}
                 </div>
               </div>
             )}

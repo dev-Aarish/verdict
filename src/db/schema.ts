@@ -22,6 +22,7 @@ export const movies = pgTable("movies", {
   director: text("director"),
   plot: text("plot"),
   actors: text("actors"),
+  castJson: text("cast_json"),
   runtime: integer("runtime"),
   rated: text("rated"),
   released: text("released"),

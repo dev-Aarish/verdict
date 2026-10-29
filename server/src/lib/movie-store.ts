@@ -38,6 +38,7 @@ export interface MovieDetailFields {
   country: string | null;
   plot: string | null;
   actors: string | null;
+  castJson: string | null;
   runtime: number | null;
   rated: string | null;
   released: string | null;
@@ -283,6 +284,16 @@ export function fromTmdbDetail(imdbId: string, detail: any): MovieDetailFields {
     country: detail.production_countries?.[0]?.name || null,
     plot: detail.overview || null,
     actors: cast.slice(0, 10).map((c: any) => c.name).join(", ") || null,
+    castJson:
+      cast.length > 0
+        ? JSON.stringify(
+            cast.slice(0, 16).map((c: any) => ({
+              name: c.name,
+              character: c.character || null,
+              profileUrl: c.profile_path ? `https://image.tmdb.org/t/p/w185${c.profile_path}` : null,
+            })),
+          )
+        : null,
     runtime: typeof detail.runtime === "number" && detail.runtime > 0 ? detail.runtime : null,
     rated,
     released: formatReleaseDate(detail.release_date),
@@ -387,6 +398,15 @@ export function fromDetail(imdbId: string, detail: OmdbDetailResult): MovieDetai
     country: detail.Country && detail.Country !== "N/A" ? detail.Country : null,
     plot: detail.Plot && detail.Plot !== "N/A" ? detail.Plot : null,
     actors: detail.Actors && detail.Actors !== "N/A" ? detail.Actors : null,
+    castJson:
+      detail.Actors && detail.Actors !== "N/A"
+        ? JSON.stringify(
+            detail.Actors.split(",")
+              .map((a) => a.trim())
+              .filter(Boolean)
+              .map((name) => ({ name, character: null, profileUrl: null })),
+          )
+        : null,
     runtime: parseRuntime(detail.Runtime),
     rated: clean(detail.Rated),
     released: clean(detail.Released),
@@ -437,6 +457,7 @@ export async function findOrCreateMovie(fields: {
       country: detail.country,
       plot: detail.plot,
       actors: detail.actors,
+      castJson: detail.castJson || null,
       runtime: detail.runtime,
       rated: detail.rated,
       released: detail.released,

@@ -17,6 +17,12 @@ export interface UserSafe {
   createdAt: Date | null;
 }
 
+export interface CastMember {
+  name: string;
+  character?: string | null;
+  profileUrl?: string | null;
+}
+
 export interface Movie {
   id: string;
   imdbId: string;
@@ -28,6 +34,7 @@ export interface Movie {
   director: string | null;
   plot: string | null;
   actors: string | null;
+  castJson?: string | null;
   runtime: number | null;
   rated: string | null;
   released: string | null;

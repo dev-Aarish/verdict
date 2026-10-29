@@ -29,6 +29,7 @@ function mergeMovieFields(movie: typeof movies.$inferSelect, fresh: MovieDetailF
     country: movie.country || fresh.country,
     plot: movie.plot || fresh.plot,
     actors: movie.actors || fresh.actors,
+    castJson: movie.castJson || fresh.castJson || null,
     runtime: movie.runtime || fresh.runtime,
     rated: movie.rated || fresh.rated,
     released: movie.released || fresh.released,
@@ -57,7 +58,8 @@ function needsEnrichment(movie: typeof movies.$inferSelect): boolean {
     !movie.released ||
     !movie.writer ||
     !movie.language ||
-    !movie.awards
+    !movie.awards ||
+    !movie.castJson
   );
 }
 
@@ -93,6 +95,7 @@ moviesRouter.get("/film/:imdbId", async (req: Request, res: Response) => {
           country: movie.country,
           plot: movie.plot,
           actors: movie.actors,
+          castJson: movie.castJson,
           runtime: movie.runtime,
           rated: movie.rated,
           released: movie.released,
