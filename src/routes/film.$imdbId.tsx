@@ -361,33 +361,41 @@ function FilmPage() {
 
           return (
             <section className="hairline mt-12 pt-8">
-              <h2 className="text-card-title text-paper mb-6">The Print</h2>
-              <dl className="grid max-w-3xl grid-cols-1 gap-x-12 sm:grid-cols-2">
-                {facts.map((f) => (
-                  <div
-                    key={f.label}
-                    className="flex items-baseline justify-between gap-6 border-b border-dust/10 py-3 max-md:flex-col max-md:items-start max-md:gap-1"
-                  >
-                    <dt className="text-caption text-dust text-xs shrink-0">{f.label}</dt>
-                    <dd className="text-sm text-paper/80 text-right max-md:text-left">{f.value}</dd>
-                  </div>
-                ))}
-                {movie.website && (
-                  <div className="flex items-baseline justify-between gap-6 border-b border-dust/10 py-3 max-md:flex-col max-md:items-start max-md:gap-1">
-                    <dt className="text-caption text-dust text-xs shrink-0">Website</dt>
-                    <dd className="text-sm text-right max-md:text-left">
-                      <a
-                        href={movie.website}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="text-brass hover:underline break-all"
-                      >
-                        {movie.website.replace(/^https?:\/\//, "")}
-                      </a>
-                    </dd>
-                  </div>
-                )}
-              </dl>
+              <div className="mx-auto max-w-3xl">
+                <h2 className="text-card-title text-paper mb-8 text-center">The Print</h2>
+                <dl className="grid grid-cols-1 gap-x-12 sm:grid-cols-2">
+                  {facts.map((f) => (
+                    <div
+                      key={f.label}
+                      className="flex flex-col items-center justify-center border-b border-dust/10 py-3.5 text-center"
+                    >
+                      <dt className="text-caption text-dust text-[11px] font-mono uppercase tracking-widest">
+                        {f.label}
+                      </dt>
+                      <dd className="text-sm font-medium text-paper/90 mt-1">
+                        {f.value}
+                      </dd>
+                    </div>
+                  ))}
+                  {movie.website && (
+                    <div className="flex flex-col items-center justify-center border-b border-dust/10 py-3.5 text-center sm:col-span-2">
+                      <dt className="text-caption text-dust text-[11px] font-mono uppercase tracking-widest">
+                        Website
+                      </dt>
+                      <dd className="text-sm font-medium mt-1">
+                        <a
+                          href={movie.website}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="text-brass hover:underline break-all"
+                        >
+                          {movie.website.replace(/^https?:\/\//, "")}
+                        </a>
+                      </dd>
+                    </div>
+                  )}
+                </dl>
+              </div>
             </section>
           );
         })()}
