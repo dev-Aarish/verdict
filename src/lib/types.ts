@@ -112,3 +112,20 @@ export interface LeaderboardRow {
   user: UserSafe | null;
   score: number;
 }
+
+export interface Recommendation {
+  id: string;
+  fromUserId: string;
+  toUserId: string;
+  movieId: string;
+  note: string | null;
+  status: "pending" | "accepted" | "dismissed";
+  createdAt: Date | string | null;
+  viewedAt: Date | string | null;
+}
+
+export interface RecommendationWithDetails extends Recommendation {
+  fromUser: UserSafe | null;
+  toUser: UserSafe | null;
+  movie: Movie | null;
+}

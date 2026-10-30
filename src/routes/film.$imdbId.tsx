@@ -9,6 +9,8 @@ import { useUser } from "@/lib/user-context";
 import { dicebearAvatar } from "@/lib/avatar";
 import { formatRuntime } from "@/lib/utils";
 import type { FilmPage, CastMember } from "@/lib/types";
+import { RecommendDialog } from "@/components/RecommendDialog";
+import { Sparkles } from "lucide-react";
 
 export const Route = createFileRoute("/film/$imdbId")({
   head: ({ params }) => ({
@@ -33,6 +35,7 @@ function FilmPage() {
   const [watchlistEntryId, setWatchlistEntryId] = useState<string | null>(null);
   const [watchlistBusy, setWatchlistBusy] = useState(false);
   const [enrichedCast, setEnrichedCast] = useState<CastMember[] | null>(null);
+  const [recommendOpen, setRecommendOpen] = useState(false);
 
   useEffect(() => {
     setEnrichedCast(null);
@@ -262,19 +265,29 @@ function FilmPage() {
             )}
 
             {user && (
-              <button
-                onClick={toggleWatchlist}
-                disabled={watchlistBusy}
-                className={`mt-8 border px-5 py-2 text-caption tracking-widest uppercase font-mono transition-colors disabled:opacity-50 cursor-pointer ${
-                  watchlistEntryId
-                    ? "border-brass/60 bg-brass/10 text-brass"
-                    : "border-brass/50 text-brass hover:bg-brass hover:text-ink"
-                }`}
-              >
-                {watchlistEntryId
-                  ? "On your watchlist — remove"
-                  : "Worth your time? Add to watchlist"}
-              </button>
+              <div className="mt-8 flex flex-wrap items-center gap-3">
+                <button
+                  onClick={toggleWatchlist}
+                  disabled={watchlistBusy}
+                  className={`border px-5 py-2 text-caption tracking-widest uppercase font-mono transition-colors disabled:opacity-50 cursor-pointer ${
+                    watchlistEntryId
+                      ? "border-brass/60 bg-brass/10 text-brass"
+                      : "border-brass/50 text-brass hover:bg-brass hover:text-ink"
+                  }`}
+                >
+                  {watchlistEntryId
+                    ? "On your watchlist — remove"
+                    : "Worth your time? Add to watchlist"}
+                </button>
+
+                <button
+                  onClick={() => setRecommendOpen(true)}
+                  className="flex items-center gap-2 border border-dust/30 px-4 py-2 text-caption tracking-widest uppercase font-mono text-dust hover:text-paper hover:border-dust/60 transition-colors cursor-pointer"
+                >
+                  <Sparkles className="h-3.5 w-3.5 text-brass" />
+                  Recommend to Friend
+                </button>
+              </div>
             )}
           </div>
         </div>
@@ -454,6 +467,12 @@ function FilmPage() {
           )}
         </section>
       </main>
+
+      <RecommendDialog
+        open={recommendOpen}
+        onOpenChange={setRecommendOpen}
+        movie={movie}
+      />
     </div>
   );
 }

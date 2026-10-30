@@ -1,6 +1,6 @@
 import { Router, Request, Response } from "express";
 import { db } from "../db/index.js";
-import { movies, users, watchlistEntries } from "../db/schema.js";
+import { movies, users, watchlistEntries, recommendations } from "../db/schema.js";
 import { eq, and, or, inArray, desc } from "drizzle-orm";
 import { v4 as uuidv4 } from "uuid";
 import { requireAuth, AuthRequest } from "../middleware/auth.js";
@@ -74,7 +74,7 @@ watchlistRouter.delete("/:entryId", requireAuth, async (req: AuthRequest, res: R
   const entryId = req.params.entryId as string;
   const userId = req.user!.id;
 
-  const entry = await db
+  let entry = await db
     .select()
     .from(watchlistEntries)
     .where(
@@ -85,13 +85,52 @@ watchlistRouter.delete("/:entryId", requireAuth, async (req: AuthRequest, res: R
     )
     .then((r) => r[0]);
 
+  // Fallback 1: check if entryId was a recommendation id
+  if (!entry) {
+    const rec = await db
+      .select()
+      .from(recommendations)
+      .where(
+        and(
+          eq(recommendations.id, entryId),
+          or(eq(recommendations.toUserId, userId), eq(recommendations.fromUserId, userId))
+        )
+      )
+      .then((r) => r[0]);
+
+    if (rec) {
+      entry = await db
+        .select()
+        .from(watchlistEntries)
+        .where(and(eq(watchlistEntries.userId, userId), eq(watchlistEntries.movieId, rec.movieId)))
+        .then((r) => r[0]);
+    }
+  }
+
+  // Fallback 2: check if entryId is an imdbId
+  if (!entry) {
+    const movie = await db
+      .select()
+      .from(movies)
+      .where(eq(movies.imdbId, entryId))
+      .then((r) => r[0]);
+
+    if (movie) {
+      entry = await db
+        .select()
+        .from(watchlistEntries)
+        .where(and(eq(watchlistEntries.userId, userId), eq(watchlistEntries.movieId, movie.id)))
+        .then((r) => r[0]);
+    }
+  }
+
   if (!entry) {
     res.status(404).json({ error: "Watchlist entry not found" });
     return;
   }
 
   await db.delete(watchlistEntries).where(eq(watchlistEntries.id, entry.id));
-  res.json({ success: true });
+  res.json({ success: true, removedEntryId: entry.id });
 });
 
 // GET /api/watchlist/me (requireAuth) — current user's watchlist

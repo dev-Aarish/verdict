@@ -134,3 +134,30 @@ export const tasteScores = pgTable("taste_scores", {
   breakdownJson: text("breakdown_json").notNull(),
   lastComputed: timestamp("last_computed", { withTimezone: true }).defaultNow(),
 });
+
+export const recommendations = pgTable(
+  "recommendations",
+  {
+    id: text("id").primaryKey(),
+    fromUserId: text("from_user_id")
+      .notNull()
+      .references(() => users.id),
+    toUserId: text("to_user_id")
+      .notNull()
+      .references(() => users.id),
+    movieId: text("movie_id")
+      .notNull()
+      .references(() => movies.id),
+    note: text("note"),
+    status: text("status").notNull().default("pending"),
+    createdAt: timestamp("created_at", { withTimezone: true }).defaultNow(),
+    viewedAt: timestamp("viewed_at", { withTimezone: true }),
+  },
+  (table) => [
+    index("recommendations_to_user_id_idx").on(table.toUserId),
+    index("recommendations_from_user_id_idx").on(table.fromUserId),
+    index("recommendations_movie_id_idx").on(table.movieId),
+    index("recommendations_status_idx").on(table.status),
+    index("recommendations_viewed_at_idx").on(table.viewedAt),
+  ],
+);

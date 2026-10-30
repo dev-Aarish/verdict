@@ -14,6 +14,18 @@ import {
   reorderWatchedFn,
 } from "@/api/movies";
 import { removeWatchlistFn } from "@/api/watchlist";
+import {
+  getReceivedRecommendationsFn,
+  acceptRecommendationFn,
+  dismissRecommendationFn,
+  markRecommendationViewedFn,
+} from "@/api/recommendations";
+import {
+  setRecommendationUnreadCount,
+  decrementRecommendationCount,
+} from "@/lib/recommendations-store";
+import { RecommendDialog } from "@/components/RecommendDialog";
+import { toast } from "sonner";
 import { updateProfileFn, getUserProfileFn, type UserProfileData } from "@/api/users";
 import { ApiError } from "@/api/client";
 import { type TasteBreakdown } from "@/api/taste-score";
@@ -21,11 +33,13 @@ import { type TasteMatch } from "@/api/taste-match";
 import { followUserFn, unfollowUserFn } from "@/api/follows";
 import { useUser } from "@/lib/user-context";
 import { useState, useCallback, useEffect, useMemo, useRef } from "react";
+import { motion, AnimatePresence } from "framer-motion";
 import type {
   User,
   WatchedEntryWithMovie,
   VerdictWithUser,
   WatchlistEntryWithMovie,
+  RecommendationWithDetails,
 } from "@/lib/types";
 import {
   AlertDialog,
@@ -42,7 +56,7 @@ import { WatchedEntryDialog } from "@/components/WatchedEntryDialog";
 import { AvatarPickerDialog } from "@/components/AvatarPickerDialog";
 import { avatarUrlFor } from "@/lib/avatar";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
-import { ArrowDown, ArrowUp, Pencil, Info } from "lucide-react";
+import { ArrowDown, ArrowUp, Pencil, Info, Sparkles, Check, X as XIcon } from "lucide-react";
 
 type SortMode = "custom" | "rating-desc" | "rating-asc" | "title-asc" | "recent";
 
@@ -142,6 +156,11 @@ function ProfilePage() {
   const [avatarSaving, setAvatarSaving] = useState(false);
   const [avatarError, setAvatarError] = useState<string | null>(null);
   const [showBreakdown, setShowBreakdown] = useState(false);
+  const [recommendations, setRecommendations] = useState<RecommendationWithDetails[] | null>(null);
+  const [recommendationsLoading, setRecommendationsLoading] = useState(false);
+  const [showRecommendModal, setShowRecommendModal] = useState(false);
+  const [acceptedRecIds, setAcceptedRecIds] = useState<Set<string>>(new Set());
+  const [dismissedRecIds, setDismissedRecIds] = useState<Set<string>>(new Set());
   const PAGE_SIZE = 20;
 
   // Keep local state in sync when loaderData updates (e.g. navigation or router.invalidate)
@@ -284,12 +303,24 @@ function ProfilePage() {
   };
 
   const handleWatchlistRemove = async (entryId: string) => {
+    // Optimistically remove from local state immediately
+    const prevList = watchlist;
+    setWatchlist((prev) => prev?.filter((e) => e.id !== entryId && e.movieId !== entryId) || []);
+
     try {
       await removeWatchlistFn({ data: { entryId } });
-      setWatchlist((prev) => prev?.filter((e) => e.id !== entryId) || []);
+      toast.success("Removed from watchlist");
       router.invalidate();
-    } catch (e) {
+    } catch (e: any) {
+      // If the backend returns 404 (not found), it is already gone from the database.
+      // Retain the optimistic removal rather than reverting.
+      if (e?.status === 404 || e?.message?.includes("not found")) {
+        router.invalidate();
+        return;
+      }
       console.error("Failed to remove from watchlist", e);
+      toast.error(e?.message || "Failed to remove from watchlist");
+      setWatchlist(prevList);
     }
   };
 
@@ -331,6 +362,146 @@ function ProfilePage() {
       setLogError(msg);
     } finally {
       setLogging(false);
+    }
+  };
+
+  useEffect(() => {
+    if (!isOwn) return;
+    setRecommendationsLoading(true);
+    getReceivedRecommendationsFn({ status: "pending" })
+      .then((res) => {
+        // Only ever display pending recommendations
+        const pendingOnly = (res.recommendations || []).filter((r) => r.status === "pending");
+        setRecommendations(pendingOnly);
+        if (typeof res.unreadCount === "number") {
+          setRecommendationUnreadCount(res.unreadCount);
+        }
+      })
+      .catch((err) => console.error("Failed to load recommendations", err))
+      .finally(() => setRecommendationsLoading(false));
+  }, [isOwn]);
+
+  const handleMarkCheckedOut = async (rec: RecommendationWithDetails) => {
+    if (rec.viewedAt) return;
+    try {
+      setRecommendations((prev) =>
+        prev?.map((r) =>
+          r.id === rec.id ? { ...r, viewedAt: new Date().toISOString() } : r,
+        ) || null,
+      );
+      decrementRecommendationCount();
+      await markRecommendationViewedFn({ id: rec.id });
+      toast.success(`Checked out recommendation for "${rec.movie?.title}"`);
+    } catch (err: any) {
+      console.error("Failed to mark recommendation as viewed:", err);
+    }
+  };
+
+  const handleAcceptRecommendation = async (rec: RecommendationWithDetails) => {
+    try {
+      // 1. Enter confirmation feedback phase
+      setAcceptedRecIds((prev) => new Set(prev).add(rec.id));
+
+      if (!rec.viewedAt) {
+        decrementRecommendationCount();
+      }
+
+      // 2. Add to local watchlist queue immediately
+      if (rec.movie) {
+        setWatchlist((prev) => {
+          if (!prev) {
+            return [
+              {
+                id: rec.id,
+                userId: user!.id,
+                movieId: rec.movieId,
+                addedAt: new Date(),
+                movie: rec.movie,
+              },
+            ];
+          }
+          if (
+            prev.some(
+              (w) => w.movieId === rec.movieId || w.movie?.imdbId === rec.movie?.imdbId,
+            )
+          ) {
+            return prev;
+          }
+          return [
+            {
+              id: rec.id,
+              userId: user!.id,
+              movieId: rec.movieId,
+              addedAt: new Date(),
+              movie: rec.movie,
+            },
+            ...prev,
+          ];
+        });
+      }
+
+      toast.success(`Added "${rec.movie?.title}" to your queue!`);
+
+      // 3. Fire backend update and sync the real database watchlist entry id
+      acceptRecommendationFn({ id: rec.id })
+        .then((res) => {
+          if (res?.watchlistEntry?.id) {
+            setWatchlist((prev) =>
+              prev?.map((item) =>
+                item.movieId === rec.movieId || item.id === rec.id
+                  ? { ...item, id: res.watchlistEntry!.id }
+                  : item,
+              ) || null,
+            );
+          }
+        })
+        .catch((err) => {
+          console.error("Failed to accept recommendation on server:", err);
+        });
+
+      // 4. Give the user an intentional 700ms confirmation pause to register the action,
+      // before initiating the slow, cinematic exit dissolve
+      setTimeout(() => {
+        setRecommendations((prev) => prev?.filter((r) => r.id !== rec.id) || null);
+        setAcceptedRecIds((prev) => {
+          const next = new Set(prev);
+          next.delete(rec.id);
+          return next;
+        });
+      }, 700);
+    } catch (err: any) {
+      toast.error(err?.message || "Failed to accept recommendation");
+      setAcceptedRecIds((prev) => {
+        const next = new Set(prev);
+        next.delete(rec.id);
+        return next;
+      });
+    }
+  };
+
+  const handleDismissRecommendation = async (recId: string) => {
+    try {
+      const rec = recommendations?.find((r) => r.id === recId);
+      if (rec && !rec.viewedAt) {
+        decrementRecommendationCount();
+      }
+
+      setDismissedRecIds((prev) => new Set(prev).add(recId));
+      dismissRecommendationFn({ id: recId }).catch(() => {});
+
+      // 400ms feedback before sliding away
+      setTimeout(() => {
+        setRecommendations((prev) => prev?.filter((r) => r.id !== recId) || null);
+        setDismissedRecIds((prev) => {
+          const next = new Set(prev);
+          next.delete(recId);
+          return next;
+        });
+      }, 400);
+
+      toast.info("Recommendation passed");
+    } catch (err: any) {
+      toast.error(err?.message || "Failed to dismiss recommendation");
     }
   };
 
@@ -691,7 +862,7 @@ function ProfilePage() {
         />
 
         {!isOwn && (
-          <div className="mt-8 flex justify-center">
+          <div className="mt-8 flex flex-wrap items-center justify-center gap-4">
             <Link
               to="/verdict/$username"
               params={{ username }}
@@ -699,6 +870,15 @@ function ProfilePage() {
             >
               Leave a Verdict →
             </Link>
+            {user && (
+              <button
+                onClick={() => setShowRecommendModal(true)}
+                className="border border-dust/30 px-6 py-3 text-caption text-dust hover:text-paper hover:border-dust/60 transition-colors flex items-center gap-2 cursor-pointer bg-velvet/30"
+              >
+                <Sparkles className="h-3.5 w-3.5 text-brass" />
+                Recommend a Film
+              </button>
+            )}
           </div>
         )}
 
@@ -958,6 +1138,199 @@ function ProfilePage() {
           )}
         </section>
 
+        {isOwn && (
+          <section className="hairline mt-10 pt-8">
+            <div className="flex items-center justify-between mb-6">
+              <div className="flex items-center gap-2.5">
+                <h2 className="text-card-title text-paper">Recommended for You</h2>
+                {recommendations &&
+                  recommendations.filter((r) => !r.viewedAt).length > 0 && (
+                    <span className="px-2 py-0.5 text-[0.65rem] font-mono uppercase bg-brass text-ink font-semibold rounded-full">
+                      {recommendations.filter((r) => !r.viewedAt).length} new
+                    </span>
+                  )}
+              </div>
+            </div>
+
+            {recommendationsLoading && (!recommendations || recommendations.length === 0) ? (
+              <p className="text-caption text-dust text-center py-10">Checking recommendations...</p>
+            ) : !recommendations || recommendations.length === 0 ? (
+              <div className="text-center py-10">
+                <p className="text-caption text-dust">
+                  No active recommendations — films recommended by friends will appear here.
+                </p>
+              </div>
+            ) : (
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <AnimatePresence>
+                {recommendations.map((rec) => {
+                  const m = rec.movie;
+                  if (!m) return null;
+                  const isUnread = !rec.viewedAt;
+                  const isAccepted = acceptedRecIds.has(rec.id);
+                  const isDismissed = dismissedRecIds.has(rec.id);
+
+                  return (
+                    <motion.div
+                      key={rec.id}
+                      layout
+                      initial={{ opacity: 0, scale: 0.96, y: 12 }}
+                      animate={
+                        isAccepted
+                          ? { opacity: 0.95, scale: 0.99, y: 0 }
+                          : isDismissed
+                            ? { opacity: 0.45, scale: 0.98, x: 8 }
+                            : { opacity: 1, scale: 1, y: 0, x: 0 }
+                      }
+                      exit={
+                        isAccepted
+                          ? {
+                              opacity: 0,
+                              scale: 0.92,
+                              y: 36,
+                              filter: "blur(14px)",
+                              transition: { duration: 0.85, ease: [0.16, 1, 0.3, 1] },
+                            }
+                          : {
+                              opacity: 0,
+                              scale: 0.95,
+                              x: 36,
+                              filter: "blur(10px)",
+                              transition: { duration: 0.75, ease: [0.16, 1, 0.3, 1] },
+                            }
+                      }
+                      transition={{
+                        layout: { duration: 0.65, ease: [0.16, 1, 0.3, 1] },
+                        duration: 0.4,
+                        ease: [0.16, 1, 0.3, 1],
+                      }}
+                      className={`flex flex-col justify-between border p-4 rounded overflow-hidden transition-all duration-500 ${
+                        isAccepted
+                          ? "border-brass/60 bg-velvet/80 shadow-[0_0_24px_rgba(212,168,83,0.18)] ring-1 ring-brass/30"
+                          : isDismissed
+                            ? "border-dust/10 bg-velvet/20 opacity-50"
+                            : isUnread
+                              ? "border-brass/35 bg-velvet/50"
+                              : "border-dust/20 bg-velvet/40 hover:border-dust/40"
+                      }`}
+                    >
+                      <div className="flex gap-4">
+                        <Link
+                          to="/film/$imdbId"
+                          params={{ imdbId: m.imdbId }}
+                          onClick={() => handleMarkCheckedOut(rec)}
+                          className="w-16 sm:w-20 aspect-2/3 shrink-0 overflow-hidden rounded bg-black/40 ring-1 ring-white/10 block hover:opacity-90 transition-opacity"
+                        >
+                          <img
+                            src={posterSrc(m.posterUrl)}
+                            alt={m.title}
+                            className="h-full w-full object-cover"
+                            onError={(e) => {
+                              e.currentTarget.src = "/film-placeholder.svg";
+                            }}
+                          />
+                        </Link>
+                        <div className="min-w-0 flex-1">
+                          <div className="flex items-start justify-between gap-2">
+                            <Link
+                              to="/film/$imdbId"
+                              params={{ imdbId: m.imdbId }}
+                              onClick={() => handleMarkCheckedOut(rec)}
+                              className="text-sm font-medium text-paper hover:text-brass hover:underline truncate block"
+                            >
+                              {m.title}
+                            </Link>
+                            {isUnread && (
+                              <span className="shrink-0 px-1.5 py-0.2 text-[0.6rem] font-mono uppercase bg-brass/20 text-brass border border-brass/40 rounded">
+                                New
+                              </span>
+                            )}
+                          </div>
+                          <p className="text-caption text-dust text-xs">
+                            {[m.year, formatRuntime(m.runtime)].filter(Boolean).join(" · ")}
+                          </p>
+
+                          {rec.fromUser && (
+                            <div className="mt-2 flex items-center gap-2">
+                              <img
+                                src={avatarUrlFor(rec.fromUser.username, rec.fromUser.avatarUrl)}
+                                alt={rec.fromUser.username}
+                                className="h-5 w-5 rounded-full object-cover shrink-0"
+                              />
+                              <span className="text-caption text-dust text-xs">
+                                from{" "}
+                                <Link
+                                  to="/profile/$username"
+                                  params={{ username: rec.fromUser.username }}
+                                  className="text-brass hover:underline font-medium"
+                                >
+                                  @{rec.fromUser.username}
+                                </Link>
+                              </span>
+                            </div>
+                          )}
+
+                          {rec.note && (
+                            <p className="mt-2 text-xs text-paper/80 italic bg-ink/40 p-2 rounded border border-dust/10">
+                              "{rec.note}"
+                            </p>
+                          )}
+                        </div>
+                      </div>
+
+                      <div className="mt-4 pt-3 border-t border-dust/10 flex items-center justify-between gap-2">
+                        <div>
+                          {isUnread ? (
+                            <button
+                              type="button"
+                              onClick={() => handleMarkCheckedOut(rec)}
+                              className="px-2.5 py-1 text-[0.65rem] font-mono uppercase tracking-wider text-brass/90 border border-brass/40 rounded hover:bg-brass hover:text-ink transition-colors cursor-pointer flex items-center gap-1"
+                              title="Mark this recommendation as checked out"
+                            >
+                              <Check className="h-3 w-3" /> Checked out
+                            </button>
+                          ) : (
+                            <span className="text-[0.65rem] font-mono uppercase tracking-wider text-dust/70 flex items-center gap-1">
+                              <Check className="h-3 w-3 text-brass/70" /> Checked out
+                            </span>
+                          )}
+                        </div>
+
+                        <div className="flex items-center gap-2">
+                          <button
+                            type="button"
+                            disabled={isAccepted || isDismissed}
+                            onClick={() => handleDismissRecommendation(rec.id)}
+                            className={`px-3 py-1.5 text-[0.65rem] font-mono uppercase tracking-wider transition-colors cursor-pointer disabled:cursor-not-allowed ${
+                              isDismissed ? "text-dust/40 italic" : "text-dust hover:text-paper"
+                            }`}
+                          >
+                            {isDismissed ? "Passed" : "Pass"}
+                          </button>
+                          <button
+                            type="button"
+                            disabled={isAccepted || isDismissed}
+                            onClick={() => handleAcceptRecommendation(rec)}
+                            className={`flex items-center gap-1.5 px-3 py-1.5 text-[0.65rem] font-mono uppercase tracking-wider rounded font-semibold transition-all duration-300 cursor-pointer disabled:cursor-not-allowed ${
+                              isAccepted
+                                ? "bg-brass text-ink shadow-[0_0_12px_rgba(212,168,83,0.35)] scale-[1.02]"
+                                : "bg-brass text-ink hover:bg-brass/90 active:scale-95"
+                            }`}
+                          >
+                            <Check className={`h-3.5 w-3.5 transition-transform duration-300 ${isAccepted ? "scale-110" : ""}`} />
+                            {isAccepted ? "Added to Queue" : "Add to Queue"}
+                          </button>
+                        </div>
+                      </div>
+                    </motion.div>
+                  );
+                })}
+              </AnimatePresence>
+            </div>
+            )}
+          </section>
+        )}
+
         <section className="hairline mt-10 pt-8">
           <div className="flex items-center justify-between mb-6">
             <h2 className="text-card-title text-paper">Worth Your Time</h2>
@@ -1098,6 +1471,14 @@ function ProfilePage() {
         saving={avatarSaving}
         error={avatarError}
       />
+
+      {profileUser && (
+        <RecommendDialog
+          open={showRecommendModal}
+          onOpenChange={setShowRecommendModal}
+          targetUser={profileUser}
+        />
+      )}
     </div>
   );
 }

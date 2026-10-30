@@ -13,6 +13,7 @@ import { verdictsRouter } from "./routes/verdicts.js";
 import { followsRouter } from "./routes/follows.js";
 import { feedRouter } from "./routes/feed.js";
 import { watchlistRouter } from "./routes/watchlist.js";
+import { recommendationsRouter } from "./routes/recommendations.js";
 
 export function createApp() {
   const app = express();
@@ -33,6 +34,7 @@ export function createApp() {
   app.use("/api/follows", followsRouter);
   app.use("/api/feed", feedRouter);
   app.use("/api/watchlist", watchlistRouter);
+  app.use("/api/recommendations", recommendationsRouter);
 
   app.use(errorHandler);
 

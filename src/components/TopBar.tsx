@@ -2,6 +2,7 @@ import { Link, useLocation } from "@tanstack/react-router";
 import { Logo } from "@/components/Logo";
 import { logoutFn } from "@/api/auth";
 import { getStoredToken } from "@/api/client";
+import { useRecommendationCount } from "@/lib/recommendations-store";
 import { useUser } from "@/lib/user-context";
 import { avatarUrlFor } from "@/lib/avatar";
 import { cn } from "@/lib/utils";
@@ -14,6 +15,7 @@ export function TopBar() {
   const { user, setUser } = useUser();
   const location = useLocation();
   const pathname = location.pathname;
+  const { unreadCount: pendingRecs } = useRecommendationCount(user);
 
   const hasStoredToken = typeof window !== "undefined" && !!getStoredToken();
   const isHydratingAuth = !user && hasStoredToken;
@@ -55,9 +57,14 @@ export function TopBar() {
                 <Link
                   to="/profile/$username"
                   params={{ username: user.username }}
-                  className="text-caption hover:text-brass transition-colors"
+                  className="text-caption hover:text-brass transition-colors inline-flex items-center gap-1.5"
                 >
-                  Profile
+                  <span>Profile</span>
+                  {pendingRecs > 0 && (
+                    <span className="px-1.5 py-0.2 text-[0.6rem] font-mono font-bold bg-brass text-ink rounded-full leading-tight">
+                      {pendingRecs}
+                    </span>
+                  )}
                 </Link>
                 <button
                   onClick={handleLogout}
@@ -90,10 +97,13 @@ export function TopBar() {
                 to="/profile/$username"
                 params={{ username: user.username }}
                 aria-label="Your profile"
-                className="block h-8 w-8 overflow-hidden rounded-full ring-1 ring-brass/70 transition-opacity hover:opacity-80"
+                className="relative block h-8 w-8 overflow-hidden rounded-full ring-1 ring-brass/70 transition-opacity hover:opacity-80"
               >
                 {avatarUrl && (
                   <img src={avatarUrl} alt={user.username} className="h-full w-full object-cover" />
+                )}
+                {pendingRecs > 0 && (
+                  <span className="absolute top-0 right-0 h-2 w-2 rounded-full bg-brass ring-1 ring-ink" />
                 )}
               </Link>
             ) : isHydratingAuth ? (
@@ -138,7 +148,14 @@ export function TopBar() {
                 params={{ username: user.username }}
                 className={cn(NAV_ITEM_CLS, pathname.startsWith("/profile/") ? "text-brass" : "text-dust hover:text-paper")}
               >
-                <User className="h-5 w-5" />
+                <div className="relative">
+                  <User className="h-5 w-5" />
+                  {pendingRecs > 0 && (
+                    <span className="absolute -top-1 -right-1.5 flex h-3.5 w-3.5 items-center justify-center rounded-full bg-brass text-[0.55rem] font-mono font-bold text-ink">
+                      {pendingRecs}
+                    </span>
+                  )}
+                </div>
                 <span>Profile</span>
               </Link>
               <button
