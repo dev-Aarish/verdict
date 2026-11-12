@@ -8,11 +8,14 @@ import { config } from "../config.js";
 import { toSafeUser } from "../lib/safe-user.js";
 import {
   searchTmdb,
+  searchOmdb,
+  checkTmdbReachable,
   getTrendingTmdb,
   getUpcomingTmdb,
   fetchEnrichedDetail,
   findOrCreateMovie,
   type MovieDetailFields,
+  type OmdbShapedSearchResult,
 } from "../lib/movie-store.js";
 import { invalidateTasteScore } from "./taste-score.js";
 
@@ -170,13 +173,30 @@ moviesRouter.get("/search", async (req: Request, res: Response) => {
     return;
   }
 
-  const key = config.tmdbApiKey;
-  if (!key) {
-    res.status(500).json({ error: "TMDb API key not configured" });
-    return;
+  let result: {
+    results: OmdbShapedSearchResult[];
+    totalResults: number;
+    totalPages: number;
+    error?: string;
+  } | null = null;
+
+  const isTmdbUp = await checkTmdbReachable();
+  if (isTmdbUp) {
+    try {
+      result = await searchTmdb(q, page, genreId, keywordId);
+    } catch {
+      result = null;
+    }
   }
 
-  const result = await searchTmdb(q, page, genreId, keywordId);
+  // If TMDb is unreachable or returned no results for a text query, fallback to OMDb!
+  if (!result || (result.results.length === 0 && q.trim())) {
+    const omdbResult = await searchOmdb(q, page);
+    if (omdbResult && (omdbResult.results.length > 0 || !result)) {
+      result = omdbResult;
+    }
+  }
+
   if (!result) {
     res.json({
       results: [],
@@ -193,7 +213,7 @@ moviesRouter.get("/search", async (req: Request, res: Response) => {
     totalResults: result.totalResults,
     totalPages: result.totalPages,
     page,
-    error: null,
+    error: result.error || null,
   });
 });
 

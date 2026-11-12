@@ -75,6 +75,38 @@ test.describe("Search page", () => {
       await expect(page.getByText(/Page \d+ of \d+/)).toBeVisible();
     }
   });
+
+  test("persists search results when navigating to a movie and returning back", async ({ page }) => {
+    await searchFilms(page, "Batman");
+
+    const firstResult = page.locator("[data-testid='search-result']").first();
+    await expect(firstResult).toBeVisible();
+    const movieTitleLink = firstResult.locator("a[href^='/film/']").first();
+    await movieTitleLink.click();
+
+    await expect(page).toHaveURL(/\/film\/tt/);
+    await expect(page.getByRole("button", { name: "← Back" })).toBeVisible();
+
+    await page.getByRole("button", { name: "← Back" }).click();
+
+    await expect(page).toHaveURL(/\/search/);
+    const input = page.getByPlaceholder("Search by title...");
+    await expect(input).toHaveValue("Batman");
+
+    await expect(page.locator("[data-testid='search-result']").first()).toBeVisible();
+  });
+
+  test("clearing the search resets query and results", async ({ page }) => {
+    await searchFilms(page, "Batman");
+    await expect(page.locator("[data-testid='search-result']").first()).toBeVisible();
+
+    await page.getByRole("button", { name: "Clear search" }).click();
+
+    const input = page.getByPlaceholder("Search by title...");
+    await expect(input).toHaveValue("");
+    await expect(page.getByText("Type at least three characters to search.")).toBeVisible();
+    await expect(page.locator("[data-testid='search-result']")).toHaveCount(0);
+  });
 });
 
 test.describe("Rating dialog", () => {

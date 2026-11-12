@@ -1,5 +1,6 @@
 import { createFileRoute, useRouter, Link } from "@tanstack/react-router";
 import { useState, useCallback, useRef, useEffect } from "react";
+import { X } from "lucide-react";
 import { TopBar } from "@/components/TopBar";
 import { searchMoviesFn, addToWatchedFn, getCurrentUserWatchedFn } from "@/api/movies";
 import { addToWatchlistFn, removeWatchlistFn, getCurrentUserWatchlistFn } from "@/api/watchlist";
@@ -7,6 +8,15 @@ import { searchUsersFn } from "@/api/users";
 import { WatchedEntryDialog } from "@/components/WatchedEntryDialog";
 import { useUser } from "@/lib/user-context";
 import { dicebearAvatar } from "@/lib/avatar";
+import {
+  getPersistedSearch,
+  setPersistedSearch,
+  clearPersistedSearch,
+  updateSearchUrl,
+  type SearchTab as Tab,
+  type MovieSearchResult as SearchResult,
+  type UserSearchResult as UserResult,
+} from "@/lib/search-store";
 
 export const Route = createFileRoute("/search")({
   head: () => ({
@@ -18,30 +28,20 @@ export const Route = createFileRoute("/search")({
   component: SearchPage,
 });
 
-type Tab = "films" | "people";
-
-interface SearchResult {
-  imdbID: string;
-  Title: string;
-  Year: string;
-  Poster: string;
-}
-
-interface UserResult {
-  id: string;
-  username: string;
-  avatarUrl: string | null;
-  bio: string | null;
-  filmCount: number;
-}
-
 function SearchPage() {
   const { user } = useUser();
   const router = useRouter();
-  const [tab, setTab] = useState<Tab>("films");
-  const [query, setQuery] = useState("");
-  const [results, setResults] = useState<SearchResult[]>([]);
-  const [userResults, setUserResults] = useState<UserResult[]>([]);
+  const inputRef = useRef<HTMLInputElement>(null);
+
+  const [initialState] = useState(() => getPersistedSearch());
+  const hasInitialResults = useRef(
+    Boolean(initialState?.results?.length || initialState?.userResults?.length),
+  );
+
+  const [tab, setTab] = useState<Tab>(initialState?.tab ?? "films");
+  const [query, setQuery] = useState(initialState?.query ?? "");
+  const [results, setResults] = useState<SearchResult[]>(initialState?.results ?? []);
+  const [userResults, setUserResults] = useState<UserResult[]>(initialState?.userResults ?? []);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [selectedMovie, setSelectedMovie] = useState<SearchResult | null>(null);
@@ -52,12 +52,12 @@ function SearchPage() {
   const [watchedMap, setWatchedMap] = useState<Record<string, number>>({});
   const [watchlistMap, setWatchlistMap] = useState<Record<string, string>>({});
   const [addedIds, setAddedIds] = useState<Set<string>>(new Set());
-  const [currentPage, setCurrentPage] = useState(1);
-  const [totalPages, setTotalPages] = useState(0);
-  const [totalResults, setTotalResults] = useState(0);
+  const [currentPage, setCurrentPage] = useState(initialState?.currentPage ?? 1);
+  const [totalPages, setTotalPages] = useState(initialState?.totalPages ?? 0);
+  const [totalResults, setTotalResults] = useState(initialState?.totalResults ?? 0);
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const requestIdRef = useRef(0);
-  const lastQueryRef = useRef("");
+  const lastQueryRef = useRef(initialState?.query ?? "");
 
   useEffect(() => {
     if (!user) {
@@ -82,17 +82,29 @@ function SearchPage() {
   }, [user]);
 
   const doSearch = useCallback(
-    async (q: string, page: number) => {
+    async (q: string, page: number, currentTab: Tab = tab) => {
       const id = ++requestIdRef.current;
       setLoading(true);
       setError(null);
 
       try {
-        if (tab === "people") {
+        if (currentTab === "people") {
           const res = await searchUsersFn({ data: { query: q } });
           if (id !== requestIdRef.current) return;
           setUserResults(res.users);
           setResults([]);
+          setTotalPages(0);
+          setTotalResults(0);
+          setPersistedSearch({
+            tab: "people",
+            query: q,
+            results: [],
+            userResults: res.users,
+            currentPage: 1,
+            totalPages: 1,
+            totalResults: res.users.length,
+          });
+          updateSearchUrl(q, "people", 1);
         } else {
           const res = await searchMoviesFn({ data: { query: q, page } });
           if (id !== requestIdRef.current) return;
@@ -103,11 +115,23 @@ function SearchPage() {
             if (res.error === "Too many results.") {
               setError("Too many results. Try a more specific title.");
             }
+            clearPersistedSearch();
+            updateSearchUrl(q, "films", 1);
           } else {
             setResults(res.results);
             setCurrentPage(res.page);
             setTotalPages(res.totalPages);
             setTotalResults(res.totalResults);
+            setPersistedSearch({
+              tab: "films",
+              query: q,
+              results: res.results,
+              userResults: [],
+              currentPage: res.page,
+              totalPages: res.totalPages,
+              totalResults: res.totalResults,
+            });
+            updateSearchUrl(q, "films", res.page);
           }
         }
       } catch (e: unknown) {
@@ -115,12 +139,33 @@ function SearchPage() {
         setError(e instanceof Error ? e.message : "Search failed");
         setResults([]);
         setUserResults([]);
+        clearPersistedSearch();
       } finally {
         if (id === requestIdRef.current) setLoading(false);
       }
     },
     [tab],
   );
+
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    const params = new URLSearchParams(window.location.search);
+    const qParam = params.get("q");
+    const tabParam = params.get("tab") === "people" ? "people" : "films";
+    const pageParam = parseInt(params.get("page") || "1", 10) || 1;
+
+    if (qParam && qParam.trim().length >= (tabParam === "people" ? 1 : 3)) {
+      const trimmed = qParam.trim();
+      if (trimmed !== lastQueryRef.current) {
+        setQuery(trimmed);
+        setTab(tabParam);
+        lastQueryRef.current = trimmed;
+        doSearch(trimmed, pageParam, tabParam);
+      }
+    } else if (initialState?.query && !window.location.search) {
+      updateSearchUrl(initialState.query, initialState.tab, initialState.currentPage);
+    }
+  }, [doSearch, initialState]);
 
   const handleSearch = useCallback(
     (q: string) => {
@@ -136,24 +181,41 @@ function SearchPage() {
         setUserResults([]);
         setTotalPages(0);
         setTotalResults(0);
+        lastQueryRef.current = "";
+        clearPersistedSearch();
+        updateSearchUrl("", tab, 1);
         return;
       }
 
       lastQueryRef.current = q;
       timerRef.current = setTimeout(() => {
-        doSearch(q, 1);
+        doSearch(q, 1, tab);
       }, 300);
     },
     [doSearch, tab],
   );
 
+  const handleClear = useCallback(() => {
+    setQuery("");
+    setResults([]);
+    setUserResults([]);
+    setTotalPages(0);
+    setTotalResults(0);
+    setError(null);
+    lastQueryRef.current = "";
+    if (timerRef.current) clearTimeout(timerRef.current);
+    clearPersistedSearch();
+    updateSearchUrl("", tab, 1);
+    inputRef.current?.focus();
+  }, [tab]);
+
   const goToPage = useCallback(
     (page: number) => {
       const q = lastQueryRef.current;
       if (q.length < 3) return;
-      doSearch(q, page);
+      doSearch(q, page, tab);
     },
-    [doSearch],
+    [doSearch, tab],
   );
 
   const handleAdd = async () => {
@@ -220,11 +282,16 @@ function SearchPage() {
         <div className="mt-8 flex gap-6 border-b border-dust/20 pb-0">
           <button
             onClick={() => {
+              if (tab === "films") return;
               setTab("films");
               setQuery("");
               setResults([]);
               setUserResults([]);
               setError(null);
+              lastQueryRef.current = "";
+              if (timerRef.current) clearTimeout(timerRef.current);
+              clearPersistedSearch();
+              updateSearchUrl("", "films", 1);
             }}
             className={`pb-3 text-sm tracking-widest uppercase font-mono transition-colors cursor-pointer ${
               tab === "films"
@@ -236,11 +303,16 @@ function SearchPage() {
           </button>
           <button
             onClick={() => {
+              if (tab === "people") return;
               setTab("people");
               setQuery("");
               setResults([]);
               setUserResults([]);
               setError(null);
+              lastQueryRef.current = "";
+              if (timerRef.current) clearTimeout(timerRef.current);
+              clearPersistedSearch();
+              updateSearchUrl("", "people", 1);
             }}
             className={`pb-3 text-sm tracking-widest uppercase font-mono transition-colors cursor-pointer ${
               tab === "people"
@@ -252,15 +324,26 @@ function SearchPage() {
           </button>
         </div>
 
-        <div className="hairline mt-6 pb-6">
+        <div className="hairline relative mt-6 pb-6">
           <input
+            ref={inputRef}
             type="text"
             placeholder={tab === "films" ? "Search by title..." : "Search by username..."}
             value={query}
             onChange={(e) => handleSearch(e.target.value)}
-            className="w-full border-0 border-b border-dust/30 bg-transparent py-3 text-lg text-paper placeholder-dust/50 outline-none transition-colors focus:border-brass font-display md:py-4 md:text-2xl"
-            autoFocus
+            className="w-full border-0 border-b border-dust/30 bg-transparent py-3 pr-10 text-lg text-paper placeholder-dust/50 outline-none transition-colors focus:border-brass font-display md:py-4 md:text-2xl"
+            autoFocus={!hasInitialResults.current}
           />
+          {query.length > 0 && (
+            <button
+              type="button"
+              onClick={handleClear}
+              className="absolute right-0 top-1/2 -translate-y-1/2 p-2 text-dust hover:text-paper cursor-pointer transition-colors"
+              aria-label="Clear search"
+            >
+              <X className="h-5 w-5" />
+            </button>
+          )}
         </div>
 
         {!user && tab === "films" && (

@@ -328,13 +328,53 @@ export async function fetchTmdbDetailByImdbId(
   return fromTmdbDetail(imdbId, detail);
 }
 
+let tmdbReachable: boolean | null = null;
+let lastTmdbCheckTime = 0;
+const TMDB_CHECK_INTERVAL_MS = 5 * 60 * 1000; // 5 minutes
+
+export async function checkTmdbReachable(): Promise<boolean> {
+  const now = Date.now();
+  if (tmdbReachable !== null && now - lastTmdbCheckTime < TMDB_CHECK_INTERVAL_MS) {
+    return tmdbReachable;
+  }
+  const key = config.tmdbApiKey;
+  if (!key) {
+    tmdbReachable = false;
+    lastTmdbCheckTime = now;
+    return false;
+  }
+  try {
+    const testUrl = `https://api.themoviedb.org/3/configuration?api_key=${key}`;
+    const res = await fetch(testUrl, { signal: AbortSignal.timeout(2000) });
+    tmdbReachable = res.ok;
+  } catch {
+    tmdbReachable = false;
+  }
+  lastTmdbCheckTime = now;
+  return tmdbReachable;
+}
+
 /**
  * Best-effort full detail: TMDb first (longer overviews, richer metadata),
  * then OMDb to fill in awards, which TMDb doesn't provide.
+ * If TMDb is down or blocked, falls back cleanly to OMDb.
  */
 export async function fetchEnrichedDetail(imdbId: string): Promise<MovieDetailFields | null> {
-  const tmdb = await fetchTmdbDetailByImdbId(imdbId);
-  if (!tmdb) return null;
+  let tmdb: MovieDetailFields | null = null;
+  const isTmdbUp = await checkTmdbReachable();
+  if (isTmdbUp) {
+    try {
+      tmdb = await fetchTmdbDetailByImdbId(imdbId);
+    } catch {
+      tmdb = null;
+    }
+  }
+
+  if (!tmdb) {
+    const omdb = await fetchOmdbDetail(imdbId);
+    if (!omdb) return null;
+    return fromDetail(imdbId, omdb);
+  }
 
   if (!tmdb.awards) {
     try {
@@ -350,6 +390,57 @@ export async function fetchEnrichedDetail(imdbId: string): Promise<MovieDetailFi
 // ---------------------------------------------------------------------------
 // OMDb (kept as a fallback source)
 // ---------------------------------------------------------------------------
+
+export async function searchOmdb(
+  query: string,
+  page: number = 1,
+): Promise<{ results: OmdbShapedSearchResult[]; totalResults: number; totalPages: number; error?: string } | null> {
+  const key = config.omdbApiKey;
+  if (!key || !query.trim()) return null;
+
+  try {
+    const url = new URL("https://www.omdbapi.com/");
+    url.searchParams.set("apikey", key);
+    url.searchParams.set("s", query.trim());
+    url.searchParams.set("page", String(page));
+    url.searchParams.set("type", "movie");
+
+    const res = await fetch(url.toString(), { signal: AbortSignal.timeout(4000) });
+    if (!res.ok) return null;
+    const data = await res.json();
+    if (data.Response === "False") {
+      if (data.Error === "Too many results.") {
+        return { results: [], totalResults: 0, totalPages: 0, error: "Too many results." };
+      }
+      return { results: [], totalResults: 0, totalPages: 0 };
+    }
+
+    const totalResults = parseInt(data.totalResults || "0", 10) || 0;
+    const totalPages = Math.ceil(totalResults / 10);
+    const results: OmdbShapedSearchResult[] = (data.Search || []).map((m: any) => ({
+      imdbID: m.imdbID,
+      Title: m.Title,
+      Year: m.Year,
+      Poster: m.Poster && m.Poster !== "N/A" ? m.Poster : "",
+      Type: m.Type || "movie",
+      releaseDate: null,
+      plot: null,
+      genres: null,
+      imdbRating: null,
+      voteCount: null,
+      language: null,
+    }));
+
+    return {
+      results,
+      totalResults,
+      totalPages,
+    };
+  } catch (err) {
+    console.error("OMDb search failed", err);
+    return null;
+  }
+}
 
 export async function fetchOmdbDetail(imdbId: string): Promise<OmdbDetailResult | null> {
   const key = config.omdbApiKey;
